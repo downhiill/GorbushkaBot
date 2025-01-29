@@ -55,7 +55,7 @@ namespace GorbushkaBot.Controllers
                                 }
                                 break;
                             case "waiting_for_pavilion_number":
-                                if (Regex.IsMatch(message.Text, "^\\d+$"))
+                                if (IsValidPavilionNumber(message.Text))
                                 {
                                     UserStates[chatId] = "waiting_for_contract_number";
                                     await botClient.SendTextMessageAsync(chatId, "Введите номер договора аренды.");
@@ -66,12 +66,18 @@ namespace GorbushkaBot.Controllers
                                 }
                                 break;
                             case "waiting_for_contract_number":
-                            case "waiting_for_business_type":
-                                UserStates[chatId] = "completed";
-                                await botClient.SendTextMessageAsync(chatId, "Спасибо! Ваша заявка отправлена на проверку.");
+                                if (IsValidContractNumber(message.Text))
+                                {
+                                    UserStates[chatId] = "completed";
+                                    await botClient.SendTextMessageAsync(chatId, "Спасибо! Ваша заявка отправлена на проверку.");
+                                }
+                                else
+                                {
+                                    await botClient.SendTextMessageAsync(chatId, "Ошибка! Введите корректный номер договора аренды.");
+                                }
                                 break;
                             case "waiting_for_company_name":
-                                if (!string.IsNullOrWhiteSpace(message.Text))
+                                if (IsValidCompanyName(message.Text))
                                 {
                                     UserStates[chatId] = "waiting_for_business_type";
                                     await botClient.SendTextMessageAsync(chatId, "Введите вид деятельности вашей компании.");
@@ -79,6 +85,17 @@ namespace GorbushkaBot.Controllers
                                 else
                                 {
                                     await botClient.SendTextMessageAsync(chatId, "Ошибка! Название компании не может быть пустым.");
+                                }
+                                break;
+                            case "waiting_for_business_type":
+                                if (IsValidBusinessType(message.Text))
+                                {
+                                    UserStates[chatId] = "completed";
+                                    await botClient.SendTextMessageAsync(chatId, "Спасибо! Ваша заявка отправлена на проверку.");
+                                }
+                                else
+                                {
+                                    await botClient.SendTextMessageAsync(chatId, "Ошибка! Введите корректный вид деятельности.");
                                 }
                                 break;
                         }
@@ -92,6 +109,30 @@ namespace GorbushkaBot.Controllers
                 }
             }
         }
+
+        private bool IsValidPavilionNumber(string pavilionNumber)
+        {
+            return Regex.IsMatch(pavilionNumber, "^\\d+$");
+        }
+
+        private bool IsValidContractNumber(string contractNumber)
+        {
+            // Предположим, что номер договора аренды должен быть числовым или иметь определенную структуру
+            return Regex.IsMatch(contractNumber, "^[A-Za-z0-9]+$");  // Пример для alphanumeric строк
+        }
+
+        private bool IsValidCompanyName(string companyName)
+        {
+            return !string.IsNullOrWhiteSpace(companyName);
+        }
+
+        private bool IsValidBusinessType(string businessType)
+        {
+            // Добавьте список допустимых видов деятельности, если нужно
+            var validBusinessTypes = new[] { "Торговля", "Услуги", "Производство" };
+            return validBusinessTypes.Contains(businessType);
+        }
+
 
         private static IReplyMarkup GetMarketChoiceKeyboard()
         {
