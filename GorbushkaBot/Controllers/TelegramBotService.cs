@@ -39,6 +39,11 @@ namespace GorbushkaBot.Controllers
                         UserStates[chatId] = "waiting_for_photo";
                         await botClient.SendTextMessageAsync(chatId, "Отправьте фото паспорта для начала верификации.");
                     }
+                    else if (message.Text == "Назад" && UserStates.TryGetValue(chatId, out var prevState))
+                    {
+                        UserStates[chatId] = GetPreviousState(prevState);
+                        await botClient.SendTextMessageAsync(chatId, "Вы вернулись на шаг назад.");
+                    }
                     else if (UserStates.TryGetValue(chatId, out var state))
                     {
                         switch (state)
@@ -104,21 +109,43 @@ namespace GorbushkaBot.Controllers
                 else if (message.Type == MessageType.Photo && UserStates.TryGetValue(chatId, out var currentState) && currentState == "waiting_for_photo")
                 {
                     var fileId = message.Photo[^1].FileId;
+                    var fileSize = message.Photo[^1].FileSize;
+
+                    if (fileSize < 10000)
+                    {
+                        await botClient.SendTextMessageAsync(chatId, "Ошибка! Фото слишком маленькое, отправьте более четкое изображение паспорта.");
+                        return;
+                    }
+
                     UserStates[chatId] = "waiting_for_market_status";
                     await botClient.SendTextMessageAsync(chatId, "Вы с рынка или нет?", replyMarkup: GetMarketChoiceKeyboard());
                 }
+                else if (message.Type == MessageType.Document && UserStates.TryGetValue(chatId, out currentState) && currentState == "waiting_for_photo")
+                {
+                    var fileName = message.Document.FileName.ToLower();
+                    var mimeType = message.Document.MimeType;
+
+                    if (!mimeType.StartsWith("image/") || !(fileName.EndsWith(".jpg") || fileName.EndsWith(".jpeg") || fileName.EndsWith(".png")))
+                    {
+                        await botClient.SendTextMessageAsync(chatId, "Ошибка! Отправьте фотографию паспорта, а не документ.");
+                        return;
+                    }
+
+                    UserStates[chatId] = "waiting_for_market_status";
+                    await botClient.SendTextMessageAsync(chatId, "Вы с рынка или нет?", replyMarkup: GetMarketChoiceKeyboard());
+                }
+
             }
         }
 
         private bool IsValidPavilionNumber(string pavilionNumber)
         {
-            return Regex.IsMatch(pavilionNumber, "^\\d+$");
+            return Regex.IsMatch(pavilionNumber, "^[A-Za-z0-9]+$");
         }
 
         private bool IsValidContractNumber(string contractNumber)
         {
-            // Предположим, что номер договора аренды должен быть числовым или иметь определенную структуру
-            return Regex.IsMatch(contractNumber, "^[A-Za-z0-9]+$");  // Пример для alphanumeric строк
+            return Regex.IsMatch(contractNumber, "^[A-Za-z0-9]+$");
         }
 
         private bool IsValidCompanyName(string companyName)
@@ -128,20 +155,32 @@ namespace GorbushkaBot.Controllers
 
         private bool IsValidBusinessType(string businessType)
         {
-            // Добавьте список допустимых видов деятельности, если нужно
             var validBusinessTypes = new[] { "Торговля", "Услуги", "Производство" };
             return validBusinessTypes.Contains(businessType);
         }
-
 
         private static IReplyMarkup GetMarketChoiceKeyboard()
         {
             return new ReplyKeyboardMarkup(new[]
             {
-            new KeyboardButton("Я с рынка"),
-            new KeyboardButton("Я не с рынка")
-        })
+                new KeyboardButton("Я с рынка"),
+                new KeyboardButton("Я не с рынка"),
+                new KeyboardButton("Назад")
+            })
             { ResizeKeyboard = true };
+        }
+
+        private static string GetPreviousState(string currentState)
+        {
+            return currentState switch
+            {
+                "waiting_for_market_status" => "waiting_for_photo",
+                "waiting_for_pavilion_number" => "waiting_for_market_status",
+                "waiting_for_contract_number" => "waiting_for_pavilion_number",
+                "waiting_for_company_name" => "waiting_for_market_status",
+                "waiting_for_business_type" => "waiting_for_company_name",
+                _ => "waiting_for_photo",
+            };
         }
 
         private static Task ErrorHandler(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
