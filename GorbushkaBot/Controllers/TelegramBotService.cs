@@ -9,9 +9,11 @@ namespace GorbushkaBot.Controllers
 {
     public class TelegramBotService
     {
-        private static readonly string BotToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? throw new InvalidOperationException("BOT_TOKEN is not set");
+        private static readonly string BotToken = Environment.GetEnvironmentVariable("BOT_TOKEN")
+            ?? throw new InvalidOperationException("BOT_TOKEN is not set");
+
         private readonly TelegramBotClient botClient;
-        private static readonly Dictionary<long, string> UserSteps = new Dictionary<long, string>();
+        private static readonly Dictionary<long, (string step, int messageId)> UserSteps = new();
 
         public TelegramBotService()
         {
@@ -47,27 +49,126 @@ namespace GorbushkaBot.Controllers
                     new[] { InlineKeyboardButton.WithCallbackData("Перейти к верификации", "verify") }
                 });
 
-                await botClient.SendTextMessageAsync(chatId, "Добро пожаловать в систему!", replyMarkup: inlineKeyboard);
+                Message sentMessage = await botClient.SendTextMessageAsync(chatId, "Добро пожаловать в систему!", replyMarkup: inlineKeyboard);
+                UserSteps[chatId] = ("start", sentMessage.MessageId);
             }
-            else if (UserSteps.ContainsKey(chatId) && UserSteps[chatId] == "fio")
+            else if (UserSteps.ContainsKey(chatId))
             {
-                // Пользователь ввел ФИО, можно сохранить
-                UserSteps.Remove(chatId);
-                await botClient.SendTextMessageAsync(chatId, $"Ваше ФИО: {message.Text}\n✅ Верификация завершена!");
+                var (step, messageId) = UserSteps[chatId];
+
+                if (step == "fio")
+                {
+                    await UpdateVerificationStep(botClient, chatId, messageId, "passport", "Отправьте фото вашего паспорта", true);
+                }
+                else if (step == "company_name")
+                {
+                    await UpdateVerificationStep(botClient, chatId, messageId, "company_activity", "Введите вид деятельности вашей компании:", true);
+                }
+                else if (step == "pavilion_number")
+                {
+                    await UpdateVerificationStep(botClient, chatId, messageId, "rental_contract", "Введите номер вашего договора аренды:", true);
+                }
             }
         }
 
         private async Task HandleCallbackQuery(ITelegramBotClient botClient, CallbackQuery callbackQuery)
         {
             long chatId = callbackQuery.Message.Chat.Id;
+            int messageId = callbackQuery.Message.MessageId;
+            string data = callbackQuery.Data;
 
-            if (callbackQuery.Data == "verify")
+            switch (data)
             {
-                UserSteps[chatId] = "fio";
-                await botClient.SendTextMessageAsync(chatId, "Введите ваше ФИО:");
+                case "verify":
+                    await UpdateVerificationStep(botClient, chatId, messageId, "fio", "Введите ваше ФИО:", false);
+                    break;
+
+                case "passport":
+                    await UpdateVerificationStep(botClient, chatId, messageId, "role", "Выберите свою роль:", false,
+                        new InlineKeyboardMarkup(new[]
+                        {
+                            new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
+                        }));
+                    break;
+
+                case "seller":
+                case "both":
+                    await UpdateVerificationStep(botClient, chatId, messageId, "market", "Вы с рынка?", false,
+                        new InlineKeyboardMarkup(new[]
+                        {
+                            new[] { InlineKeyboardButton.WithCallbackData("Да", "market_yes") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Нет", "market_no") }
+                        }));
+                    break;
+
+                case "market_yes":
+                    await UpdateVerificationStep(botClient, chatId, messageId, "pavilion_number", "Введите номер вашего павильона:", true);
+                    break;
+
+                case "market_no":
+                    await UpdateVerificationStep(botClient, chatId, messageId, "company_name", "Введите название вашей компании:", true);
+                    break;
+
+                case "buyer":
+                    await UpdateVerificationStep(botClient, chatId, messageId, "completed", "Заявка заполнена.\n\nВыберите действие:", false,
+                        new InlineKeyboardMarkup(new[]
+                        {
+                            new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
+                        }));
+                    break;
+
+                case "rental_contract":
+                case "company_activity":
+                    await UpdateVerificationStep(botClient, chatId, messageId, "completed", "Заявка заполнена.\n\nВыберите действие:", false,
+                        new InlineKeyboardMarkup(new[]
+                        {
+                            new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
+                        }));
+                    break;
+
+                case "back":
+                    await GoBackStep(botClient, chatId, messageId);
+                    break;
             }
 
             await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
+        }
+
+        private async Task UpdateVerificationStep(ITelegramBotClient botClient, long chatId, int messageId, string nextStep, string messageText, bool isTextInput, InlineKeyboardMarkup? keyboard = null)
+        {
+            if (keyboard == null)
+            {
+                keyboard = new InlineKeyboardMarkup(new[] { new[] { InlineKeyboardButton.WithCallbackData("Назад", "back") } });
+            }
+
+            await botClient.EditMessageTextAsync(chatId, messageId, messageText, replyMarkup: keyboard);
+            UserSteps[chatId] = (nextStep, messageId);
+        }
+
+        private async Task GoBackStep(ITelegramBotClient botClient, long chatId, int messageId)
+        {
+            if (!UserSteps.ContainsKey(chatId)) return;
+
+            var (currentStep, _) = UserSteps[chatId];
+
+            var previousStep = currentStep switch
+            {
+                "passport" => ("fio", "Введите ваше ФИО:"),
+                "role" => ("passport", "Отправьте фото паспорта"),
+                "market" => ("role", "Выберите свою роль:"),
+                "pavilion_number" => ("market", "Вы с рынка?"),
+                "company_name" => ("market", "Вы с рынка?"),
+                "rental_contract" => ("pavilion_number", "Введите номер вашего павильона:"),
+                "company_activity" => ("company_name", "Введите название вашей компании:"),
+                "completed" => ("role", "Выберите свою роль:"),
+                _ => ("fio", "Введите ваше ФИО:")
+            };
+
+            await UpdateVerificationStep(botClient, chatId, messageId, previousStep.Item1, previousStep.Item2, false);
         }
 
         private Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, System.Threading.CancellationToken cancellationToken)
