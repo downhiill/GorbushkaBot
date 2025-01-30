@@ -23,8 +23,8 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 
-// Start the bot
+// Start the bot in a separate task
 var botService = app.Services.GetRequiredService<TelegramBotService>();
-botService.Start();
+var botTask = Task.Run(() => botService.Start());  // Запуск бота в фоновом потоке
 
 app.Run();
