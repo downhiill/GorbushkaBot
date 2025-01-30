@@ -1,9 +1,9 @@
 ﻿using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
-using Telegram.Bot;
-using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using Telegram.Bot.Types;
+using Telegram.Bot;
 
 namespace GorbushkaBot.Controllers
 {
@@ -60,23 +60,61 @@ namespace GorbushkaBot.Controllers
                                 if (message.Text == "Верификация")
                                 {
                                     UserPreviousStates[chatId] = currentState;  // Сохраняем текущий шаг
-                                    UserStates[chatId] = "waiting_for_photo";
+                                    UserStates[chatId] = "waiting_for_full_name";
                                     await SendStepMessage(chatId);
                                 }
+                                break;
+                            case "waiting_for_full_name":
+                                // Попросить ввести ФИО
+                                UserPreviousStates[chatId] = currentState;
+                                UserStates[chatId] = "waiting_for_photo";
+                                await SendStepMessage(chatId);
                                 break;
                             case "waiting_for_photo":
                                 if (message.Text == "Назад")
                                 {
                                     UserPreviousStates[chatId] = currentState;
-                                    UserStates[chatId] = "waiting_for_verification"; // Возвращаемся на шаг верификации
+                                    UserStates[chatId] = "waiting_for_full_name"; // Возвращаемся на шаг ввода ФИО
+                                    await SendStepMessage(chatId);
+                                }
+                                else if (message.Type == MessageType.Photo)
+                                {
+                                    UserPreviousStates[chatId] = currentState;
+                                    UserStates[chatId] = "waiting_for_role";
+                                    await SendStepMessage(chatId);
+                                }
+                                break;
+                            case "waiting_for_role":
+                                if (message.Text == "Продавец")
+                                {
+                                    UserPreviousStates[chatId] = currentState;
+                                    UserStates[chatId] = "waiting_for_market_status";
+                                    await SendStepMessage(chatId);
+                                }
+                                else if (message.Text == "Покупатель")
+                                {
+                                    UserPreviousStates[chatId] = currentState;
+                                    UserStates[chatId] = "completed";
+                                    await SendStepMessage(chatId);
+                                }
+                                else if (message.Text == "Продавец и покупатель")
+                                {
+                                    UserPreviousStates[chatId] = currentState;
+                                    UserStates[chatId] = "waiting_for_market_status";
                                     await SendStepMessage(chatId);
                                 }
                                 break;
                             case "waiting_for_market_status":
-                                if (message.Text == "Я с рынка" || message.Text == "Я не с рынка")
+                                if (message.Text == "Я с рынка")
                                 {
                                     UserPreviousStates[chatId] = currentState;
-                                    UserStates[chatId] = message.Text == "Я с рынка" ? "waiting_for_pavilion_number" : "waiting_for_company_name";
+                                    UserStates[chatId] = "waiting_for_pavilion_number";
+                                    await SendStepMessage(chatId);
+                                }
+                                else if (message.Text == "Я не с рынка")
+                                {
+                                    UserPreviousStates[chatId] = currentState;
+                                    UserStates[chatId] = "waiting_for_company_name";
                                     await SendStepMessage(chatId);
                                 }
                                 break;
@@ -99,14 +137,6 @@ namespace GorbushkaBot.Controllers
                         }
                     }
                 }
-
-                // Обработка фото
-                if (message.Type == MessageType.Photo && UserStates[chatId] == "waiting_for_photo")
-                {
-                    UserPreviousStates[chatId] = "waiting_for_photo";
-                    UserStates[chatId] = "waiting_for_market_status";
-                    await SendStepMessage(chatId);
-                }
             }
 
             // Обработка нажатия кнопки
@@ -118,7 +148,7 @@ namespace GorbushkaBot.Controllers
 
                 if (callbackData == "start_verification")
                 {
-                    UserStates[chatId] = "waiting_for_photo";
+                    UserStates[chatId] = "waiting_for_full_name";
                     await SendStepMessage(chatId);
                 }
                 else if (callbackData == "go_back" && UserPreviousStates.TryGetValue(chatId, out var prevState))
@@ -164,21 +194,29 @@ namespace GorbushkaBot.Controllers
             switch (currentState)
             {
                 case "waiting_for_verification":
-                    messageText = "Отправьте фото паспорта для начала верификации.";
-                    keyboard = new InlineKeyboardMarkup(new[]
-                    {
-                        new InlineKeyboardButton("Назад") { CallbackData = "go_back" }
-                    });
+                    messageText = "Отправьте ФИО для начала верификации.";
+                    keyboard = new InlineKeyboardMarkup(new[] { new InlineKeyboardButton("Назад") { CallbackData = "go_back" } });
+                    break;
+                case "waiting_for_full_name":
+                    messageText = "Введите ваше ФИО.";
+                    keyboard = new InlineKeyboardMarkup(new[] { new InlineKeyboardButton("Назад") { CallbackData = "go_back" } });
                     break;
                 case "waiting_for_photo":
                     messageText = "Отправьте фото паспорта для начала верификации.";
+                    keyboard = new InlineKeyboardMarkup(new[] { new InlineKeyboardButton("Назад") { CallbackData = "go_back" } });
+                    break;
+                case "waiting_for_role":
+                    messageText = "Выберите свою роль:";
                     keyboard = new InlineKeyboardMarkup(new[]
                     {
+                        new InlineKeyboardButton("Продавец") { CallbackData = "Продавец" },
+                        new InlineKeyboardButton("Покупатель") { CallbackData = "Покупатель" },
+                        new InlineKeyboardButton("Продавец и покупатель") { CallbackData = "Продавец и покупатель" },
                         new InlineKeyboardButton("Назад") { CallbackData = "go_back" }
                     });
                     break;
                 case "waiting_for_market_status":
-                    messageText = "Вы с рынка или нет?";
+                    messageText = "Вы с рынка?";
                     keyboard = new InlineKeyboardMarkup(new[]
                     {
                         new InlineKeyboardButton("Я с рынка") { CallbackData = "market_status_yes" },
@@ -188,31 +226,23 @@ namespace GorbushkaBot.Controllers
                     break;
                 case "waiting_for_pavilion_number":
                     messageText = "Введите номер павильона.";
-                    keyboard = new InlineKeyboardMarkup(new[]
-                    {
-                        new InlineKeyboardButton("Назад") { CallbackData = "go_back" }
-                    });
+                    keyboard = new InlineKeyboardMarkup(new[] { new InlineKeyboardButton("Назад") { CallbackData = "go_back" } });
                     break;
                 case "waiting_for_contract_number":
                     messageText = "Введите номер договора аренды.";
-                    keyboard = new InlineKeyboardMarkup(new[]
-                    {
-                        new InlineKeyboardButton("Назад") { CallbackData = "go_back" }
-                    });
+                    keyboard = new InlineKeyboardMarkup(new[] { new InlineKeyboardButton("Назад") { CallbackData = "go_back" } });
                     break;
                 case "completed":
                     messageText = "Спасибо! Ваша заявка отправлена на проверку.";
                     keyboard = new InlineKeyboardMarkup(new[]
                     {
-                        new InlineKeyboardButton("Назад") { CallbackData = "go_back" }
+                        new InlineKeyboardButton("Отправить") { CallbackData = "send" },
+                        new InlineKeyboardButton("Заполнить заново") { CallbackData = "restart" }
                     });
                     break;
                 default:
                     messageText = "Произошла ошибка. Попробуйте снова.";
-                    keyboard = new InlineKeyboardMarkup(new[]
-                    {
-                        new InlineKeyboardButton("Назад") { CallbackData = "go_back" }
-                    });
+                    keyboard = new InlineKeyboardMarkup(new[] { new InlineKeyboardButton("Назад") { CallbackData = "go_back" } });
                     break;
             }
 
@@ -229,10 +259,9 @@ namespace GorbushkaBot.Controllers
             return Regex.IsMatch(contractNumber, "^[A-Za-z0-9]+$");
         }
 
-        private static Task ErrorHandler(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
+        private async Task ErrorHandler(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
-            Console.WriteLine($"Ошибка: {exception.Message}");
-            return Task.CompletedTask;
+            Console.WriteLine($"Error occurred: {exception.Message}");
         }
     }
 }
