@@ -37,23 +37,45 @@ namespace GorbushkaBot.Controllers
                     if (message.Text == "/start")
                     {
                         UserStates[chatId] = "waiting_for_verification";
-                        var keyboard = new ReplyKeyboardMarkup(new[] { new KeyboardButton("Верификация") }) { ResizeKeyboard = true };
+                        var keyboard = new ReplyKeyboardMarkup(new[]
+                        {
+                            new KeyboardButton("Верификация")
+                        })
+                        {
+                            ResizeKeyboard = true
+                        };
 
                         await botClient.SendTextMessageAsync(chatId, "Добро пожаловать в бот! Нажмите 'Верификация', чтобы начать процесс.", replyMarkup: keyboard);
                     }
                     else if (message.Text == "Верификация" && UserStates.TryGetValue(chatId, out var state) && state == "waiting_for_verification")
                     {
                         UserStates[chatId] = "waiting_for_photo";
-                        await botClient.SendTextMessageAsync(chatId, "Отправьте фото паспорта для начала верификации.");
+                        var keyboard = new ReplyKeyboardMarkup(new[]
+                        {
+                            new KeyboardButton("Назад")
+                        })
+                        {
+                            ResizeKeyboard = true
+                        };
+
+                        await botClient.SendTextMessageAsync(chatId, "Отправьте фото паспорта для начала верификации.", replyMarkup: keyboard);
                     }
                     else if (message.Text == "Назад" && UserStates.TryGetValue(chatId, out var prevState))
                     {
                         UserStates[chatId] = GetPreviousState(prevState);
-                        await botClient.SendTextMessageAsync(chatId, "Вы вернулись на шаг назад.");
+                        var keyboard = new ReplyKeyboardMarkup(new[]
+                        {
+                            new KeyboardButton("Верификация")
+                        })
+                        {
+                            ResizeKeyboard = true
+                        };
+
+                        await botClient.SendTextMessageAsync(chatId, "Вы вернулись на шаг назад.", replyMarkup: keyboard);
                     }
-                    else if (UserStates.TryGetValue(chatId, out var currentState))  // Переименовать переменную currentState
+                    else if (UserStates.TryGetValue(chatId, out var currentState))
                     {
-                        switch (currentState)  // Используем currentState
+                        switch (currentState)
                         {
                             case "waiting_for_market_status":
                                 if (message.Text == "Я с рынка" || message.Text == "Я не с рынка")
@@ -63,7 +85,7 @@ namespace GorbushkaBot.Controllers
                                 }
                                 else
                                 {
-                                    await botClient.SendTextMessageAsync(chatId, "Пожалуйста, выберите один из вариантов: 'Я с рынка' или 'Я не с рынка'.");
+                                    await botClient.SendTextMessageAsync(chatId, "Пожалуйста, выберите один из вариантов: 'Я с рынка' или 'Я не с рынка'.", replyMarkup: GetMarketChoiceKeyboard());
                                 }
                                 break;
                             case "waiting_for_pavilion_number":
@@ -112,7 +134,7 @@ namespace GorbushkaBot.Controllers
                                 break;
                         }
                     }
-                    else if (message.Type == MessageType.Photo && UserStates.TryGetValue(chatId, out var stateAfterPhoto) && stateAfterPhoto == "waiting_for_photo")  // Переименовать переменную stateAfterPhoto
+                    else if (message.Type == MessageType.Photo && UserStates.TryGetValue(chatId, out var stateAfterPhoto) && stateAfterPhoto == "waiting_for_photo")
                     {
                         var fileId = message.Photo[^1].FileId;
                         var fileSize = message.Photo[^1].FileSize;
@@ -126,7 +148,7 @@ namespace GorbushkaBot.Controllers
                         UserStates[chatId] = "waiting_for_market_status";
                         await botClient.SendTextMessageAsync(chatId, "Вы с рынка или нет?", replyMarkup: GetMarketChoiceKeyboard());
                     }
-                    else if (message.Type == MessageType.Document && UserStates.TryGetValue(chatId, out var stateAfterDoc) && stateAfterDoc == "waiting_for_photo")  // Переименовать переменную stateAfterDoc
+                    else if (message.Type == MessageType.Document && UserStates.TryGetValue(chatId, out var stateAfterDoc) && stateAfterDoc == "waiting_for_photo")
                     {
                         var fileName = message.Document.FileName.ToLower();
                         var mimeType = message.Document.MimeType;
@@ -140,7 +162,6 @@ namespace GorbushkaBot.Controllers
                         UserStates[chatId] = "waiting_for_market_status";
                         await botClient.SendTextMessageAsync(chatId, "Вы с рынка или нет?", replyMarkup: GetMarketChoiceKeyboard());
                     }
-
                 }
             }
         }
