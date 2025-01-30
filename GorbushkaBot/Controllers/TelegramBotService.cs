@@ -134,34 +134,34 @@ namespace GorbushkaBot.Controllers
                                 break;
                         }
                     }
-                    else if (message.Type == MessageType.Photo && UserStates.TryGetValue(chatId, out var stateAfterPhoto) && stateAfterPhoto == "waiting_for_photo")
+                }
+                else if (message.Type == MessageType.Photo && UserStates.TryGetValue(chatId, out var stateAfterPhoto) && stateAfterPhoto == "waiting_for_photo")
+                {
+                    var fileId = message.Photo[^1].FileId;
+                    var fileSize = message.Photo[^1].FileSize;
+
+                    if (fileSize < 10000)
                     {
-                        var fileId = message.Photo[^1].FileId;
-                        var fileSize = message.Photo[^1].FileSize;
-
-                        if (fileSize < 10000)
-                        {
-                            await botClient.SendTextMessageAsync(chatId, "Ошибка! Фото слишком маленькое, отправьте более четкое изображение паспорта.");
-                            return;
-                        }
-
-                        UserStates[chatId] = "waiting_for_market_status";
-                        await botClient.SendTextMessageAsync(chatId, "Вы с рынка или нет?", replyMarkup: GetMarketChoiceKeyboard());
+                        await botClient.SendTextMessageAsync(chatId, "Ошибка! Фото слишком маленькое, отправьте более четкое изображение паспорта.");
+                        return;
                     }
-                    else if (message.Type == MessageType.Document && UserStates.TryGetValue(chatId, out var stateAfterDoc) && stateAfterDoc == "waiting_for_photo")
+
+                    UserStates[chatId] = "waiting_for_market_status";
+                    await botClient.SendTextMessageAsync(chatId, "Вы с рынка или нет?", replyMarkup: GetMarketChoiceKeyboard());
+                }
+                else if (message.Type == MessageType.Document && UserStates.TryGetValue(chatId, out var stateAfterDoc) && stateAfterDoc == "waiting_for_photo")
+                {
+                    var fileName = message.Document.FileName.ToLower();
+                    var mimeType = message.Document.MimeType;
+
+                    if (!mimeType.StartsWith("image/") || !(fileName.EndsWith(".jpg") || fileName.EndsWith(".jpeg") || fileName.EndsWith(".png")))
                     {
-                        var fileName = message.Document.FileName.ToLower();
-                        var mimeType = message.Document.MimeType;
-
-                        if (!mimeType.StartsWith("image/") || !(fileName.EndsWith(".jpg") || fileName.EndsWith(".jpeg") || fileName.EndsWith(".png")))
-                        {
-                            await botClient.SendTextMessageAsync(chatId, "Ошибка! Отправьте фотографию паспорта, а не документ.");
-                            return;
-                        }
-
-                        UserStates[chatId] = "waiting_for_market_status";
-                        await botClient.SendTextMessageAsync(chatId, "Вы с рынка или нет?", replyMarkup: GetMarketChoiceKeyboard());
+                        await botClient.SendTextMessageAsync(chatId, "Ошибка! Отправьте фотографию паспорта, а не документ.");
+                        return;
                     }
+
+                    UserStates[chatId] = "waiting_for_market_status";
+                    await botClient.SendTextMessageAsync(chatId, "Вы с рынка или нет?", replyMarkup: GetMarketChoiceKeyboard());
                 }
             }
         }
