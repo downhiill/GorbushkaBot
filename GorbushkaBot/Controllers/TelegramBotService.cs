@@ -49,8 +49,7 @@ namespace GorbushkaBot.Controllers
                     {
                         // Возвращаемся к предыдущему состоянию
                         UserStates[chatId] = prevState;
-                        UserPreviousStates[chatId] = prevState;
-                        await SendStepMessage(chatId);
+                        await SendStepMessage(chatId);  // Отправляем сообщение с нужными кнопками
                     }
                     else if (UserStates.TryGetValue(chatId, out var currentState))
                     {
@@ -59,6 +58,7 @@ namespace GorbushkaBot.Controllers
                             case "waiting_for_verification":
                                 if (message.Text == "Верификация")
                                 {
+                                    UserPreviousStates[chatId] = currentState;  // Сохраняем текущий шаг
                                     UserStates[chatId] = "waiting_for_photo";
                                     await SendStepMessage(chatId);
                                 }
@@ -66,6 +66,7 @@ namespace GorbushkaBot.Controllers
                             case "waiting_for_photo":
                                 if (message.Text == "Назад")
                                 {
+                                    UserPreviousStates[chatId] = currentState;
                                     UserStates[chatId] = "waiting_for_verification"; // Возвращаемся на шаг верификации
                                     await SendStepMessage(chatId);
                                 }
@@ -73,6 +74,7 @@ namespace GorbushkaBot.Controllers
                             case "waiting_for_market_status":
                                 if (message.Text == "Я с рынка" || message.Text == "Я не с рынка")
                                 {
+                                    UserPreviousStates[chatId] = currentState;
                                     UserStates[chatId] = message.Text == "Я с рынка" ? "waiting_for_pavilion_number" : "waiting_for_company_name";
                                     await SendStepMessage(chatId);
                                 }
@@ -80,6 +82,7 @@ namespace GorbushkaBot.Controllers
                             case "waiting_for_pavilion_number":
                                 if (IsValidPavilionNumber(message.Text))
                                 {
+                                    UserPreviousStates[chatId] = currentState;
                                     UserStates[chatId] = "waiting_for_contract_number";
                                     await SendStepMessage(chatId);
                                 }
@@ -87,6 +90,7 @@ namespace GorbushkaBot.Controllers
                             case "waiting_for_contract_number":
                                 if (IsValidContractNumber(message.Text))
                                 {
+                                    UserPreviousStates[chatId] = currentState;
                                     UserStates[chatId] = "completed";
                                     await botClient.SendTextMessageAsync(chatId, "Спасибо! Ваша заявка отправлена на проверку.");
                                 }
