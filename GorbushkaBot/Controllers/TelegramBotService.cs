@@ -46,8 +46,8 @@ namespace GorbushkaBot.Controllers
             {
                 var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
-                    new[] { InlineKeyboardButton.WithCallbackData("Перейти к верификации", "verify") }
-                });
+            new[] { InlineKeyboardButton.WithCallbackData("Перейти к верификации", "verify") }
+        });
 
                 Message sentMessage = await botClient.SendTextMessageAsync(chatId, "Добро пожаловать в систему!", replyMarkup: inlineKeyboard);
                 UserSteps[chatId] = ("start", sentMessage.MessageId);
@@ -60,6 +60,17 @@ namespace GorbushkaBot.Controllers
                 {
                     await UpdateVerificationStep(botClient, chatId, messageId, "passport", "Отправьте фото вашего паспорта", true);
                 }
+                else if (step == "passport" && message.Photo != null) // Обрабатываем фото
+                {
+                    await botClient.SendTextMessageAsync(chatId, "Фото получено!"); // Подтверждение
+                    await UpdateVerificationStep(botClient, chatId, messageId, "role", "Выберите свою роль:", false,
+                        new InlineKeyboardMarkup(new[]
+                        {
+                    new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
+                    new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
+                    new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
+                        }));
+                }
                 else if (step == "company_name")
                 {
                     await UpdateVerificationStep(botClient, chatId, messageId, "company_activity", "Введите вид деятельности вашей компании:", true);
@@ -70,6 +81,7 @@ namespace GorbushkaBot.Controllers
                 }
             }
         }
+
 
         private async Task HandleCallbackQuery(ITelegramBotClient botClient, CallbackQuery callbackQuery)
         {
