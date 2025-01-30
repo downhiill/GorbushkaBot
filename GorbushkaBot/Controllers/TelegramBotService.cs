@@ -37,10 +37,7 @@ namespace GorbushkaBot.Controllers
                     if (message.Text == "/start")
                     {
                         UserStates[chatId] = "waiting_for_verification";
-                        var keyboard = new ReplyKeyboardMarkup(new[]
-                        {
-                        new KeyboardButton("Верификация")})
-                        { ResizeKeyboard = true };
+                        var keyboard = new ReplyKeyboardMarkup(new[] { new KeyboardButton("Верификация") }) { ResizeKeyboard = true };
 
                         await botClient.SendTextMessageAsync(chatId, "Добро пожаловать в бот! Нажмите 'Верификация', чтобы начать процесс.", replyMarkup: keyboard);
                     }
@@ -54,9 +51,9 @@ namespace GorbushkaBot.Controllers
                         UserStates[chatId] = GetPreviousState(prevState);
                         await botClient.SendTextMessageAsync(chatId, "Вы вернулись на шаг назад.");
                     }
-                    else if (UserStates.TryGetValue(chatId, out var state))
+                    else if (UserStates.TryGetValue(chatId, out var currentState))  // Переименовать переменную currentState
                     {
-                        switch (state)
+                        switch (currentState)  // Используем currentState
                         {
                             case "waiting_for_market_status":
                                 if (message.Text == "Я с рынка" || message.Text == "Я не с рынка")
@@ -115,36 +112,36 @@ namespace GorbushkaBot.Controllers
                                 break;
                         }
                     }
-                }
-                else if (message.Type == MessageType.Photo && UserStates.TryGetValue(chatId, out var currentState) && currentState == "waiting_for_photo")
-                {
-                    var fileId = message.Photo[^1].FileId;
-                    var fileSize = message.Photo[^1].FileSize;
-
-                    if (fileSize < 10000)
+                    else if (message.Type == MessageType.Photo && UserStates.TryGetValue(chatId, out var stateAfterPhoto) && stateAfterPhoto == "waiting_for_photo")  // Переименовать переменную stateAfterPhoto
                     {
-                        await botClient.SendTextMessageAsync(chatId, "Ошибка! Фото слишком маленькое, отправьте более четкое изображение паспорта.");
-                        return;
+                        var fileId = message.Photo[^1].FileId;
+                        var fileSize = message.Photo[^1].FileSize;
+
+                        if (fileSize < 10000)
+                        {
+                            await botClient.SendTextMessageAsync(chatId, "Ошибка! Фото слишком маленькое, отправьте более четкое изображение паспорта.");
+                            return;
+                        }
+
+                        UserStates[chatId] = "waiting_for_market_status";
+                        await botClient.SendTextMessageAsync(chatId, "Вы с рынка или нет?", replyMarkup: GetMarketChoiceKeyboard());
+                    }
+                    else if (message.Type == MessageType.Document && UserStates.TryGetValue(chatId, out var stateAfterDoc) && stateAfterDoc == "waiting_for_photo")  // Переименовать переменную stateAfterDoc
+                    {
+                        var fileName = message.Document.FileName.ToLower();
+                        var mimeType = message.Document.MimeType;
+
+                        if (!mimeType.StartsWith("image/") || !(fileName.EndsWith(".jpg") || fileName.EndsWith(".jpeg") || fileName.EndsWith(".png")))
+                        {
+                            await botClient.SendTextMessageAsync(chatId, "Ошибка! Отправьте фотографию паспорта, а не документ.");
+                            return;
+                        }
+
+                        UserStates[chatId] = "waiting_for_market_status";
+                        await botClient.SendTextMessageAsync(chatId, "Вы с рынка или нет?", replyMarkup: GetMarketChoiceKeyboard());
                     }
 
-                    UserStates[chatId] = "waiting_for_market_status";
-                    await botClient.SendTextMessageAsync(chatId, "Вы с рынка или нет?", replyMarkup: GetMarketChoiceKeyboard());
                 }
-                else if (message.Type == MessageType.Document && UserStates.TryGetValue(chatId, out currentState) && currentState == "waiting_for_photo")
-                {
-                    var fileName = message.Document.FileName.ToLower();
-                    var mimeType = message.Document.MimeType;
-
-                    if (!mimeType.StartsWith("image/") || !(fileName.EndsWith(".jpg") || fileName.EndsWith(".jpeg") || fileName.EndsWith(".png")))
-                    {
-                        await botClient.SendTextMessageAsync(chatId, "Ошибка! Отправьте фотографию паспорта, а не документ.");
-                        return;
-                    }
-
-                    UserStates[chatId] = "waiting_for_market_status";
-                    await botClient.SendTextMessageAsync(chatId, "Вы с рынка или нет?", replyMarkup: GetMarketChoiceKeyboard());
-                }
-
             }
         }
 
