@@ -66,9 +66,9 @@ namespace GorbushkaBot.Controllers
                     await UpdateVerificationStep(botClient, chatId, messageId, "role", "Выберите свою роль:", false,
                         new InlineKeyboardMarkup(new[]
                         {
-                    new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
-                    new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
-                    new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
+                            new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
                         }));
                 }
                 else if (step == "company_name")
@@ -167,21 +167,40 @@ namespace GorbushkaBot.Controllers
 
             var (currentStep, _) = UserSteps[chatId];
 
-            var previousStep = currentStep switch
+            var (previousStep, previousMessage, previousKeyboard) = currentStep switch
             {
-                "passport" => ("fio", "Введите ваше ФИО:"),
-                "role" => ("passport", "Отправьте фото паспорта"),
-                "market" => ("role", "Выберите свою роль:"),
-                "pavilion_number" => ("market", "Вы с рынка?"),
-                "company_name" => ("market", "Вы с рынка?"),
-                "rental_contract" => ("pavilion_number", "Введите номер вашего павильона:"),
-                "company_activity" => ("company_name", "Введите название вашей компании:"),
-                "completed" => ("role", "Выберите свою роль:"),
-                _ => ("fio", "Введите ваше ФИО:")
+                "passport" => ("fio", "Введите ваше ФИО:", null),
+                "role" => ("passport", "Отправьте фото паспорта", null),
+                "market" => ("role", "Выберите свою роль:", new InlineKeyboardMarkup(new[]
+                {
+                    new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
+                    new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
+                    new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
+                })),
+                "pavilion_number" => ("market", "Вы с рынка?", new InlineKeyboardMarkup(new[]
+                {
+                    new[] { InlineKeyboardButton.WithCallbackData("Да", "market_yes") },
+                    new[] { InlineKeyboardButton.WithCallbackData("Нет", "market_no") }
+                })),
+                "company_name" => ("market", "Вы с рынка?", new InlineKeyboardMarkup(new[]
+                {
+                    new[] { InlineKeyboardButton.WithCallbackData("Да", "market_yes") },
+                    new[] { InlineKeyboardButton.WithCallbackData("Нет", "market_no") }
+                })),
+                "rental_contract" => ("pavilion_number", "Введите номер вашего павильона:", null),
+                "company_activity" => ("company_name", "Введите название вашей компании:", null),
+                "completed" => ("role", "Выберите свою роль:", new InlineKeyboardMarkup(new[]
+                {
+                    new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
+                    new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
+                    new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
+                })),
+                _ => ("fio", "Введите ваше ФИО:", null)
             };
 
-            await UpdateVerificationStep(botClient, chatId, messageId, previousStep.Item1, previousStep.Item2, false);
+            await UpdateVerificationStep(botClient, chatId, messageId, previousStep, previousMessage, false, previousKeyboard);
         }
+
 
         private Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, System.Threading.CancellationToken cancellationToken)
         {
