@@ -10,7 +10,6 @@ namespace GorbushkaBot.Controllers
     public class TelegramBotService
     {
         private static readonly string BotToken = Environment.GetEnvironmentVariable("BOT_TOKEN") ?? throw new InvalidOperationException("BOT_TOKEN is not set");
-        private static readonly string ConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL") ?? throw new InvalidOperationException("DATABASE_URL is not set");
         private readonly TelegramBotClient botClient;
         private static readonly ConcurrentDictionary<long, string> UserStates = new();
         private static readonly ConcurrentDictionary<long, string> UserPreviousStates = new(); // Хранение предыдущих состояний
@@ -99,6 +98,14 @@ namespace GorbushkaBot.Controllers
                                 break;
                         }
                     }
+                }
+
+                // Обработка фото
+                if (message.Type == MessageType.Photo && UserStates[chatId] == "waiting_for_photo")
+                {
+                    UserPreviousStates[chatId] = "waiting_for_photo";
+                    UserStates[chatId] = "waiting_for_market_status";
+                    await SendStepMessage(chatId);
                 }
             }
 
@@ -220,17 +227,6 @@ namespace GorbushkaBot.Controllers
         private bool IsValidContractNumber(string contractNumber)
         {
             return Regex.IsMatch(contractNumber, "^[A-Za-z0-9]+$");
-        }
-
-        private bool IsValidCompanyName(string companyName)
-        {
-            return !string.IsNullOrWhiteSpace(companyName);
-        }
-
-        private bool IsValidBusinessType(string businessType)
-        {
-            var validBusinessTypes = new[] { "Торговля", "Услуги", "Производство" };
-            return validBusinessTypes.Contains(businessType);
         }
 
         private static Task ErrorHandler(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
