@@ -175,7 +175,8 @@ namespace GorbushkaBot.Controllers
                 {
                     new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
                     new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
-                    new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
+                    new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") },
+                    new[] { InlineKeyboardButton.WithCallbackData("Назад", "back") }
                 })),
                 "pavilion_number" => ("market", "Вы с рынка?", new InlineKeyboardMarkup(new[]
                 {
@@ -195,7 +196,8 @@ namespace GorbushkaBot.Controllers
                 {
                     new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
                     new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
-                    new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
+                    new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") },
+                    new[] { InlineKeyboardButton.WithCallbackData("Назад", "back") }
                 })),
                 _ => ("fio", "Введите ваше ФИО:", null)
             };
