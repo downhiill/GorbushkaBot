@@ -100,18 +100,33 @@ namespace GorbushkaBot.Controllers
                         }
                     }
                 }
-                else if (message.Type == MessageType.Photo && UserStates.TryGetValue(chatId, out var stateAfterPhoto) && stateAfterPhoto == "waiting_for_photo")
+            }
+
+            // Обработка нажатия кнопки
+            if (update.Type == UpdateType.CallbackQuery)
+            {
+                var callbackQuery = update.CallbackQuery;
+                var chatId = callbackQuery.Message.Chat.Id;
+                var callbackData = callbackQuery.Data;
+
+                if (callbackData == "start_verification")
                 {
-                    var fileId = message.Photo[^1].FileId;
-                    var fileSize = message.Photo[^1].FileSize;
-
-                    if (fileSize < 10000)
-                    {
-                        await botClient.SendTextMessageAsync(chatId, "Ошибка! Фото слишком маленькое, отправьте более четкое изображение паспорта.");
-                        return;
-                    }
-
-                    UserStates[chatId] = "waiting_for_market_status";
+                    UserStates[chatId] = "waiting_for_photo";
+                    await SendStepMessage(chatId);
+                }
+                else if (callbackData == "go_back" && UserPreviousStates.TryGetValue(chatId, out var prevState))
+                {
+                    UserStates[chatId] = prevState;
+                    await SendStepMessage(chatId);  // Возвращаемся на предыдущий шаг
+                }
+                else if (callbackData == "market_status_yes")
+                {
+                    UserStates[chatId] = "waiting_for_pavilion_number";
+                    await SendStepMessage(chatId);
+                }
+                else if (callbackData == "market_status_no")
+                {
+                    UserStates[chatId] = "waiting_for_company_name";
                     await SendStepMessage(chatId);
                 }
             }
