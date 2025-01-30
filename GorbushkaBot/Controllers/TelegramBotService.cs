@@ -73,6 +73,7 @@ namespace GorbushkaBot.Controllers
                             case "waiting_for_photo":
                                 if (message.Text == "Назад")
                                 {
+                                    // Если нажата кнопка "Назад", возвращаемся на шаг ввода ФИО
                                     UserPreviousStates[chatId] = currentState;
                                     UserStates[chatId] = "waiting_for_full_name"; // Возвращаемся на шаг ввода ФИО
                                     await SendStepMessage(chatId);
@@ -83,15 +84,16 @@ namespace GorbushkaBot.Controllers
                                     var photoId = message.Photo.Last().FileId;  // Получаем ID самого большого фото
                                     Console.WriteLine($"Received photo with FileId: {photoId}");
 
+                                    // Здесь можно сохранить photoId в БД или в другом месте, если нужно
+
+                                    // Переходим к следующему шагу
                                     UserPreviousStates[chatId] = currentState;
                                     UserStates[chatId] = "waiting_for_role";  // Переходим к следующему шагу
                                     await SendStepMessage(chatId);
-
-                                    // Дополнительные действия с фото, например, сохранить в БД, если необходимо
                                 }
                                 else
                                 {
-                                    // Если фото не отправлено
+                                    // Если фото не отправлено, просим пользователя отправить фото
                                     await botClient.SendTextMessageAsync(chatId, "Пожалуйста, отправьте фотографию паспорта.");
                                 }
                                 break;
