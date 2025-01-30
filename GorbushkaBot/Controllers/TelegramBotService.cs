@@ -185,6 +185,11 @@ namespace GorbushkaBot.Controllers
             if (!UserSteps.ContainsKey(chatId)) return;
 
             var (currentStep, _) = UserSteps[chatId];
+            if (currentStep == "fio")
+            {
+                await botClient.SendTextMessageAsync(chatId, "Вы уже на первом шаге!");
+                return;
+            }
 
             var (previousStep, previousMessage, previousKeyboard) = currentStep switch
             {
