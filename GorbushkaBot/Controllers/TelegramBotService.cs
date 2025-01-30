@@ -135,7 +135,23 @@ namespace GorbushkaBot.Controllers
         private async Task SendStepMessage(long chatId)
         {
             var currentState = UserStates[chatId];
-            var messageText = string.Empty;
+            var (messageText, keyboard) = GetMessageAndKeyboardForState(currentState);
+
+            // Обновляем сообщение с сохраненным messageId
+            if (UserMessageIds.ContainsKey(chatId))
+            {
+                await botClient.EditMessageTextAsync(chatId, messageId: UserMessageIds[chatId], text: messageText, replyMarkup: keyboard);
+            }
+            else
+            {
+                var sentMessage = await botClient.SendTextMessageAsync(chatId, messageText, replyMarkup: keyboard);
+                UserMessageIds[chatId] = sentMessage.MessageId; // Сохраняем messageId
+            }
+        }
+
+        private (string messageText, InlineKeyboardMarkup keyboard) GetMessageAndKeyboardForState(string currentState)
+        {
+            string messageText = string.Empty;
             InlineKeyboardMarkup keyboard;
 
             switch (currentState)
@@ -193,11 +209,7 @@ namespace GorbushkaBot.Controllers
                     break;
             }
 
-            // Обновляем сообщение с сохраненным messageId
-            if (UserMessageIds.ContainsKey(chatId))
-            {
-                await botClient.EditMessageTextAsync(chatId, messageId: UserMessageIds[chatId], text: messageText, replyMarkup: keyboard);
-            }
+            return (messageText, keyboard);
         }
 
         private bool IsValidPavilionNumber(string pavilionNumber)
