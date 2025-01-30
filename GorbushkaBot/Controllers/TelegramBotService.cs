@@ -96,7 +96,7 @@ namespace GorbushkaBot.Controllers
                     break;
 
                 case "passport":
-                    await UpdateVerificationStep(botClient, chatId, messageId, "role", "Выберите свою роль:", false,
+                    await UpdateVerificationStep(botClient, chatId, messageId, "role", "Выберите свою роль:", true,
                         new InlineKeyboardMarkup(new[]
                         {
                             new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
@@ -107,7 +107,7 @@ namespace GorbushkaBot.Controllers
 
                 case "seller":
                 case "both":
-                    await UpdateVerificationStep(botClient, chatId, messageId, "market", "Вы с рынка?", false,
+                    await UpdateVerificationStep(botClient, chatId, messageId, "market", "Вы с рынка?", true,
                         new InlineKeyboardMarkup(new[]
                         {
                             new[] { InlineKeyboardButton.WithCallbackData("Да", "market_yes") },
