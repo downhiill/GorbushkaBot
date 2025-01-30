@@ -14,6 +14,7 @@ namespace GorbushkaBot.Controllers
         private readonly TelegramBotClient botClient;
         private static readonly ConcurrentDictionary<long, string> UserStates = new();
         private static readonly ConcurrentDictionary<long, string> UserPreviousStates = new(); // Хранение предыдущих состояний
+        private static readonly ConcurrentDictionary<long, int> UserMessageIds = new(); // Сохранение messageId
 
         public TelegramBotService()
         {
@@ -43,7 +44,8 @@ namespace GorbushkaBot.Controllers
                             new InlineKeyboardButton("Верификация") { CallbackData = "start_verification" }
                         });
 
-                        await botClient.SendTextMessageAsync(chatId, "Добро пожаловать в бот! Нажмите 'Верификация', чтобы начать процесс.", replyMarkup: keyboard);
+                        var sentMessage = await botClient.SendTextMessageAsync(chatId, "Добро пожаловать в бот! Нажмите 'Верификация', чтобы начать процесс.", replyMarkup: keyboard);
+                        UserMessageIds[chatId] = sentMessage.MessageId;  // Сохраняем messageId
                     }
                     else if (message.Text == "Назад" && UserPreviousStates.TryGetValue(chatId, out var prevState))
                     {
@@ -118,9 +120,8 @@ namespace GorbushkaBot.Controllers
         private async Task SendStepMessage(long chatId)
         {
             var currentState = UserStates[chatId];
-
+            var messageText = string.Empty;
             InlineKeyboardMarkup keyboard;
-            string messageText;
 
             switch (currentState)
             {
@@ -177,7 +178,11 @@ namespace GorbushkaBot.Controllers
                     break;
             }
 
-            await botClient.SendTextMessageAsync(chatId, messageText, replyMarkup: keyboard);
+            // Обновляем сообщение с сохраненным messageId
+            if (UserMessageIds.ContainsKey(chatId))
+            {
+                await botClient.EditMessageTextAsync(chatId, messageId: UserMessageIds[chatId], text: messageText, replyMarkup: keyboard);
+            }
         }
 
         private bool IsValidPavilionNumber(string pavilionNumber)
