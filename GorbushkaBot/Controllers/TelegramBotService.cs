@@ -180,12 +180,14 @@ namespace GorbushkaBot.Controllers
                 "pavilion_number" => ("market", "Вы с рынка?", new InlineKeyboardMarkup(new[]
                 {
                     new[] { InlineKeyboardButton.WithCallbackData("Да", "market_yes") },
-                    new[] { InlineKeyboardButton.WithCallbackData("Нет", "market_no") }
+                    new[] { InlineKeyboardButton.WithCallbackData("Нет", "market_no") },
+                    new[] { InlineKeyboardButton.WithCallbackData("Назад", "back") }
                 })),
                 "company_name" => ("market", "Вы с рынка?", new InlineKeyboardMarkup(new[]
                 {
                     new[] { InlineKeyboardButton.WithCallbackData("Да", "market_yes") },
-                    new[] { InlineKeyboardButton.WithCallbackData("Нет", "market_no") }
+                    new[] { InlineKeyboardButton.WithCallbackData("Нет", "market_no") },
+                    new[] { InlineKeyboardButton.WithCallbackData("Назад", "back") }
                 })),
                 "rental_contract" => ("pavilion_number", "Введите номер вашего павильона:", null),
                 "company_activity" => ("company_name", "Введите название вашей компании:", null),
