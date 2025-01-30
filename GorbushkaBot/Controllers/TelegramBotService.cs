@@ -79,6 +79,25 @@ namespace GorbushkaBot.Controllers
                 {
                     await UpdateVerificationStep(botClient, chatId, messageId, "rental_contract", "Введите номер вашего договора аренды:", true);
                 }
+                else if (step == "company_activity")  // Обрабатываем ввод вида деятельности
+                {
+                    await UpdateVerificationStep(botClient, chatId, messageId, "completed", "Заявка заполнена.\n\nВыберите действие:", false,
+                        new InlineKeyboardMarkup(new[]
+                        {
+                            new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
+                        }));
+                }
+                else if (step == "rental_contract")  // Обрабатываем ввод номера договора аренды
+                {
+                    await UpdateVerificationStep(botClient, chatId, messageId, "completed", "Заявка заполнена.\n\nВыберите действие:", false,
+                        new InlineKeyboardMarkup(new[]
+                        {
+                            new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
+                        }));
+                }
+
             }
         }
 
@@ -96,7 +115,7 @@ namespace GorbushkaBot.Controllers
                     break;
 
                 case "passport":
-                    await UpdateVerificationStep(botClient, chatId, messageId, "role", "Выберите свою роль:", true,
+                    await UpdateVerificationStep(botClient, chatId, messageId, "role", "Выберите свою роль:", false,
                         new InlineKeyboardMarkup(new[]
                         {
                             new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
@@ -107,7 +126,7 @@ namespace GorbushkaBot.Controllers
 
                 case "seller":
                 case "both":
-                    await UpdateVerificationStep(botClient, chatId, messageId, "market", "Вы с рынка?", true,
+                    await UpdateVerificationStep(botClient, chatId, messageId, "market", "Вы с рынка?", false,
                         new InlineKeyboardMarkup(new[]
                         {
                             new[] { InlineKeyboardButton.WithCallbackData("Да", "market_yes") },
@@ -124,16 +143,6 @@ namespace GorbushkaBot.Controllers
                     break;
 
                 case "buyer":
-                    await UpdateVerificationStep(botClient, chatId, messageId, "completed", "Заявка заполнена.\n\nВыберите действие:", false,
-                        new InlineKeyboardMarkup(new[]
-                        {
-                            new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
-                            new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
-                        }));
-                    break;
-
-                case "rental_contract":
-                case "company_activity":
                     await UpdateVerificationStep(botClient, chatId, messageId, "completed", "Заявка заполнена.\n\nВыберите действие:", false,
                         new InlineKeyboardMarkup(new[]
                         {
