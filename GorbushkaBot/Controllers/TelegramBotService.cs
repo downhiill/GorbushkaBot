@@ -36,6 +36,16 @@ namespace GorbushkaBot.Controllers
                 {
                     if (message.Text == "/start")
                     {
+                        UserStates[chatId] = "waiting_for_verification";
+                        var keyboard = new ReplyKeyboardMarkup(new[]
+                        {
+                        new KeyboardButton("Верификация")})
+                        { ResizeKeyboard = true };
+
+                        await botClient.SendTextMessageAsync(chatId, "Добро пожаловать в бот! Нажмите 'Верификация', чтобы начать процесс.", replyMarkup: keyboard);
+                    }
+                    else if (message.Text == "Верификация" && UserStates.TryGetValue(chatId, out var state) && state == "waiting_for_verification")
+                    {
                         UserStates[chatId] = "waiting_for_photo";
                         await botClient.SendTextMessageAsync(chatId, "Отправьте фото паспорта для начала верификации.");
                     }
