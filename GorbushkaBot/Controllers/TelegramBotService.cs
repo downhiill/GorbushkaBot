@@ -13,6 +13,7 @@ namespace GorbushkaBot.Controllers
         private static readonly string ConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL") ?? throw new InvalidOperationException("DATABASE_URL is not set");
         private readonly TelegramBotClient botClient;
         private static readonly ConcurrentDictionary<long, string> UserStates = new();
+        private static readonly ConcurrentDictionary<long, string> UserPreviousStates = new(); // Хранение предыдущих состояний
 
         public TelegramBotService()
         {
@@ -37,66 +38,50 @@ namespace GorbushkaBot.Controllers
                     if (message.Text == "/start")
                     {
                         UserStates[chatId] = "waiting_for_verification";
-                        var keyboard = new ReplyKeyboardMarkup(new[]
+                        var keyboard = new InlineKeyboardMarkup(new[]
                         {
-                            new KeyboardButton("Верификация")
-                        })
-                        {
-                            ResizeKeyboard = true
-                        };
+                            new InlineKeyboardButton("Верификация") { CallbackData = "start_verification" }
+                        });
 
                         await botClient.SendTextMessageAsync(chatId, "Добро пожаловать в бот! Нажмите 'Верификация', чтобы начать процесс.", replyMarkup: keyboard);
                     }
-                    else if (message.Text == "Верификация" && UserStates.TryGetValue(chatId, out var state) && state == "waiting_for_verification")
+                    else if (message.Text == "Назад" && UserPreviousStates.TryGetValue(chatId, out var prevState))
                     {
-                        UserStates[chatId] = "waiting_for_photo";
-                        var keyboard = new ReplyKeyboardMarkup(new[]
-                        {
-                            new KeyboardButton("Назад")
-                        })
-                        {
-                            ResizeKeyboard = true
-                        };
-
-                        await botClient.SendTextMessageAsync(chatId, "Отправьте фото паспорта для начала верификации.", replyMarkup: keyboard);
-                    }
-                    else if (message.Text == "Назад" && UserStates.TryGetValue(chatId, out var prevState))
-                    {
-                        UserStates[chatId] = GetPreviousState(prevState);
-                        var keyboard = new ReplyKeyboardMarkup(new[]
-                        {
-                            new KeyboardButton("Верификация")
-                        })
-                        {
-                            ResizeKeyboard = true
-                        };
-
-                        await botClient.SendTextMessageAsync(chatId, "Вы вернулись на шаг назад.", replyMarkup: keyboard);
+                        // Возвращаемся к предыдущему состоянию
+                        UserStates[chatId] = prevState;
+                        UserPreviousStates[chatId] = prevState;
+                        await SendStepMessage(chatId);
                     }
                     else if (UserStates.TryGetValue(chatId, out var currentState))
                     {
                         switch (currentState)
                         {
+                            case "waiting_for_verification":
+                                if (message.Text == "Верификация")
+                                {
+                                    UserStates[chatId] = "waiting_for_photo";
+                                    await SendStepMessage(chatId);
+                                }
+                                break;
+                            case "waiting_for_photo":
+                                if (message.Text == "Назад")
+                                {
+                                    UserStates[chatId] = "waiting_for_verification"; // Возвращаемся на шаг верификации
+                                    await SendStepMessage(chatId);
+                                }
+                                break;
                             case "waiting_for_market_status":
                                 if (message.Text == "Я с рынка" || message.Text == "Я не с рынка")
                                 {
                                     UserStates[chatId] = message.Text == "Я с рынка" ? "waiting_for_pavilion_number" : "waiting_for_company_name";
-                                    await botClient.SendTextMessageAsync(chatId, message.Text == "Я с рынка" ? "Введите номер павильона." : "Введите название вашей компании.");
-                                }
-                                else
-                                {
-                                    await botClient.SendTextMessageAsync(chatId, "Пожалуйста, выберите один из вариантов: 'Я с рынка' или 'Я не с рынка'.", replyMarkup: GetMarketChoiceKeyboard());
+                                    await SendStepMessage(chatId);
                                 }
                                 break;
                             case "waiting_for_pavilion_number":
                                 if (IsValidPavilionNumber(message.Text))
                                 {
                                     UserStates[chatId] = "waiting_for_contract_number";
-                                    await botClient.SendTextMessageAsync(chatId, "Введите номер договора аренды.");
-                                }
-                                else
-                                {
-                                    await botClient.SendTextMessageAsync(chatId, "Ошибка! Введите корректный номер павильона (только цифры).");
+                                    await SendStepMessage(chatId);
                                 }
                                 break;
                             case "waiting_for_contract_number":
@@ -104,32 +89,6 @@ namespace GorbushkaBot.Controllers
                                 {
                                     UserStates[chatId] = "completed";
                                     await botClient.SendTextMessageAsync(chatId, "Спасибо! Ваша заявка отправлена на проверку.");
-                                }
-                                else
-                                {
-                                    await botClient.SendTextMessageAsync(chatId, "Ошибка! Введите корректный номер договора аренды.");
-                                }
-                                break;
-                            case "waiting_for_company_name":
-                                if (IsValidCompanyName(message.Text))
-                                {
-                                    UserStates[chatId] = "waiting_for_business_type";
-                                    await botClient.SendTextMessageAsync(chatId, "Введите вид деятельности вашей компании.");
-                                }
-                                else
-                                {
-                                    await botClient.SendTextMessageAsync(chatId, "Ошибка! Название компании не может быть пустым.");
-                                }
-                                break;
-                            case "waiting_for_business_type":
-                                if (IsValidBusinessType(message.Text))
-                                {
-                                    UserStates[chatId] = "completed";
-                                    await botClient.SendTextMessageAsync(chatId, "Спасибо! Ваша заявка отправлена на проверку.");
-                                }
-                                else
-                                {
-                                    await botClient.SendTextMessageAsync(chatId, "Ошибка! Введите корректный вид деятельности.");
                                 }
                                 break;
                         }
@@ -147,23 +106,74 @@ namespace GorbushkaBot.Controllers
                     }
 
                     UserStates[chatId] = "waiting_for_market_status";
-                    await botClient.SendTextMessageAsync(chatId, "Вы с рынка или нет?", replyMarkup: GetMarketChoiceKeyboard());
-                }
-                else if (message.Type == MessageType.Document && UserStates.TryGetValue(chatId, out var stateAfterDoc) && stateAfterDoc == "waiting_for_photo")
-                {
-                    var fileName = message.Document.FileName.ToLower();
-                    var mimeType = message.Document.MimeType;
-
-                    if (!mimeType.StartsWith("image/") || !(fileName.EndsWith(".jpg") || fileName.EndsWith(".jpeg") || fileName.EndsWith(".png")))
-                    {
-                        await botClient.SendTextMessageAsync(chatId, "Ошибка! Отправьте фотографию паспорта, а не документ.");
-                        return;
-                    }
-
-                    UserStates[chatId] = "waiting_for_market_status";
-                    await botClient.SendTextMessageAsync(chatId, "Вы с рынка или нет?", replyMarkup: GetMarketChoiceKeyboard());
+                    await SendStepMessage(chatId);
                 }
             }
+        }
+
+        private async Task SendStepMessage(long chatId)
+        {
+            var currentState = UserStates[chatId];
+
+            InlineKeyboardMarkup keyboard;
+            string messageText;
+
+            switch (currentState)
+            {
+                case "waiting_for_verification":
+                    messageText = "Отправьте фото паспорта для начала верификации.";
+                    keyboard = new InlineKeyboardMarkup(new[]
+                    {
+                        new InlineKeyboardButton("Назад") { CallbackData = "go_back" }
+                    });
+                    break;
+                case "waiting_for_photo":
+                    messageText = "Отправьте фото паспорта для начала верификации.";
+                    keyboard = new InlineKeyboardMarkup(new[]
+                    {
+                        new InlineKeyboardButton("Назад") { CallbackData = "go_back" }
+                    });
+                    break;
+                case "waiting_for_market_status":
+                    messageText = "Вы с рынка или нет?";
+                    keyboard = new InlineKeyboardMarkup(new[]
+                    {
+                        new InlineKeyboardButton("Я с рынка") { CallbackData = "market_status_yes" },
+                        new InlineKeyboardButton("Я не с рынка") { CallbackData = "market_status_no" },
+                        new InlineKeyboardButton("Назад") { CallbackData = "go_back" }
+                    });
+                    break;
+                case "waiting_for_pavilion_number":
+                    messageText = "Введите номер павильона.";
+                    keyboard = new InlineKeyboardMarkup(new[]
+                    {
+                        new InlineKeyboardButton("Назад") { CallbackData = "go_back" }
+                    });
+                    break;
+                case "waiting_for_contract_number":
+                    messageText = "Введите номер договора аренды.";
+                    keyboard = new InlineKeyboardMarkup(new[]
+                    {
+                        new InlineKeyboardButton("Назад") { CallbackData = "go_back" }
+                    });
+                    break;
+                case "completed":
+                    messageText = "Спасибо! Ваша заявка отправлена на проверку.";
+                    keyboard = new InlineKeyboardMarkup(new[]
+                    {
+                        new InlineKeyboardButton("Назад") { CallbackData = "go_back" }
+                    });
+                    break;
+                default:
+                    messageText = "Произошла ошибка. Попробуйте снова.";
+                    keyboard = new InlineKeyboardMarkup(new[]
+                    {
+                        new InlineKeyboardButton("Назад") { CallbackData = "go_back" }
+                    });
+                    break;
+            }
+
+            await botClient.SendTextMessageAsync(chatId, messageText, replyMarkup: keyboard);
         }
 
         private bool IsValidPavilionNumber(string pavilionNumber)
@@ -185,30 +195,6 @@ namespace GorbushkaBot.Controllers
         {
             var validBusinessTypes = new[] { "Торговля", "Услуги", "Производство" };
             return validBusinessTypes.Contains(businessType);
-        }
-
-        private static IReplyMarkup GetMarketChoiceKeyboard()
-        {
-            return new ReplyKeyboardMarkup(new[]
-            {
-                new KeyboardButton("Я с рынка"),
-                new KeyboardButton("Я не с рынка"),
-                new KeyboardButton("Назад")
-            })
-            { ResizeKeyboard = true };
-        }
-
-        private static string GetPreviousState(string currentState)
-        {
-            return currentState switch
-            {
-                "waiting_for_market_status" => "waiting_for_photo",
-                "waiting_for_pavilion_number" => "waiting_for_market_status",
-                "waiting_for_contract_number" => "waiting_for_pavilion_number",
-                "waiting_for_company_name" => "waiting_for_market_status",
-                "waiting_for_business_type" => "waiting_for_company_name",
-                _ => "waiting_for_photo",
-            };
         }
 
         private static Task ErrorHandler(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
