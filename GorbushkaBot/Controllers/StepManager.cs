@@ -67,6 +67,23 @@ namespace GorbushkaBot.Controllers
                     new[] { InlineKeyboardButton.WithCallbackData("Далее", "next_after_passport") }
                 }));
             }
+            else if (step == "company_name")
+            {
+                await UpdateVerificationStep(botClient, chatId, messageId, "company_activity", "Введите вид деятельности вашей компании:", true);
+            }
+            else if (step == "pavilion_number")
+            {
+                await UpdateVerificationStep(botClient, chatId, messageId, "rental_contract", "Введите номер вашего договора аренды:", true);
+            }
+            else if (step == "company_activity" || step == "rental_contract")
+            {
+                await UpdateVerificationStep(botClient, chatId, messageId, "completed", "Заявка заполнена.\n\nВыберите действие:", false,
+                    new InlineKeyboardMarkup(new[]
+                    {
+                        new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
+                        new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
+                    }));
+            }
         }
 
         public async Task HandleCallbackQuery(ITelegramBotClient botClient, long chatId, CallbackQuery callbackQuery)
@@ -79,11 +96,12 @@ namespace GorbushkaBot.Controllers
                     await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "fio", "Введите ваше ФИО:", false);
                     break;
                 case "next_after_passport":
-                    await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "completed", "Заявка заполнена.\n\nВыберите действие:", false,
+                    await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "role", "Выберите свою роль:", false,
                         new InlineKeyboardMarkup(new[]
                         {
-                            new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
-                            new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
+                            new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
                         }));
                     break;
             }
