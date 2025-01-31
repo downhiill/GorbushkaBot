@@ -113,6 +113,34 @@ namespace GorbushkaBot.Controllers
                 case "both":
                     await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "pavilion_number", "Введите номер павильона:", true);
                     break;
+                case "back":
+                    if (UserSteps.ContainsKey(chatId))
+                    {
+                        var (currentStep, currentMessageId) = UserSteps[chatId];
+
+                        // Определяем предыдущий шаг
+                        var previousSteps = new Dictionary<string, (string step, string message)>
+                        {
+                            { "passport_number", ("fio", "Введите ваше ФИО:") },
+                            { "passport_issue_date", ("passport_number", "Введите номер вашего паспорта:") },
+                            { "passport", ("passport_issue_date", "Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):") },
+                            { "role", ("passport", "Отправьте фото страниц своего паспорта, на которых находятся:\n- ФИО\n- Номер\n- Дата выдачи\n- Прописка\n\nВы можете отправить несколько фото.") },
+                            { "pavilion_number", ("role", "Выберите свою роль:") },
+                            { "company_name", ("role", "Выберите свою роль:") },
+                            { "company_activity", ("company_name", "Введите название вашей компании:") },
+                            { "rental_contract", ("pavilion_number", "Введите номер павильона:") }
+                        };
+
+                        if (previousSteps.TryGetValue(currentStep, out var previousStepData))
+                        {
+                            string previousStep = previousStepData.step;
+                            string previousMessage = previousStepData.message;
+
+                            await UpdateVerificationStep(botClient, chatId, currentMessageId, previousStep, previousMessage, true);
+                        }
+                    }
+                    break;
+
             }
             await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
         }
