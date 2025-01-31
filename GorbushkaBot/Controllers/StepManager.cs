@@ -119,27 +119,39 @@ namespace GorbushkaBot.Controllers
                         var (currentStep, currentMessageId) = UserSteps[chatId];
 
                         // Определяем предыдущий шаг
-                        var previousSteps = new Dictionary<string, (string step, string message)>
+                        var previousSteps = new Dictionary<string, (string step, string message, InlineKeyboardMarkup? keyboard)>
                         {
-                            { "passport_number", ("fio", "Введите ваше ФИО:") },
-                            { "passport_issue_date", ("passport_number", "Введите номер вашего паспорта:") },
-                            { "passport", ("passport_issue_date", "Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):") },
-                            { "role", ("passport", "Отправьте фото страниц своего паспорта, на которых находятся:\n- ФИО\n- Номер\n- Дата выдачи\n- Прописка\n\nВы можете отправить несколько фото.") },
-                            { "pavilion_number", ("role", "Выберите свою роль:") },
-                            { "company_name", ("role", "Выберите свою роль:") },
-                            { "company_activity", ("company_name", "Введите название вашей компании:") },
-                            { "rental_contract", ("pavilion_number", "Введите номер павильона:") }
+                            { "passport_number", ("fio", "Введите ваше ФИО:", null) },
+                            { "passport_issue_date", ("passport_number", "Введите номер вашего паспорта:", null) },
+                            { "passport", ("passport_issue_date", "Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):", null) },
+                            { "role", ("passport", "Отправьте фото страниц своего паспорта, на которых находятся:\n- ФИО\n- Номер\n- Дата выдачи\n- Прописка\n\nВы можете отправить несколько фото.", null) },
+                            { "pavilion_number", ("role", "Выберите свою роль:", new InlineKeyboardMarkup(new[]
+                                {
+                                    new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
+                                    new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
+                                    new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
+                                })) },
+                            { "company_name", ("role", "Выберите свою роль:", new InlineKeyboardMarkup(new[]
+                                {
+                                    new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
+                                    new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
+                                    new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
+                                })) },
+                            { "company_activity", ("company_name", "Введите название вашей компании:", null) },
+                            { "rental_contract", ("pavilion_number", "Введите номер павильона:", null) }
                         };
 
                         if (previousSteps.TryGetValue(currentStep, out var previousStepData))
                         {
                             string previousStep = previousStepData.step;
                             string previousMessage = previousStepData.message;
+                            InlineKeyboardMarkup? keyboard = previousStepData.keyboard;
 
-                            await UpdateVerificationStep(botClient, chatId, currentMessageId, previousStep, previousMessage, true);
+                            await UpdateVerificationStep(botClient, chatId, currentMessageId, previousStep, previousMessage, true, keyboard);
                         }
                     }
                     break;
+
 
             }
             await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
