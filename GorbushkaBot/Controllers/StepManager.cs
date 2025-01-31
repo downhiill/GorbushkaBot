@@ -104,6 +104,15 @@ namespace GorbushkaBot.Controllers
                             new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
                         }));
                     break;
+                case "seller":
+                    await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "pavilion_number", "Введите номер павильона:", true);
+                    break;
+                case "buyer":
+                    await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "company_name", "Введите название вашей компании:", true);
+                    break;
+                case "both":
+                    await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "pavilion_number", "Введите номер павильона:", true);
+                    break;
             }
             await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
         }
