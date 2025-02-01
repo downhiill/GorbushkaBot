@@ -10,6 +10,7 @@ namespace GorbushkaBot.Controllers
     public class StepManager
     {
         private static readonly Dictionary<long, (string step, int messageId)> UserSteps = new();
+        private static readonly Dictionary<long, Dictionary<string, string>> UserData = new();
         private readonly TelegramBotClient botClient;
 
         public StepManager(TelegramBotClient botClient)
@@ -20,6 +21,55 @@ namespace GorbushkaBot.Controllers
         public void SaveStep(long chatId, string step, int messageId)
         {
             UserSteps[chatId] = (step, messageId);
+        }
+
+        private void SaveUserData(long chatId, string key, string value)
+        {
+            if (!UserData.ContainsKey(chatId))
+            {
+                UserData[chatId] = new Dictionary<string, string>();
+            }
+            UserData[chatId][key] = value;
+        }
+
+        private void ClearUserDataAfterStep(long chatId, string step)
+        {
+            if (!UserData.ContainsKey(chatId)) return;
+
+            var stepsToClear = new List<string>();
+
+            switch (step)
+            {
+                case "fio":
+                    stepsToClear.AddRange(new[] { "passport_number", "passport_issue_date", "passport", "company_name", "company_activity", "pavilion_number", "rental_contract" });
+                    break;
+                case "passport_number":
+                    stepsToClear.AddRange(new[] { "passport_issue_date", "passport", "company_name", "company_activity", "pavilion_number", "rental_contract" });
+                    break;
+                case "passport_issue_date":
+                    stepsToClear.AddRange(new[] { "passport", "company_name", "company_activity", "pavilion_number", "rental_contract" });
+                    break;
+                case "passport":
+                    stepsToClear.AddRange(new[] { "company_name", "company_activity", "pavilion_number", "rental_contract" });
+                    break;
+                case "role":
+                    stepsToClear.AddRange(new[] { "company_name", "company_activity", "pavilion_number", "rental_contract" });
+                    break;
+                case "company_name":
+                    stepsToClear.AddRange(new[] { "company_activity", "pavilion_number", "rental_contract" });
+                    break;
+                case "pavilion_number":
+                    stepsToClear.AddRange(new[] { "rental_contract" });
+                    break;
+            }
+
+            foreach (var key in stepsToClear)
+            {
+                if (UserData[chatId].ContainsKey(key))
+                {
+                    UserData[chatId].Remove(key);
+                }
+            }
         }
 
         public async Task HandleMessage(ITelegramBotClient botClient, long chatId, Message message)
@@ -35,6 +85,7 @@ namespace GorbushkaBot.Controllers
                     await botClient.SendTextMessageAsync(chatId, "Ошибка: ФИО должно содержать только буквы и пробелы.");
                     return;
                 }
+                SaveUserData(chatId, "fio", message.Text);
                 await UpdateVerificationStep(botClient, chatId, messageId, "passport_number", "Введите номер вашего паспорта:", true);
             }
             else if (step == "passport_number")
@@ -44,6 +95,7 @@ namespace GorbushkaBot.Controllers
                     await botClient.SendTextMessageAsync(chatId, "Ошибка: Введите корректный номер паспорта (формат: 0000 000000).");
                     return;
                 }
+                SaveUserData(chatId, "passport_number", message.Text);
                 await UpdateVerificationStep(botClient, chatId, messageId, "passport_issue_date", "Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):", true);
             }
             else if (step == "passport_issue_date")
@@ -53,6 +105,7 @@ namespace GorbushkaBot.Controllers
                     await botClient.SendTextMessageAsync(chatId, "Ошибка: Введите корректную дату в формате ДД.ММ.ГГГГ.");
                     return;
                 }
+                SaveUserData(chatId, "passport_issue_date", message.Text);
                 await UpdateVerificationStep(botClient, chatId, messageId, "passport", "Отправьте фото страниц своего паспорта, на которых находятся:\n- ФИО\n- Номер\n- Дата выдачи\n- Прописка\n\nВы можете отправить несколько фото.", true);
             }
             else if (step == "passport")
@@ -69,14 +122,21 @@ namespace GorbushkaBot.Controllers
             }
             else if (step == "company_name")
             {
+                SaveUserData(chatId, "company_name", message.Text);
                 await UpdateVerificationStep(botClient, chatId, messageId, "company_activity", "Введите вид деятельности вашей компании:", true);
             }
             else if (step == "pavilion_number")
             {
+                SaveUserData(chatId, "pavilion_number", message.Text);
                 await UpdateVerificationStep(botClient, chatId, messageId, "rental_contract", "Введите номер вашего договора аренды:", true);
             }
             else if (step == "company_activity" || step == "rental_contract")
             {
+                if (step == "company_activity")
+                    SaveUserData(chatId, "company_activity", message.Text);
+                else if (step == "rental_contract")
+                    SaveUserData(chatId, "rental_contract", message.Text);
+
                 await UpdateVerificationStep(botClient, chatId, messageId, "completed", "Заявка заполнена.\n\nВыберите действие:", false,
                     new InlineKeyboardMarkup(new[]
                     {
@@ -93,8 +153,14 @@ namespace GorbushkaBot.Controllers
             switch (data)
             {
                 case "verify":
+                    // Очищаем все данные пользователя
+                    if (UserData.ContainsKey(chatId))
+                    {
+                        UserData[chatId].Clear();
+                    }
                     await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "fio", "Введите ваше ФИО:", false);
                     break;
+
                 case "next_after_passport":
                     await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "role", "Выберите свою роль:", false,
                         new InlineKeyboardMarkup(new[]
@@ -104,18 +170,9 @@ namespace GorbushkaBot.Controllers
                             new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
                         }));
                     break;
-                case "buyer":
-                    // Для покупателя сразу переходим к конечному шагу
-                    await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "completed", "Заявка заполнена.\n\nВыберите действие:", false,
-                        new InlineKeyboardMarkup(new[]
-                        {
-                            new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
-                            new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
-                        }));
-                    break;
+
                 case "seller":
                 case "both":
-                    // Для продавца и "продавца и покупателя" задаем вопрос "Вы с рынка?"
                     await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "market_question", "Вы с рынка?", false,
                         new InlineKeyboardMarkup(new[]
                         {
@@ -123,18 +180,48 @@ namespace GorbushkaBot.Controllers
                             new[] { InlineKeyboardButton.WithCallbackData("Нет", "market_no") }
                         }));
                     break;
+
                 case "market_yes":
-                    // Если ответ "Да", запрашиваем номер павильона
                     await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "pavilion_number", "Введите номер вашего павильона:", true);
                     break;
+
                 case "market_no":
-                    // Если ответ "Нет", запрашиваем название компании
                     await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "company_name", "Введите название вашей компании:", true);
                     break;
+
+                case "buyer":
+                    await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "completed", "Заявка заполнена.\n\nВыберите действие:", false,
+                        new InlineKeyboardMarkup(new[]
+                        {
+                            new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
+                        }));
+                    break;
+
+                case "submit":
+                    if (UserData.ContainsKey(chatId))
+                    {
+                        var userData = UserData[chatId];
+                        string finalMessage = "Ваша заявка:\n\n" +
+                                              $"ФИО: {userData["fio"]}\n" +
+                                              $"Номер паспорта: {userData["passport_number"]}\n" +
+                                              $"Дата выдачи паспорта: {userData["passport_issue_date"]}\n" +
+                                              (userData.ContainsKey("company_name") ? $"Название компании: {userData["company_name"]}\n" : "") +
+                                              (userData.ContainsKey("company_activity") ? $"Вид деятельности: {userData["company_activity"]}\n" : "") +
+                                              (userData.ContainsKey("pavilion_number") ? $"Номер павильона: {userData["pavilion_number"]}\n" : "") +
+                                              (userData.ContainsKey("rental_contract") ? $"Номер договора аренды: {userData["rental_contract"]}\n" : "");
+
+                        await botClient.SendTextMessageAsync(chatId, finalMessage);
+                    }
+                    break;
+
                 case "back":
                     if (UserSteps.ContainsKey(chatId))
                     {
                         var (currentStep, currentMessageId) = UserSteps[chatId];
+
+                        // Очищаем данные после текущего шага
+                        ClearUserDataAfterStep(chatId, currentStep);
 
                         // Определяем предыдущий шаг
                         var previousSteps = new Dictionary<string, (string step, string message, InlineKeyboardMarkup? keyboard)>
@@ -170,17 +257,31 @@ namespace GorbushkaBot.Controllers
                     }
                     break;
             }
+
             await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
         }
 
         private async Task UpdateVerificationStep(ITelegramBotClient botClient, long chatId, int messageId, string nextStep, string messageText, bool isTextInput, InlineKeyboardMarkup? keyboard = null)
         {
-            if (keyboard == null)
+            // Удаляем предыдущее сообщение
+            try
             {
-                keyboard = new InlineKeyboardMarkup(new[] { new[] { InlineKeyboardButton.WithCallbackData("Назад", "back") } });
+                await botClient.DeleteMessageAsync(chatId, messageId);
             }
-            await botClient.EditMessageTextAsync(chatId, messageId, messageText, replyMarkup: keyboard);
-            SaveStep(chatId, nextStep, messageId);
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при удалении сообщения: {ex.Message}");
+            }
+
+            // Отправляем новое сообщение
+            var newMessage = await botClient.SendTextMessageAsync(
+                chatId,
+                messageText,
+                replyMarkup: keyboard
+            );
+
+            // Сохраняем новый messageId для следующего шага
+            SaveStep(chatId, nextStep, newMessage.MessageId);
         }
     }
 }
