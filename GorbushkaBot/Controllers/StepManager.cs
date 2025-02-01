@@ -104,14 +104,32 @@ namespace GorbushkaBot.Controllers
                             new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
                         }));
                     break;
-                case "seller":
-                    await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "pavilion_number", "Введите номер павильона:", true);
-                    break;
                 case "buyer":
-                    await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "company_name", "Введите название вашей компании:", true);
+                    // Для покупателя сразу переходим к конечному шагу
+                    await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "completed", "Заявка заполнена.\n\nВыберите действие:", false,
+                        new InlineKeyboardMarkup(new[]
+                        {
+                            new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
+                        }));
                     break;
+                case "seller":
                 case "both":
-                    await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "pavilion_number", "Введите номер павильона:", true);
+                    // Для продавца и "продавца и покупателя" задаем вопрос "Вы с рынка?"
+                    await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "market_question", "Вы с рынка?", false,
+                        new InlineKeyboardMarkup(new[]
+                        {
+                            new[] { InlineKeyboardButton.WithCallbackData("Да", "market_yes") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Нет", "market_no") }
+                        }));
+                    break;
+                case "market_yes":
+                    // Если ответ "Да", запрашиваем номер павильона
+                    await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "pavilion_number", "Введите номер вашего павильона:", true);
+                    break;
+                case "market_no":
+                    // Если ответ "Нет", запрашиваем название компании
+                    await UpdateVerificationStep(botClient, chatId, callbackQuery.Message.MessageId, "company_name", "Введите название вашей компании:", true);
                     break;
                 case "back":
                     if (UserSteps.ContainsKey(chatId))
@@ -151,8 +169,6 @@ namespace GorbushkaBot.Controllers
                         }
                     }
                     break;
-
-
             }
             await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
         }
