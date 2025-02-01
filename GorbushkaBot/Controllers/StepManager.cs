@@ -39,12 +39,29 @@ namespace GorbushkaBot.Controllers
                 UserData[chatId] = new Dictionary<string, string>();
             }
 
-            // Сохраняем только первое фото (можно доработать для нескольких фото)
+            // Сохраняем все фото (собираем FileId каждого фото)
             if (photos != null && photos.Length > 0)
             {
-                UserData[chatId][key] = photos[0].FileId; // Сохраняем FileId фото
+                if (!UserData[chatId].ContainsKey(key))
+                {
+                    UserData[chatId][key] = string.Empty;
+                }
+
+                foreach (var photo in photos)
+                {
+                    string currentPhotos = UserData[chatId][key];
+                    if (string.IsNullOrEmpty(currentPhotos))
+                    {
+                        UserData[chatId][key] = photo.FileId;
+                    }
+                    else
+                    {
+                        UserData[chatId][key] = $"{currentPhotos},{photo.FileId}";
+                    }
+                }
             }
         }
+
 
         private void ClearUserDataAfterStep(long chatId, string step)
         {
@@ -130,7 +147,8 @@ namespace GorbushkaBot.Controllers
                     return;
                 }
 
-                SaveUserPhoto(chatId, "passport_photo", message.Photo); // Сохраняем фото
+                // Сохраняем все фото
+                SaveUserPhoto(chatId, "passport_photo", message.Photo);
 
                 // Удаляем сообщение с инструкцией
                 await DeleteAndSendNextStep(
@@ -140,13 +158,9 @@ namespace GorbushkaBot.Controllers
                     "passport",
                     "Фото получено! Если у вас есть ещё страницы, отправьте их. Если все страницы отправлены, нажмите кнопку 'Далее'.",
                     false, // Здесь нет необходимости в вводе текста
-                    new InlineKeyboardMarkup(new[]
-                    {
-                        new[] { InlineKeyboardButton.WithCallbackData("Далее", "next_after_passport") }
-                    })
+                    new InlineKeyboardMarkup(new[] { new[] { InlineKeyboardButton.WithCallbackData("Далее", "next_after_passport") } })
                 );
             }
-
             else if (step == "company_name")
             {
                 SaveUserData(chatId, "company_name", message.Text);
