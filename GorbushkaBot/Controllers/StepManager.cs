@@ -262,6 +262,7 @@ namespace GorbushkaBot.Controllers
 
                             foreach (var fileId in fileIds)
                             {
+                                // Отправляем каждую фотографию по очереди
                                 await botClient.SendPhotoAsync(
                                     chatId,
                                     new InputFileId(fileId) // Используем InputFileId для отправки фото
@@ -270,6 +271,7 @@ namespace GorbushkaBot.Controllers
                         }
                     }
                     break;
+
 
                 case "back":
                     if (UserSteps.ContainsKey(chatId))
