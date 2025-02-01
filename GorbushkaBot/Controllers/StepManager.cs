@@ -129,12 +129,24 @@ namespace GorbushkaBot.Controllers
                     await botClient.SendTextMessageAsync(chatId, "Ошибка: Отправьте именно фото, а не текст или документ.");
                     return;
                 }
+
                 SaveUserPhoto(chatId, "passport_photo", message.Photo); // Сохраняем фото
-                await botClient.SendTextMessageAsync(chatId, "Фото получено! Если у вас есть ещё страницы, отправьте их. Если все страницы отправлены, нажмите кнопку 'Далее'.", replyMarkup: new InlineKeyboardMarkup(new[]
-                {
-                    new[] { InlineKeyboardButton.WithCallbackData("Далее", "next_after_passport") }
-                }));
+
+                // Удаляем сообщение с инструкцией
+                await DeleteAndSendNextStep(
+                    botClient,
+                    chatId,
+                    messageId, // Удаляем именно это сообщение
+                    "passport",
+                    "Фото получено! Если у вас есть ещё страницы, отправьте их. Если все страницы отправлены, нажмите кнопку 'Далее'.",
+                    false, // Здесь нет необходимости в вводе текста
+                    new InlineKeyboardMarkup(new[]
+                    {
+                        new[] { InlineKeyboardButton.WithCallbackData("Далее", "next_after_passport") }
+                    })
+                );
             }
+
             else if (step == "company_name")
             {
                 SaveUserData(chatId, "company_name", message.Text);
