@@ -253,21 +253,6 @@ namespace GorbushkaBot.Controllers
 
                         // Отправляем итоговое сообщение
                         await botClient.SendTextMessageAsync(chatId, finalMessage);
-
-                        // Отправляем все фото, если они есть
-                        if (userData.ContainsKey("passport_photo"))
-                        {
-                            string photoFileIds = userData["passport_photo"];
-                            var fileIds = photoFileIds.Split(',');
-
-                            foreach (var fileId in fileIds)
-                            {
-                                await botClient.SendPhotoAsync(
-                                    chatId,
-                                    new InputFileId(fileId) // Используем InputFileId для отправки фото
-                                );
-                            }
-                        }
                     }
                     break;
 
