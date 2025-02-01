@@ -39,6 +39,9 @@ namespace GorbushkaBot.Controllers
                 UserData[chatId] = new Dictionary<string, string>();
             }
 
+            // Используем HashSet для уникальности
+            HashSet<string> uniquePhotoIds = new HashSet<string>();
+
             // Сохраняем все фото (собираем FileId каждого фото)
             if (photos != null && photos.Length > 0)
             {
@@ -49,18 +52,14 @@ namespace GorbushkaBot.Controllers
 
                 foreach (var photo in photos)
                 {
-                    string currentPhotos = UserData[chatId][key];
-                    if (string.IsNullOrEmpty(currentPhotos))
-                    {
-                        UserData[chatId][key] = photo.FileId;
-                    }
-                    else
-                    {
-                        UserData[chatId][key] = $"{currentPhotos},{photo.FileId}";
-                    }
+                    uniquePhotoIds.Add(photo.FileId); // Добавляем только уникальные FileId
                 }
+
+                // Конвертируем HashSet обратно в строку с разделением запятой
+                UserData[chatId][key] = string.Join(",", uniquePhotoIds);
             }
         }
+
 
 
         private void ClearUserDataAfterStep(long chatId, string step)
