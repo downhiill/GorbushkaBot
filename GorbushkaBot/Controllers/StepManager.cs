@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -11,6 +12,7 @@ namespace GorbushkaBot.Controllers
     {
         private static readonly Dictionary<long, (string step, int messageId)> UserSteps = new();
         private static readonly Dictionary<long, Dictionary<string, string>> UserData = new();
+        private static readonly Dictionary<long, int> LastErrorMessages = new(); // Новый словарь для ошибок
         private readonly TelegramBotClient botClient;
 
         public StepManager(TelegramBotClient botClient)
@@ -108,21 +110,38 @@ namespace GorbushkaBot.Controllers
 
             var (step, messageId) = UserSteps[chatId];
 
+            // Удаляем предыдущее сообщение об ошибке при новом вводе
+            if (LastErrorMessages.TryGetValue(chatId, out int errorMsgId))
+            {
+                try { await botClient.DeleteMessageAsync(chatId, errorMsgId); }
+                catch { /* Игнорируем ошибки */ }
+                LastErrorMessages.Remove(chatId);
+            }
+
             if (step == "fio")
             {
-                if (!System.Text.RegularExpressions.Regex.IsMatch(message.Text, "^[А-Яа-яA-Za-z ]+$"))
+                if (!Regex.IsMatch(message.Text, "^[А-Яа-яA-Za-z ]+$"))
                 {
-                    await botClient.SendTextMessageAsync(chatId, "Ошибка: ФИО должно содержать только буквы и пробелы.");
+                    var errorMsg = await botClient.SendTextMessageAsync(
+                        chatId,
+                        "Ошибка: ФИО должно содержать только буквы и пробелы."
+                    );
+                    LastErrorMessages[chatId] = errorMsg.MessageId; // Сохраняем ID ошибки
                     return;
                 }
+                // Успешный ввод - очищаем ошибки
                 SaveUserData(chatId, "fio", message.Text);
                 await DeleteAndSendNextStep(botClient, chatId, messageId, "passport_number", "Введите номер вашего паспорта:", true);
             }
             else if (step == "passport_number")
             {
-                if (!System.Text.RegularExpressions.Regex.IsMatch(message.Text, @"^\d{4} \d{6}$"))
+                if (!Regex.IsMatch(message.Text, @"^\d{4} \d{6}$"))
                 {
-                    await botClient.SendTextMessageAsync(chatId, "Ошибка: Введите корректный номер паспорта (формат: 0000 000000).");
+                    var errorMsg = await botClient.SendTextMessageAsync(
+                        chatId,
+                        "Ошибка: Введите корректный номер паспорта (формат: 0000 000000)."
+                    );
+                    LastErrorMessages[chatId] = errorMsg.MessageId;
                     return;
                 }
                 SaveUserData(chatId, "passport_number", message.Text);
@@ -130,9 +149,13 @@ namespace GorbushkaBot.Controllers
             }
             else if (step == "passport_issue_date")
             {
-                if (!System.Text.RegularExpressions.Regex.IsMatch(message.Text, @"^\d{2}\.\d{2}\.\d{4}$"))
+                if (!Regex.IsMatch(message.Text, @"^\d{2}\.\d{2}\.\d{4}$"))
                 {
-                    await botClient.SendTextMessageAsync(chatId, "Ошибка: Введите корректную дату в формате ДД.ММ.ГГГГ.");
+                    var errorMsg = await botClient.SendTextMessageAsync(
+                        chatId,
+                        "Ошибка: Введите корректную дату в формате ДД.ММ.ГГГГ."
+                    );
+                    LastErrorMessages[chatId] = errorMsg.MessageId;
                     return;
                 }
                 SaveUserData(chatId, "passport_issue_date", message.Text);
@@ -243,25 +266,15 @@ namespace GorbushkaBot.Controllers
                     {
                         var userData = UserData[chatId];
                         string finalMessage = "Ваша заявка:\n\n" +
-                                            $"ФИО: {userData["fio"]}\n" +
-                                            $"Номер паспорта: {userData["passport_number"]}\n" +
-                                            $"Дата выдачи паспорта: {userData["passport_issue_date"]}\n" +
-                                            (userData.ContainsKey("company_name") ? $"Название компании: {userData["company_name"]}\n" : "") +
-                                            (userData.ContainsKey("company_activity") ? $"Вид деятельности: {userData["company_activity"]}\n" : "") +
-                                            (userData.ContainsKey("pavilion_number") ? $"Номер павильона: {userData["pavilion_number"]}\n" : "") +
-                                            (userData.ContainsKey("rental_contract") ? $"Номер договора аренды: {userData["rental_contract"]}\n" : "");
+                                              $"ФИО: {userData["fio"]}\n" +
+                                              $"Номер паспорта: {userData["passport_number"]}\n" +
+                                              $"Дата выдачи паспорта: {userData["passport_issue_date"]}\n" +
+                                              (userData.ContainsKey("company_name") ? $"Название компании: {userData["company_name"]}\n" : "") +
+                                              (userData.ContainsKey("company_activity") ? $"Вид деятельности: {userData["company_activity"]}\n" : "") +
+                                              (userData.ContainsKey("pavilion_number") ? $"Номер павильона: {userData["pavilion_number"]}\n" : "") +
+                                              (userData.ContainsKey("rental_contract") ? $"Номер договора аренды: {userData["rental_contract"]}\n" : "");
 
-                        // Редактируем исходное сообщение с кнопками
-                        await botClient.EditMessageTextAsync(
-                            chatId,
-                            messageId: UserSteps[chatId].messageId,
-                            text: "✅ Заявка успешно отправлена!",
-                            replyMarkup: new InlineKeyboardMarkup(new[]
-                            {
-                new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") }
-                            }));
-
-                        // Отправляем финальное сообщение с данными
+                        // Отправляем итоговое сообщение
                         await botClient.SendTextMessageAsync(chatId, finalMessage);
                     }
                     break;
