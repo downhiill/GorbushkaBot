@@ -163,21 +163,25 @@ namespace GorbushkaBot.Controllers
             {
                 if (message.Photo == null)
                 {
-                    await botClient.SendTextMessageAsync(chatId, "Ошибка: Отправьте именно фото, а не текст или документ.");
+                    var errorMsg = await botClient.SendTextMessageAsync(
+                        chatId,
+                        "Ошибка: Отправьте именно фото, а не текст или документ."
+                    );
+                    LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
                     return;
                 }
 
                 // Сохраняем все фото
                 SaveUserPhoto(chatId, "passport_photo", message.Photo);
 
-                // Удаляем сообщение с инструкцией
+                // Удаляем предыдущее сообщение с инструкцией и ошибками
                 await DeleteAndSendNextStep(
                     botClient,
                     chatId,
-                    messageId, // Удаляем именно это сообщение
+                    messageId,
                     "passport",
                     "Фото получено! Если у вас есть ещё страницы, отправьте их. Если все страницы отправлены, нажмите кнопку 'Далее'.",
-                    false, // Здесь нет необходимости в вводе текста
+                    false,
                     new InlineKeyboardMarkup(new[] { new[] { InlineKeyboardButton.WithCallbackData("Далее", "next_after_passport") } })
                 );
             }
@@ -210,6 +214,13 @@ namespace GorbushkaBot.Controllers
         public async Task HandleCallbackQuery(ITelegramBotClient botClient, long chatId, CallbackQuery callbackQuery)
         {
             string data = callbackQuery.Data;
+
+            if (LastErrorMessages.TryGetValue(chatId, out var lastError))
+            {
+                try { await botClient.DeleteMessageAsync(chatId, lastError.errorMsgId); } catch { }
+                try { await botClient.DeleteMessageAsync(chatId, lastError.userMsgId); } catch { }
+                LastErrorMessages.Remove(chatId);
+            }
 
             switch (data)
             {
