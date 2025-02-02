@@ -12,7 +12,7 @@ namespace GorbushkaBot.Controllers
     {
         private static readonly Dictionary<long, (string step, int messageId)> UserSteps = new();
         private static readonly Dictionary<long, Dictionary<string, string>> UserData = new();
-        private static readonly Dictionary<long, int> LastErrorMessages = new(); // Новый словарь для ошибок
+        private static readonly Dictionary<long, (int errorMsgId, int userMsgId)> LastErrorMessages = new(); // Новый словарь для ошибок
         private readonly TelegramBotClient botClient;
 
         public StepManager(TelegramBotClient botClient)
@@ -110,11 +110,10 @@ namespace GorbushkaBot.Controllers
 
             var (step, messageId) = UserSteps[chatId];
 
-            // Удаляем предыдущее сообщение об ошибке при новом вводе
-            if (LastErrorMessages.TryGetValue(chatId, out int errorMsgId))
+            if (LastErrorMessages.TryGetValue(chatId, out var lastError))
             {
-                try { await botClient.DeleteMessageAsync(chatId, errorMsgId); }
-                catch { /* Игнорируем ошибки */ }
+                try { await botClient.DeleteMessageAsync(chatId, lastError.errorMsgId); } catch { }
+                try { await botClient.DeleteMessageAsync(chatId, lastError.userMsgId); } catch { }
                 LastErrorMessages.Remove(chatId);
             }
 
@@ -126,10 +125,9 @@ namespace GorbushkaBot.Controllers
                         chatId,
                         "Ошибка: ФИО должно содержать только буквы и пробелы."
                     );
-                    LastErrorMessages[chatId] = errorMsg.MessageId; // Сохраняем ID ошибки
+                    LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
                     return;
                 }
-                // Успешный ввод - очищаем ошибки
                 SaveUserData(chatId, "fio", message.Text);
                 await DeleteAndSendNextStep(botClient, chatId, messageId, "passport_number", "Введите номер вашего паспорта:", true);
             }
@@ -141,7 +139,7 @@ namespace GorbushkaBot.Controllers
                         chatId,
                         "Ошибка: Введите корректный номер паспорта (формат: 0000 000000)."
                     );
-                    LastErrorMessages[chatId] = errorMsg.MessageId;
+                    LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
                     return;
                 }
                 SaveUserData(chatId, "passport_number", message.Text);
@@ -155,7 +153,7 @@ namespace GorbushkaBot.Controllers
                         chatId,
                         "Ошибка: Введите корректную дату в формате ДД.ММ.ГГГГ."
                     );
-                    LastErrorMessages[chatId] = errorMsg.MessageId;
+                    LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
                     return;
                 }
                 SaveUserData(chatId, "passport_issue_date", message.Text);
