@@ -243,15 +243,25 @@ namespace GorbushkaBot.Controllers
                     {
                         var userData = UserData[chatId];
                         string finalMessage = "Ваша заявка:\n\n" +
-                                              $"ФИО: {userData["fio"]}\n" +
-                                              $"Номер паспорта: {userData["passport_number"]}\n" +
-                                              $"Дата выдачи паспорта: {userData["passport_issue_date"]}\n" +
-                                              (userData.ContainsKey("company_name") ? $"Название компании: {userData["company_name"]}\n" : "") +
-                                              (userData.ContainsKey("company_activity") ? $"Вид деятельности: {userData["company_activity"]}\n" : "") +
-                                              (userData.ContainsKey("pavilion_number") ? $"Номер павильона: {userData["pavilion_number"]}\n" : "") +
-                                              (userData.ContainsKey("rental_contract") ? $"Номер договора аренды: {userData["rental_contract"]}\n" : "");
+                                            $"ФИО: {userData["fio"]}\n" +
+                                            $"Номер паспорта: {userData["passport_number"]}\n" +
+                                            $"Дата выдачи паспорта: {userData["passport_issue_date"]}\n" +
+                                            (userData.ContainsKey("company_name") ? $"Название компании: {userData["company_name"]}\n" : "") +
+                                            (userData.ContainsKey("company_activity") ? $"Вид деятельности: {userData["company_activity"]}\n" : "") +
+                                            (userData.ContainsKey("pavilion_number") ? $"Номер павильона: {userData["pavilion_number"]}\n" : "") +
+                                            (userData.ContainsKey("rental_contract") ? $"Номер договора аренды: {userData["rental_contract"]}\n" : "");
 
-                        // Отправляем итоговое сообщение
+                        // Редактируем исходное сообщение с кнопками
+                        await botClient.EditMessageTextAsync(
+                            chatId,
+                            messageId: UserSteps[chatId].messageId,
+                            text: "✅ Заявка успешно отправлена!",
+                            replyMarkup: new InlineKeyboardMarkup(new[]
+                            {
+                new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") }
+                            }));
+
+                        // Отправляем финальное сообщение с данными
                         await botClient.SendTextMessageAsync(chatId, finalMessage);
                     }
                     break;
