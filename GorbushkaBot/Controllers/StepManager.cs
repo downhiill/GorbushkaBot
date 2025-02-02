@@ -273,6 +273,16 @@ namespace GorbushkaBot.Controllers
                 case "submit":
                     if (UserData.ContainsKey(chatId))
                     {
+                        // Редактируем исходное сообщение с кнопками
+                        await botClient.EditMessageTextAsync(
+                            chatId: chatId,
+                            messageId: callbackQuery.Message.MessageId,
+                            text: "✅ Заявка успешно отправлена!",
+                            replyMarkup: new InlineKeyboardMarkup(new[]
+                            {
+                                 new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") }
+                            })
+                        );
                         var userData = UserData[chatId];
                         string finalMessage = "Ваша заявка:\n\n" +
                                               $"ФИО: {userData["fio"]}\n" +
