@@ -10,7 +10,7 @@ namespace GorbushkaBot
     {
         private readonly SheetsService _service;
         private readonly string _spreadsheetId;
-        private const string Range = "Лист1!A:H";
+        private const string Range = "Лист1!A:I";
 
         public GoogleSheetsService(string credentialPath, string spreadsheetId)
         {

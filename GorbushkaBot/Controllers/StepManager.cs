@@ -39,7 +39,7 @@ namespace GorbushkaBot.Controllers
             UserData[chatId][key] = value;
         }
 
-        private void SaveUserPhoto(long chatId, string key, PhotoSize[] photos, int maxPhotos = 3)
+        private void SaveUserPhoto(long chatId, string key, PhotoSize[] photos)
         {
             if (!UserData.ContainsKey(chatId))
             {
@@ -58,15 +58,14 @@ namespace GorbushkaBot.Controllers
                 }
             }
 
-            // Добавляем новые фото, если лимит не превышен
+            // Добавляем ТОЛЬКО самое большое изображение каждого фото
             if (photos != null && photos.Length > 0)
             {
-                foreach (var photo in photos)
+                var largestPhoto = photos.OrderByDescending(p => p.FileSize).FirstOrDefault(); // Берем только самое большое
+
+                if (largestPhoto != null)
                 {
-                    if (uniquePhotoIds.Count < maxPhotos) // Ограничение по количеству фото
-                    {
-                        uniquePhotoIds.Add(photo.FileId);
-                    }
+                    uniquePhotoIds.Add(largestPhoto.FileId);
                 }
 
                 // Сохраняем обратно в UserData
