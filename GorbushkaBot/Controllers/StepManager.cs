@@ -39,33 +39,41 @@ namespace GorbushkaBot.Controllers
             UserData[chatId][key] = value;
         }
 
-        private void SaveUserPhoto(long chatId, string key, PhotoSize[] photos)
+        private void SaveUserPhoto(long chatId, string key, PhotoSize[] photos, int maxPhotos = 3)
         {
             if (!UserData.ContainsKey(chatId))
             {
                 UserData[chatId] = new Dictionary<string, string>();
             }
 
-            // Используем HashSet для уникальности
+            // Загружаем уже сохраненные фото
             HashSet<string> uniquePhotoIds = new HashSet<string>();
 
-            // Сохраняем все фото (собираем FileId каждого фото)
+            if (UserData[chatId].ContainsKey(key) && !string.IsNullOrEmpty(UserData[chatId][key]))
+            {
+                var existingPhotoIds = UserData[chatId][key].Split(',');
+                foreach (var id in existingPhotoIds)
+                {
+                    uniquePhotoIds.Add(id);
+                }
+            }
+
+            // Добавляем новые фото, если лимит не превышен
             if (photos != null && photos.Length > 0)
             {
-                if (!UserData[chatId].ContainsKey(key))
-                {
-                    UserData[chatId][key] = string.Empty;
-                }
-
                 foreach (var photo in photos)
                 {
-                    uniquePhotoIds.Add(photo.FileId); // Добавляем только уникальные FileId
+                    if (uniquePhotoIds.Count < maxPhotos) // Ограничение по количеству фото
+                    {
+                        uniquePhotoIds.Add(photo.FileId);
+                    }
                 }
 
-                // Конвертируем HashSet обратно в строку с разделением запятой
+                // Сохраняем обратно в UserData
                 UserData[chatId][key] = string.Join(",", uniquePhotoIds);
             }
         }
+
 
 
 
