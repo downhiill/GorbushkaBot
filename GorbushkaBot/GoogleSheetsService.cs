@@ -39,6 +39,7 @@ namespace GorbushkaBot
                     userData.GetValueOrDefault("company_name", ""),
                     userData.GetValueOrDefault("company_activity", ""),
                     userData.GetValueOrDefault("pavilion_number", ""),
+                    userData.GetValueOrDefault("rental_contract", ""),
                     folderUrl
                 }}
             };
