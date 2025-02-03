@@ -27,7 +27,7 @@ namespace GorbushkaBot.Controllers
         {
             botClient = new TelegramBotClient(BotToken);
             googleSheetsService = new GoogleSheetsService(CredentialPath, SpreadsheetId);
-            googleDriveService = new GoogleDriveService(CredentialPath);
+            googleDriveService = new GoogleDriveService();
             stepManager = new StepManager(botClient, googleSheetsService, googleDriveService);
             keyboardManager = new KeyboardManager();
             errorHandler = new ErrorHandler();
