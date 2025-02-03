@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Telegram.Bot;
-using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
+using Telegram.Bot.Types;
 
 namespace GorbushkaBot.Controllers
 {
@@ -12,15 +10,25 @@ namespace GorbushkaBot.Controllers
         private static readonly string BotToken = Environment.GetEnvironmentVariable("BOT_TOKEN")
             ?? throw new InvalidOperationException("BOT_TOKEN is not set");
 
+        private static readonly string CredentialPath = Environment.GetEnvironmentVariable("GOOGLE_CREDENTIALS_PATH")
+            ?? throw new InvalidOperationException("GOOGLE_CREDENTIALS_PATH is not set");
+
+        private static readonly string SpreadsheetId = Environment.GetEnvironmentVariable("GOOGLE_SHEET_ID")
+            ?? throw new InvalidOperationException("GOOGLE_SHEET_ID is not set");
+
         private readonly TelegramBotClient botClient;
         private readonly StepManager stepManager;
         private readonly KeyboardManager keyboardManager;
         private readonly ErrorHandler errorHandler;
+        private readonly GoogleSheetsService googleSheetsService;
+        private readonly GoogleDriveService googleDriveService;
 
         public TelegramBotService()
         {
             botClient = new TelegramBotClient(BotToken);
-            stepManager = new StepManager(botClient);
+            googleSheetsService = new GoogleSheetsService(CredentialPath, SpreadsheetId);
+            googleDriveService = new GoogleDriveService(CredentialPath);
+            stepManager = new StepManager(botClient, googleSheetsService, googleDriveService);
             keyboardManager = new KeyboardManager();
             errorHandler = new ErrorHandler();
         }

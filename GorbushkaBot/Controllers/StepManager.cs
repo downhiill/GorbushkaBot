@@ -14,10 +14,15 @@ namespace GorbushkaBot.Controllers
         private static readonly Dictionary<long, Dictionary<string, string>> UserData = new();
         private static readonly Dictionary<long, (int errorMsgId, int userMsgId)> LastErrorMessages = new(); // Новый словарь для ошибок
         private readonly TelegramBotClient botClient;
+        private readonly GoogleSheetsService _sheetsService;
+        private readonly GoogleDriveService _driveService;
+        private static readonly string bottoken = Environment.GetEnvironmentVariable("BOT_TOKEN");
 
-        public StepManager(TelegramBotClient botClient)
+        public StepManager(TelegramBotClient botClient, GoogleSheetsService sheetsService,GoogleDriveService driveService)
         {
             this.botClient = botClient;
+            _sheetsService = sheetsService;
+            _driveService = driveService;
         }
 
         public void SaveStep(long chatId, string step, int messageId)
@@ -273,28 +278,55 @@ namespace GorbushkaBot.Controllers
                 case "submit":
                     if (UserData.ContainsKey(chatId))
                     {
-                        // Редактируем исходное сообщение с кнопками
-                        await botClient.EditMessageTextAsync(
-                            chatId: chatId,
-                            messageId: callbackQuery.Message.MessageId,
-                            text: "✅ Заявка успешно отправлена!",
-                            replyMarkup: new InlineKeyboardMarkup(new[]
-                            {
-                                 new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") }
-                            })
-                        );
-                        var userData = UserData[chatId];
-                        string finalMessage = "Ваша заявка:\n\n" +
-                                              $"ФИО: {userData["fio"]}\n" +
-                                              $"Номер паспорта: {userData["passport_number"]}\n" +
-                                              $"Дата выдачи паспорта: {userData["passport_issue_date"]}\n" +
-                                              (userData.ContainsKey("company_name") ? $"Название компании: {userData["company_name"]}\n" : "") +
-                                              (userData.ContainsKey("company_activity") ? $"Вид деятельности: {userData["company_activity"]}\n" : "") +
-                                              (userData.ContainsKey("pavilion_number") ? $"Номер павильона: {userData["pavilion_number"]}\n" : "") +
-                                              (userData.ContainsKey("rental_contract") ? $"Номер договора аренды: {userData["rental_contract"]}\n" : "");
+                        try
+                        {
+                            
+                            // Редактируем сообщение о статусе
+                            await botClient.EditMessageTextAsync(
+                                chatId: chatId,
+                                messageId: callbackQuery.Message.MessageId,
+                                text: "⏳ Сохраняем данные...",
+                                replyMarkup: null);
 
-                        // Отправляем итоговое сообщение
-                        await botClient.SendTextMessageAsync(chatId, finalMessage);
+                            // Получаем данные пользователя
+                            var userData = UserData[chatId];
+
+                            // Создаем папку в Google Drive
+                            var folderUrl = await _driveService.CreateUserFolderAsync(chatId);
+                            var folderId = GetFolderIdFromUrl(folderUrl);
+
+                            // Загружаем фотографии
+                            if (userData.TryGetValue("passport_photo", out var photoIds))
+                            {
+                                var fileIds = photoIds.Split(',');
+                                await _driveService.UploadPhotosAsync(botClient, folderId, fileIds, bottoken);
+                            }
+
+                            // Сохраняем данные в Google Sheets
+                            await _sheetsService.AppendDataAsync(userData, folderUrl);
+
+                            // Обновляем сообщение о успешной отправке
+                            await botClient.EditMessageTextAsync(
+                                chatId: chatId,
+                                messageId: callbackQuery.Message.MessageId,
+                                text: "✅ Заявка успешно отправлена!",
+                                replyMarkup: new InlineKeyboardMarkup(new[]
+                                {
+                                new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") }
+                                }));
+
+                            // Очищаем данные
+                            UserData.Remove(chatId);
+                            UserSteps.Remove(chatId);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Ошибка при сохранении данных: {ex.Message}");
+                            await botClient.EditMessageTextAsync(
+                                chatId: chatId,
+                                messageId: callbackQuery.Message.MessageId,
+                                text: "⚠️ Ошибка при отправке данных. Попробуйте позже.");
+                        }
                     }
                     break;
 
@@ -342,6 +374,13 @@ namespace GorbushkaBot.Controllers
             }
 
             await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
+
+
+        }
+        private string GetFolderIdFromUrl(string url)
+        {
+            var parts = url.Split(new[] { "folders/" }, StringSplitOptions.None);
+            return parts.Length > 1 ? parts[1].Split('?')[0] : null;
         }
 
         private async Task DeleteAndSendNextStep(ITelegramBotClient botClient, long chatId, int messageId, string nextStep, string messageText, bool isTextInput, InlineKeyboardMarkup? keyboard = null)
