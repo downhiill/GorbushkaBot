@@ -38,11 +38,14 @@ namespace GorbushkaBot
             };
 
             var rootRequest = _service.Files.Create(rootFolderMetadata);
-            rootRequest.Fields = "id";
+            rootRequest.Fields = "id, webViewLink";
             var rootFolder = await rootRequest.ExecuteAsync();
-            string rootFolderId = rootFolder.Id;
 
-            var subFolders = new Dictionary<string, string>();
+            var folders = new Dictionary<string, string>
+            {
+                ["root"] = rootFolder.WebViewLink // Ссылка на корневую папку
+            };
+
             string[] subFolderNames = { "face", "passport", "pavilion" };
 
             foreach (var folderName in subFolderNames)
@@ -51,17 +54,17 @@ namespace GorbushkaBot
                 {
                     Name = folderName,
                     MimeType = "application/vnd.google-apps.folder",
-                    Parents = new List<string> { rootFolderId }
+                    Parents = new List<string> { rootFolder.Id }
                 };
 
                 var subFolderRequest = _service.Files.Create(subFolderMetadata);
-                subFolderRequest.Fields = "id";
+                subFolderRequest.Fields = "id, webViewLink";
                 var subFolder = await subFolderRequest.ExecuteAsync();
-                subFolders[folderName] = subFolder.Id;
+
+                folders[folderName] = subFolder.WebViewLink; // Сохраняем ссылку, а не ID
             }
 
-            subFolders["root"] = rootFolderId; // Добавляем root ID
-            return subFolders;
+            return folders;
         }
 
         public async Task UploadPhotosAsync(ITelegramBotClient botClient, string folderId, IEnumerable<string> fileIds)
