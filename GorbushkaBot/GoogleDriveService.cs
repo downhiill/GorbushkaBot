@@ -86,7 +86,7 @@ namespace GorbushkaBot
                 };
 
                 var request = _service.Files.Create(fileMetadata, stream, "image/jpeg");
-                request.Fields = "id";
+                request.Fields = "id, webViewLink";
                 await request.UploadAsync();
             }
         }

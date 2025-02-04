@@ -471,9 +471,9 @@ namespace GorbushkaBot.Controllers
                                 await _driveService.UploadPhotosAsync(botClient, pavilionFolderId, pavilionPhotos.Split(','));
                             }
 
-                            userData["face_photo"] = rootFolderId + "/face";
-                            userData["passport_photos"] = rootFolderId + "/passport";
-                            userData["pavilion_photos"] = rootFolderId + "/pavilion";
+                            userData["face_photo"] = folders["face"];
+                            userData["passport_photos"] = folders["passport"];
+                            userData["pavilion_photos"] = folders["pavilion"];
                             await _sheetsService.AppendDataAsync(userData, rootFolderId);
 
                             // Обновляем сообщение о успешной отправке
