@@ -30,41 +30,31 @@ namespace GorbushkaBot
 
         public async Task<Dictionary<string, string>> CreateUserFolderAsync(long userId)
         {
-            var rootFolderMetadata = new Google.Apis.Drive.v3.Data.File
-            {
-                Name = $"User_{userId}",
-                MimeType = "application/vnd.google-apps.folder",
-                Parents = new List<string> { _parentFolderId }
-            };
+            var folders = new Dictionary<string, string>();
 
-            var rootRequest = _service.Files.Create(rootFolderMetadata);
-            rootRequest.Fields = "id, webViewLink";
-            var rootFolder = await rootRequest.ExecuteAsync();
+            // Создаем корневую папку
+            var rootFolder = await CreateFolderAsync($"User_{userId}", _parentFolderId);
+            folders.Add("root", rootFolder.Id);
 
-            var folders = new Dictionary<string, string>
-            {
-                ["root"] = rootFolder.WebViewLink // Ссылка на корневую папку
-            };
-
-            string[] subFolderNames = { "face", "passport", "pavilion" };
-
-            foreach (var folderName in subFolderNames)
-            {
-                var subFolderMetadata = new Google.Apis.Drive.v3.Data.File
-                {
-                    Name = folderName,
-                    MimeType = "application/vnd.google-apps.folder",
-                    Parents = new List<string> { rootFolder.Id }
-                };
-
-                var subFolderRequest = _service.Files.Create(subFolderMetadata);
-                subFolderRequest.Fields = "id, webViewLink";
-                var subFolder = await subFolderRequest.ExecuteAsync();
-
-                folders[folderName] = subFolder.WebViewLink; // Сохраняем ссылку, а не ID
-            }
+            // Создаем подпапки и сохраняем их ID
+            folders.Add("face", (await CreateFolderAsync("face", rootFolder.Id)).Id);
+            folders.Add("passport", (await CreateFolderAsync("passport", rootFolder.Id)).Id);
+            folders.Add("pavilion", (await CreateFolderAsync("pavilion", rootFolder.Id)).Id);
 
             return folders;
+        }
+        private async Task<Google.Apis.Drive.v3.Data.File> CreateFolderAsync(string name, string parentId)
+        {
+            var folderMetadata = new Google.Apis.Drive.v3.Data.File
+            {
+                Name = name,
+                MimeType = "application/vnd.google-apps.folder",
+                Parents = new List<string> { parentId }
+            };
+
+            var request = _service.Files.Create(folderMetadata);
+            request.Fields = "id";
+            return await request.ExecuteAsync();
         }
 
         public async Task UploadPhotosAsync(ITelegramBotClient botClient, string folderId, IEnumerable<string> fileIds)
@@ -73,21 +63,34 @@ namespace GorbushkaBot
 
             foreach (var fileId in fileIds)
             {
-                var file = await botClient.GetFileAsync(fileId);
-                var fileUrl = $"https://api.telegram.org/file/bot{_botToken}/{file.FilePath}";
-
-                using var response = await httpClient.GetAsync(fileUrl);
-                using var stream = await response.Content.ReadAsStreamAsync();
-
-                var fileMetadata = new Google.Apis.Drive.v3.Data.File
+                try
                 {
-                    Name = $"{fileId}.jpg",
-                    Parents = new List<string> { folderId }
-                };
+                    // Получаем информацию о файле
+                    var file = await botClient.GetFileAsync(fileId);
 
-                var request = _service.Files.Create(fileMetadata, stream, "image/jpeg");
-                request.Fields = "id, webViewLink";
-                await request.UploadAsync();
+                    // Формируем URL для скачивания
+                    var fileUrl = $"https://api.telegram.org/file/bot{_botToken}/{file.FilePath}";
+
+                    // Скачиваем файл
+                    using var response = await httpClient.GetAsync(fileUrl);
+                    using var stream = await response.Content.ReadAsStreamAsync();
+
+                    // Создаем метаданные для Google Drive
+                    var fileMetadata = new Google.Apis.Drive.v3.Data.File
+                    {
+                        Name = $"{DateTime.Now:yyyyMMddHHmmss}_{fileId}.jpg",
+                        Parents = new List<string> { folderId }
+                    };
+
+                    // Загружаем в Google Drive
+                    var request = _service.Files.Create(fileMetadata, stream, "image/jpeg");
+                    request.Fields = "id";
+                    await request.UploadAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Ошибка загрузки файла {fileId}: {ex.Message}");
+                }
             }
         }
 

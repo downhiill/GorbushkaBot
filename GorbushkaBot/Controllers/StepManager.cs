@@ -437,66 +437,73 @@ namespace GorbushkaBot.Controllers
                     {
                         try
                         {
-                            
-                            // Редактируем сообщение о статусе
                             await botClient.EditMessageTextAsync(
                                 chatId: chatId,
                                 messageId: callbackQuery.Message.MessageId,
                                 text: "⏳ Сохраняем данные...",
                                 replyMarkup: null);
 
-                            // Получаем данные пользователя
                             var userData = UserData[chatId];
 
-                            // Создаем папку в Google Drive
+                            // Создаем папки и получаем их ID
                             var folders = await _driveService.CreateUserFolderAsync(chatId);
-                            string rootFolderId = folders["root"];
-                            string faceFolderId = folders["face"];
-                            string passportFolderId = folders["passport"];
-                            string pavilionFolderId = folders["pavilion"];
 
+                            // Загружаем фото лица
                             if (userData.TryGetValue("face_photo", out var facePhotoId))
                             {
-                                await _driveService.UploadPhotosAsync(botClient, faceFolderId,
-                                    new[] { facePhotoId.Split(',')[0] });
+                                await _driveService.UploadPhotosAsync(
+                                    botClient,
+                                    folders["face"],
+                                    new[] { facePhotoId.Split(',')[0] }
+                                );
                             }
 
+                            // Загружаем фото паспорта
                             if (userData.TryGetValue("passport_photo", out var passportPhotos))
                             {
-                                await _driveService.UploadPhotosAsync(botClient, passportFolderId, passportPhotos.Split(','));
+                                await _driveService.UploadPhotosAsync(
+                                    botClient,
+                                    folders["passport"],
+                                    passportPhotos.Split(',')
+                                );
                             }
 
+                            // Загружаем фото павильона
                             if (userData.TryGetValue("pavilion_photo", out var pavilionPhotos))
                             {
-                                await _driveService.UploadPhotosAsync(botClient, pavilionFolderId, pavilionPhotos.Split(','));
+                                await _driveService.UploadPhotosAsync(
+                                    botClient,
+                                    folders["pavilion"],
+                                    pavilionPhotos.Split(',')
+                                );
                             }
 
-                            userData["face_photo"] = folders["face"];
-                            userData["passport_photos"] = folders["passport"];
-                            userData["pavilion_photos"] = folders["pavilion"];
-                            await _sheetsService.AppendDataAsync(userData, rootFolderId);
+                            // Обновляем данные для таблицы
+                            userData["face_photo"] = $"https://drive.google.com/drive/folders/{folders["face"]}";
+                            userData["passport_photos"] = $"https://drive.google.com/drive/folders/{folders["passport"]}";
+                            userData["pavilion_photos"] = $"https://drive.google.com/drive/folders/{folders["pavilion"]}";
 
-                            // Обновляем сообщение о успешной отправке
+                            await _sheetsService.AppendDataAsync(userData, folders["root"]);
+
                             await botClient.EditMessageTextAsync(
                                 chatId: chatId,
                                 messageId: callbackQuery.Message.MessageId,
                                 text: "✅ Заявка успешно отправлена!",
                                 replyMarkup: new InlineKeyboardMarkup(new[]
                                 {
-                                new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") }
+                                    new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") }
                                 }));
 
-                            // Очищаем данные
                             UserData.Remove(chatId);
                             UserSteps.Remove(chatId);
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"Ошибка при сохранении данных: {ex.Message}");
+                            Console.WriteLine($"Ошибка: {ex}");
                             await botClient.EditMessageTextAsync(
                                 chatId: chatId,
                                 messageId: callbackQuery.Message.MessageId,
-                                text: "⚠️ Ошибка при отправке данных. Попробуйте позже.");
+                                text: "⚠️ Ошибка при отправке. Попробуйте позже.");
                         }
                     }
                     break;
