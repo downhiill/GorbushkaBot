@@ -84,35 +84,86 @@ namespace GorbushkaBot.Controllers
 
             switch (step)
             {
+                case "face_photo":
+                    stepsToClear.AddRange(new[] {
+                    "fio", "phone_number", "passport_number", "passport_issue_date",
+                    "registration_address", "passport", "role", "company_name",
+                    "company_activity", "pavilion_number", "pavilion_photo", "rental_contract"
+                    });
+                    break;
+
                 case "fio":
-                    stepsToClear.AddRange(new[] { "passport_number", "passport_issue_date", "passport", "company_name", "company_activity", "pavilion_number", "rental_contract" });
+                    stepsToClear.AddRange(new[] {
+                    "phone_number", "passport_number", "passport_issue_date",
+                    "registration_address", "passport", "role", "company_name",
+                    "company_activity", "pavilion_number", "pavilion_photo", "rental_contract"
+                    });
                     break;
+
+                case "phone_number":
+                    stepsToClear.AddRange(new[] {
+                    "passport_number", "passport_issue_date", "registration_address",
+                    "passport", "role", "company_name", "company_activity",
+                    "pavilion_number", "pavilion_photo", "rental_contract"
+                    });
+                    break;
+
                 case "passport_number":
-                    stepsToClear.AddRange(new[] { "passport_issue_date", "passport", "company_name", "company_activity", "pavilion_number", "rental_contract" });
+                    stepsToClear.AddRange(new[] {
+                    "passport_issue_date", "registration_address", "passport",
+                    "role", "company_name", "company_activity", "pavilion_number",
+                    "pavilion_photo", "rental_contract"
+                    });
                     break;
+
                 case "passport_issue_date":
-                    stepsToClear.AddRange(new[] { "passport", "company_name", "company_activity", "pavilion_number", "rental_contract" });
+                    stepsToClear.AddRange(new[] {
+                    "registration_address", "passport", "role", "company_name",
+                    "company_activity", "pavilion_number", "pavilion_photo", "rental_contract"
+                    });
                     break;
+
+                case "registration_address":
+                    stepsToClear.AddRange(new[] {
+                    "passport", "role", "company_name", "company_activity",
+                    "pavilion_number", "pavilion_photo", "rental_contract"
+                    });
+                    break;
+
                 case "passport":
-                    stepsToClear.AddRange(new[] { "company_name", "company_activity", "pavilion_number", "rental_contract" });
+                    stepsToClear.AddRange(new[] {
+                    "role", "company_name", "company_activity", "pavilion_number",
+                    "pavilion_photo", "rental_contract"
+                    });
                     break;
+
                 case "role":
-                    stepsToClear.AddRange(new[] { "company_name", "company_activity", "pavilion_number", "rental_contract" });
+                    stepsToClear.AddRange(new[] {
+                    "company_name", "company_activity", "pavilion_number",
+                    "pavilion_photo", "rental_contract"
+                    });
                     break;
+
                 case "company_name":
-                    stepsToClear.AddRange(new[] { "company_activity", "pavilion_number", "rental_contract" });
+                    stepsToClear.AddRange(new[] {
+                    "company_activity", "pavilion_number", "pavilion_photo", "rental_contract"
+                    });
                     break;
+
                 case "pavilion_number":
+                    stepsToClear.AddRange(new[] {
+                    "pavilion_photo", "rental_contract"
+                    });
+                    break;
+
+                case "pavilion_photo":
                     stepsToClear.AddRange(new[] { "rental_contract" });
                     break;
             }
 
-            foreach (var key in stepsToClear)
+            foreach (var key in stepsToClear.Where(UserData[chatId].ContainsKey))
             {
-                if (UserData[chatId].ContainsKey(key))
-                {
-                    UserData[chatId].Remove(key);
-                }
+                UserData[chatId].Remove(key);
             }
         }
 
@@ -129,7 +180,29 @@ namespace GorbushkaBot.Controllers
                 LastErrorMessages.Remove(chatId);
             }
 
-            if (step == "fio")
+            if (step == "face_photo")
+            {
+                if (message.Photo == null)
+                {
+                    var errorMsg = await botClient.SendTextMessageAsync(
+                        chatId,
+                        "Ошибка: Пожалуйста, отправьте именно фотографию."
+                    );
+                    LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
+                    return;
+                }
+
+                SaveUserPhoto(chatId, "face_photo", message.Photo);
+                await DeleteAndSendNextStep(
+                    botClient,
+                    chatId,
+                    messageId,
+                    "fio",
+                    "✅ Фото принято!\n\nТеперь введите ваше ФИО:",
+                    true
+                );
+            }
+            else if (step == "fio")
             {
                 if (!Regex.IsMatch(message.Text, "^[А-Яа-яA-Za-z ]+$"))
                 {
@@ -142,6 +215,21 @@ namespace GorbushkaBot.Controllers
                 }
                 SaveUserData(chatId, "fio", message.Text);
                 await DeleteAndSendNextStep(botClient, chatId, messageId, "passport_number", "Введите номер вашего паспорта:", true);
+            }
+            else if (step == "phone_number")
+            {
+                if (!Regex.IsMatch(message.Text, @"^\+7\d{10}$"))
+                {
+                    var errorMsg = await botClient.SendTextMessageAsync(
+                        chatId,
+                        "Ошибка: Введите корректный номер телефона (формат: +7 1234567891)."
+                    );
+                    LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
+                    return;
+                }
+                SaveUserData(chatId, "phone", message.Text);
+                await DeleteAndSendNextStep(botClient, chatId, messageId, "passport_number",
+                    "Введите номер вашего паспорта (формат: 0000 000000):", true);
             }
             else if (step == "passport_number")
             {
@@ -169,7 +257,19 @@ namespace GorbushkaBot.Controllers
                     return;
                 }
                 SaveUserData(chatId, "passport_issue_date", message.Text);
-                await DeleteAndSendNextStep(botClient, chatId, messageId, "passport", "Отправьте фото страниц своего паспорта, на которых находятся:\n- ФИО\n- Номер\n- Дата выдачи\n- Прописка\n\nВы можете отправить несколько фото.", true);
+                await DeleteAndSendNextStep(botClient, chatId, messageId, "registration_address", "Введите свой адрес прописки:", true);
+            }
+            else if (step == "registration_address")
+            {
+                SaveUserData(chatId, "registration_address", message.Text);
+                await DeleteAndSendNextStep(botClient, chatId, messageId, "passport",
+                    "📷 Отправьте фото страниц своего паспорта, на которых находятся:\n\n" +
+                    "• ФИО\n" +
+                    "• Номер\n" +
+                    "• Дата выдачи\n" +
+                    "• Прописка\n\n" +
+                    "Можно отправить несколько фото за раз.",
+                    true);
             }
             else if (step == "passport")
             {
@@ -207,12 +307,40 @@ namespace GorbushkaBot.Controllers
                 SaveUserData(chatId, "pavilion_number", message.Text);
                 await DeleteAndSendNextStep(botClient, chatId, messageId, "rental_contract", "Введите номер вашего договора аренды:", true);
             }
-            else if (step == "company_activity" || step == "rental_contract")
+            else if (step == "rental_contract")
             {
-                if (step == "company_activity")
-                    SaveUserData(chatId, "company_activity", message.Text);
-                else if (step == "rental_contract")
-                    SaveUserData(chatId, "rental_contract", message.Text);
+                SaveUserData(chatId, "rental_contract", message.Text);
+                await DeleteAndSendNextStep(botClient, chatId, messageId, "rental_contract", "Введите номер вашего договора аренды:", true);
+            }
+            else if (step == "pavilion_photo")
+            {
+                if (message.Photo == null)
+                {
+                    var errorMsg = await botClient.SendTextMessageAsync(
+                        chatId,
+                        "Ошибка: Отправьте именно фото, а не текст или документ."
+                    );
+                    LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
+                    return;
+                }
+
+                SaveUserPhoto(chatId, "pavilion_photo", message.Photo);
+                await DeleteAndSendNextStep(
+                    botClient,
+                    chatId,
+                    messageId,
+                    "pavilion_photo",
+                    "✅ Фото принято! Если нужно добавить ещё фото, отправьте их. Иначе нажмите 'Далее'.",
+                    false,
+                    new InlineKeyboardMarkup(new[]
+                    {
+                    new[] { InlineKeyboardButton.WithCallbackData("Далее", "next_after_pavilion") }
+                    })
+                );
+            }
+            else if (step == "company_activity" )
+            {
+                SaveUserData(chatId, "company_activity", message.Text);
 
                 await DeleteAndSendNextStep(botClient, chatId, messageId, "completed", "Заявка заполнена.\n\nВыберите действие:", false,
                     new InlineKeyboardMarkup(new[]
@@ -237,12 +365,18 @@ namespace GorbushkaBot.Controllers
             switch (data)
             {
                 case "verify":
-                    // Очищаем все данные пользователя
-                    if (UserData.ContainsKey(chatId))
-                    {
-                        UserData[chatId].Clear();
-                    }
-                    await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "fio", "Введите ваше ФИО:", false);
+                    // Очищаем предыдущие данные
+                    if (UserData.ContainsKey(chatId)) UserData[chatId].Clear();
+
+                    // Начинаем с шага face_photo
+                    await DeleteAndSendNextStep(
+                        botClient,
+                        chatId,
+                        callbackQuery.Message.MessageId,
+                        "face_photo",
+                        "📸 Первый шаг: Отправьте свою фотографию (лицо крупным планом):",
+                        false
+                    );
                     break;
 
                 case "next_after_passport":
@@ -267,6 +401,22 @@ namespace GorbushkaBot.Controllers
 
                 case "market_yes":
                     await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "pavilion_number", "Введите номер вашего павильона:", true);
+                    break;
+
+                case "next_after_pavilion":
+                    await DeleteAndSendNextStep(
+                        botClient,
+                        chatId,
+                        callbackQuery.Message.MessageId,
+                        "completed",
+                        "Заявка заполнена.\n\nВыберите действие:",
+                        false,
+                        new InlineKeyboardMarkup(new[]
+                        {
+                        new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
+                        new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
+                        })
+                    );
                     break;
 
                 case "market_no":
@@ -302,12 +452,32 @@ namespace GorbushkaBot.Controllers
                             var folderUrl = await _driveService.CreateUserFolderAsync(chatId);
                             var folderId = GetFolderIdFromUrl(folderUrl);
 
-                            // Загружаем фотографии
-                            if (userData.TryGetValue("passport_photo", out var photoIds))
+                            // Загружаем фото лица (одно фото)
+                            if (userData.TryGetValue("face_photo", out var facePhotoId))
                             {
-                                var fileIds = photoIds.Split(',');
+                                await _driveService.UploadPhotosAsync(botClient, folderId,
+                                    new[] { facePhotoId.Split(',')[0] }, // Берем первое фото
+                                    bottoken);
+                            }
+
+                            // Загружаем фото паспорта
+                            if (userData.TryGetValue("passport_photo", out var passportPhotos))
+                            {
+                                var fileIds = passportPhotos.Split(',');
                                 await _driveService.UploadPhotosAsync(botClient, folderId, fileIds, bottoken);
                             }
+
+                            // Загружаем фото павильона (если есть)
+                            if (userData.TryGetValue("pavilion_photo", out var pavilionPhotos))
+                            {
+                                var fileIds = pavilionPhotos.Split(',');
+                                await _driveService.UploadPhotosAsync(botClient, folderId, fileIds, bottoken);
+                            }
+
+                            // Добавляем ссылки в данные для таблицы
+                            userData["face_photo_url"] = folderUrl + "/face.jpg";
+                            userData["passport_photos_url"] = folderUrl + "/passport";
+                            userData["pavilion_photos_url"] = folderUrl + "/pavilion";
 
                             // Сохраняем данные в Google Sheets
                             await _sheetsService.AppendDataAsync(userData, folderUrl);
