@@ -28,20 +28,66 @@ namespace GorbushkaBot
             });
         }
 
-        public async Task<string> CreateUserFolderAsync(long userId)
+        public async Task<Dictionary<string, string>> CreateUserFolderAsync(long userId)
         {
-            var folderMetadata = new Google.Apis.Drive.v3.Data.File
+            var rootFolderMetadata = new Google.Apis.Drive.v3.Data.File
             {
                 Name = $"User_{userId}",
                 MimeType = "application/vnd.google-apps.folder",
                 Parents = new List<string> { _parentFolderId }
             };
 
-            var request = _service.Files.Create(folderMetadata);
-            request.Fields = "id, webViewLink";
-            var folder = await request.ExecuteAsync();
-            return folder.WebViewLink;
+            var rootRequest = _service.Files.Create(rootFolderMetadata);
+            rootRequest.Fields = "id";
+            var rootFolder = await rootRequest.ExecuteAsync();
+            string rootFolderId = rootFolder.Id;
+
+            var subFolders = new Dictionary<string, string>();
+            string[] subFolderNames = { "face", "passport", "pavilion" };
+
+            foreach (var folderName in subFolderNames)
+            {
+                var subFolderMetadata = new Google.Apis.Drive.v3.Data.File
+                {
+                    Name = folderName,
+                    MimeType = "application/vnd.google-apps.folder",
+                    Parents = new List<string> { rootFolderId }
+                };
+
+                var subFolderRequest = _service.Files.Create(subFolderMetadata);
+                subFolderRequest.Fields = "id";
+                var subFolder = await subFolderRequest.ExecuteAsync();
+                subFolders[folderName] = subFolder.Id;
+            }
+
+            subFolders["root"] = rootFolderId; // Добавляем root ID
+            return subFolders;
         }
+
+        public async Task UploadPhotosAsync(ITelegramBotClient botClient, string folderId, IEnumerable<string> fileIds)
+        {
+            using var httpClient = new HttpClient();
+
+            foreach (var fileId in fileIds)
+            {
+                var file = await botClient.GetFileAsync(fileId);
+                var fileUrl = $"https://api.telegram.org/file/bot{_botToken}/{file.FilePath}";
+
+                using var response = await httpClient.GetAsync(fileUrl);
+                using var stream = await response.Content.ReadAsStreamAsync();
+
+                var fileMetadata = new Google.Apis.Drive.v3.Data.File
+                {
+                    Name = $"{fileId}.jpg",
+                    Parents = new List<string> { folderId }
+                };
+
+                var request = _service.Files.Create(fileMetadata, stream, "image/jpeg");
+                request.Fields = "id";
+                await request.UploadAsync();
+            }
+        }
+
 
         public async Task UploadPhotosAsync(ITelegramBotClient botClient, string folderId, IEnumerable<string> fileIds, string bottoken)
         {

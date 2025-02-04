@@ -449,38 +449,32 @@ namespace GorbushkaBot.Controllers
                             var userData = UserData[chatId];
 
                             // Создаем папку в Google Drive
-                            var folderUrl = await _driveService.CreateUserFolderAsync(chatId);
-                            var folderId = GetFolderIdFromUrl(folderUrl);
+                            var folders = await _driveService.CreateUserFolderAsync(chatId);
+                            string rootFolderId = folders["root"];
+                            string faceFolderId = folders["face"];
+                            string passportFolderId = folders["passport"];
+                            string pavilionFolderId = folders["pavilion"];
 
-                            // Загружаем фото лица (одно фото)
                             if (userData.TryGetValue("face_photo", out var facePhotoId))
                             {
-                                await _driveService.UploadPhotosAsync(botClient, folderId,
-                                    new[] { facePhotoId.Split(',')[0] }, // Берем первое фото
-                                    bottoken);
+                                await _driveService.UploadPhotosAsync(botClient, faceFolderId,
+                                    new[] { facePhotoId.Split(',')[0] });
                             }
 
-                            // Загружаем фото паспорта
                             if (userData.TryGetValue("passport_photo", out var passportPhotos))
                             {
-                                var fileIds = passportPhotos.Split(',');
-                                await _driveService.UploadPhotosAsync(botClient, folderId, fileIds, bottoken);
+                                await _driveService.UploadPhotosAsync(botClient, passportFolderId, passportPhotos.Split(','));
                             }
 
-                            // Загружаем фото павильона (если есть)
                             if (userData.TryGetValue("pavilion_photo", out var pavilionPhotos))
                             {
-                                var fileIds = pavilionPhotos.Split(',');
-                                await _driveService.UploadPhotosAsync(botClient, folderId, fileIds, bottoken);
+                                await _driveService.UploadPhotosAsync(botClient, pavilionFolderId, pavilionPhotos.Split(','));
                             }
 
-                            // Добавляем ссылки в данные для таблицы
-                            userData["face_photo"] = folderUrl + "/face.jpg";
-                            userData["passport_photos"] = folderUrl + "/passport";
-                            userData["pavilion_photos"] = folderUrl + "/pavilion";
-
-                            // Сохраняем данные в Google Sheets
-                            await _sheetsService.AppendDataAsync(userData, folderUrl);
+                            userData["face_photo"] = rootFolderId + "/face";
+                            userData["passport_photos"] = rootFolderId + "/passport";
+                            userData["pavilion_photos"] = rootFolderId + "/pavilion";
+                            await _sheetsService.AppendDataAsync(userData, rootFolderId);
 
                             // Обновляем сообщение о успешной отправке
                             await botClient.EditMessageTextAsync(
