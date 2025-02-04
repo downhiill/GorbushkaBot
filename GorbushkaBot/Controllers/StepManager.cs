@@ -227,7 +227,7 @@ namespace GorbushkaBot.Controllers
                     LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
                     return;
                 }
-                SaveUserData(chatId, "phone", message.Text);
+                SaveUserData(chatId, "phone_number", message.Text);
                 await DeleteAndSendNextStep(botClient, chatId, messageId, "passport_number",
                     "Введите номер вашего паспорта (формат: 0000 000000):", true);
             }
