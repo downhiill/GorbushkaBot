@@ -474,11 +474,6 @@ namespace GorbushkaBot.Controllers
                                 await _driveService.UploadPhotosAsync(botClient, folderId, fileIds, bottoken);
                             }
 
-                            // Добавляем ссылки в данные для таблицы
-                            userData["face_photo_url"] = folderUrl + "/face.jpg";
-                            userData["passport_photos_url"] = folderUrl + "/passport";
-                            userData["pavilion_photos_url"] = folderUrl + "/pavilion";
-
                             // Сохраняем данные в Google Sheets
                             await _sheetsService.AppendDataAsync(userData, folderUrl);
 
