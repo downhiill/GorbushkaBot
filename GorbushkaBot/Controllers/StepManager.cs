@@ -214,7 +214,7 @@ namespace GorbushkaBot.Controllers
                     return;
                 }
                 SaveUserData(chatId, "fio", message.Text);
-                await DeleteAndSendNextStep(botClient, chatId, messageId, "passport_number", "Введите номер вашего паспорта:", true);
+                await DeleteAndSendNextStep(botClient, chatId, messageId, "phone_number", "Введите номер вашего телефона:", true);
             }
             else if (step == "phone_number")
             {
@@ -310,7 +310,7 @@ namespace GorbushkaBot.Controllers
             else if (step == "rental_contract")
             {
                 SaveUserData(chatId, "rental_contract", message.Text);
-                await DeleteAndSendNextStep(botClient, chatId, messageId, "pavilion_photo", "Введите номер вашего договора аренды:", true);
+                await DeleteAndSendNextStep(botClient, chatId, messageId, "pavilion_photo", "📷 Отправьте фото вашего павильона:", true);
             }
             else if (step == "pavilion_photo")
             {
