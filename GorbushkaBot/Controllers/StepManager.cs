@@ -494,15 +494,19 @@ namespace GorbushkaBot.Controllers
                                 new[] { InlineKeyboardButton.WithCallbackData("❌ Отклонить", $"reject_{chatId}") }
                             });
 
+                            string companyName = userData.ContainsKey("company_name") ? userData["company_name"] : "Не указано";
+                            string companyActivity = userData.ContainsKey("company_activity") ? userData["company_activity"] : "Не указано";
+
                             string adminMessage = $"📌 Новая заявка от пользователя:\n\n" +
                                 $"👤 ФИО: {userData["fio"]}\n" +
                                 $"📄 Паспорт: {userData["passport_number"]}, {userData["passport_issue_date"]}\n" +
                                 $"🏢 Павильон: {userData["pavilion_number"]}\n" +
-                                $"🏢 Компания: {userData["company_name"]}\n" +
-                                $"📌 Деятельность: {userData["company_activity"]}\n\n" +
+                                $"🏢 Компания: {companyName}\n" +
+                                $"📌 Деятельность: {companyActivity}\n\n" +
                                 $"🖼 Фото: \n[Лицо]({userData["face_photo"]})\n" +
                                 $"[Паспорт]({userData["passport_photos"]})\n" +
                                 $"[Павильон]({userData["pavilion_photos"]})";
+
 
                             await botClient.SendTextMessageAsync(
                                 chatId: adminChatId,
