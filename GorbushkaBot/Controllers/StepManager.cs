@@ -377,7 +377,7 @@ namespace GorbushkaBot.Controllers
                         "📸 Первый шаг: Отправьте свою фотографию (лицо крупным планом):",
                         false
                     );
-                    break;
+                break;
 
                 case "next_after_passport":
                     await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "role", "Выберите свою роль:", false,
@@ -387,7 +387,7 @@ namespace GorbushkaBot.Controllers
                             new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
                             new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
                         }));
-                    break;
+                break;
 
                 case "seller":
                 case "both":
@@ -397,11 +397,11 @@ namespace GorbushkaBot.Controllers
                             new[] { InlineKeyboardButton.WithCallbackData("Да", "market_yes") },
                             new[] { InlineKeyboardButton.WithCallbackData("Нет", "market_no") }
                         }));
-                    break;
+                break;
 
                 case "market_yes":
                     await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "pavilion_number", "Введите номер вашего павильона:", true);
-                    break;
+                break;
 
                 case "next_after_pavilion":
                     await DeleteAndSendNextStep(
@@ -417,11 +417,11 @@ namespace GorbushkaBot.Controllers
                         new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
                         })
                     );
-                    break;
+                break;
 
                 case "market_no":
                     await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "company_name", "Введите название вашей компании:", true);
-                    break;
+                break;
 
                 case "buyer":
                     await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "completed", "Заявка заполнена.\n\nВыберите действие:", false,
@@ -430,7 +430,7 @@ namespace GorbushkaBot.Controllers
                             new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
                             new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
                         }));
-                    break;
+                break;
 
                 case "submit":
                     if (UserData.ContainsKey(chatId))
@@ -485,10 +485,35 @@ namespace GorbushkaBot.Controllers
 
                             await _sheetsService.AppendDataAsync(userData, folders["root"]);
 
+                            // Отправка админу заявки с кнопками одобрения/отклонения
+                            long adminChatId = 8018159474; // Укажи ID админа
+
+                            var approvalKeyboard = new InlineKeyboardMarkup(new[]
+                            {
+                                new[] { InlineKeyboardButton.WithCallbackData("✅ Одобрить", $"approve_{chatId}") },
+                                new[] { InlineKeyboardButton.WithCallbackData("❌ Отклонить", $"reject_{chatId}") }
+                            });
+
+                            string adminMessage = $"📌 Новая заявка от пользователя:\n\n" +
+                                $"👤 ФИО: {userData["fio"]}\n" +
+                                $"📄 Паспорт: {userData["passport_number"]}, {userData["passport_issue_date"]}\n" +
+                                $"🏢 Павильон: {userData["pavilion_number"]}\n" +
+                                $"🏢 Компания: {userData["company_name"]}\n" +
+                                $"📌 Деятельность: {userData["company_activity"]}\n\n" +
+                                $"🖼 Фото: \n[Лицо]({userData["face_photo"]})\n" +
+                                $"[Паспорт]({userData["passport_photos"]})\n" +
+                                $"[Павильон]({userData["pavilion_photos"]})";
+
+                            await botClient.SendTextMessageAsync(
+                                chatId: adminChatId,
+                                text: adminMessage,
+                                parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
+                                replyMarkup: approvalKeyboard);
+
                             await botClient.EditMessageTextAsync(
                                 chatId: chatId,
                                 messageId: callbackQuery.Message.MessageId,
-                                text: "✅ Заявка успешно отправлена!",
+                                text: "✅ Заявка успешно отправлена! Ожидайте подтверждения.",
                                 replyMarkup: new InlineKeyboardMarkup(new[]
                                 {
                                     new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") }
@@ -506,55 +531,30 @@ namespace GorbushkaBot.Controllers
                                 text: "⚠️ Ошибка при отправке. Попробуйте позже.");
                         }
                     }
-                    break;
+                break;
 
-                case "back":
-                    if (UserSteps.ContainsKey(chatId))
+                case "approve":
+                case "reject":
+                    string[] parts = callbackQuery.Data.Split('_');
+                    if (parts.Length == 2 && long.TryParse(parts[1], out long targetChatId))
                     {
-                        var (currentStep, currentMessageId) = UserSteps[chatId];
+                        string decisionText = callbackQuery.Data.StartsWith("approve") ?
+                            "✅ Ваша заявка одобрена! 🎉" :
+                            "❌ Ваша заявка отклонена. Свяжитесь с поддержкой.";
 
-                        // Очищаем данные после текущего шага
-                        ClearUserDataAfterStep(chatId, currentStep);
+                        await botClient.SendTextMessageAsync(
+                            chatId: targetChatId,
+                            text: decisionText);
 
-                        // Определяем предыдущий шаг
-                        var previousSteps = new Dictionary<string, (string step, string message, InlineKeyboardMarkup? keyboard)>
-                        {
-                            { "passport_number", ("fio", "Введите ваше ФИО:", null) },
-                            { "passport_issue_date", ("passport_number", "Введите номер вашего паспорта:", null) },
-                            { "passport", ("passport_issue_date", "Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):", null) },
-                            { "role", ("passport", "Отправьте фото страниц своего паспорта, на которых находятся:\n- ФИО\n- Номер\n- Дата выдачи\n- Прописка\n\nВы можете отправить несколько фото.", null) },
-                            { "pavilion_number", ("role", "Выберите свою роль:", new InlineKeyboardMarkup(new[]
-                                {
-                                    new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
-                                    new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
-                                    new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
-                                })) },
-                            { "company_name", ("role", "Выберите свою роль:", new InlineKeyboardMarkup(new[]
-                                {
-                                    new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
-                                    new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
-                                    new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
-                                })) },
-                            { "company_activity", ("company_name", "Введите название вашей компании:", null) },
-                            { "rental_contract", ("pavilion_number", "Введите номер павильона:", null) }
-                        };
-
-                        if (previousSteps.TryGetValue(currentStep, out var previousStepData))
-                        {
-                            string previousStep = previousStepData.step;
-                            string previousMessage = previousStepData.message;
-                            InlineKeyboardMarkup? keyboard = previousStepData.keyboard;
-
-                            await DeleteAndSendNextStep(botClient, chatId, currentMessageId, previousStep, previousMessage, true, keyboard);
-                        }
+                        await botClient.EditMessageTextAsync(
+                            chatId: callbackQuery.Message.Chat.Id,
+                            messageId: callbackQuery.Message.MessageId,
+                            text: $"📝 Заявка пользователя {(callbackQuery.Data.StartsWith("approve") ? "одобрена ✅" : "отклонена ❌")}.");
                     }
-                    break;
+                break;
             }
-
-            await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
-
-
         }
+
         private string GetFolderIdFromUrl(string url)
         {
             var parts = url.Split(new[] { "folders/" }, StringSplitOptions.None);
