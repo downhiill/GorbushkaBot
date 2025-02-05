@@ -500,7 +500,7 @@ namespace GorbushkaBot.Controllers
                             string adminMessage = $"📌 Новая заявка от пользователя:\n\n" +
                                 $"👤 ФИО: {userData["fio"]}\n" +
                                 $"📄 Паспорт: {userData["passport_number"]}, {userData["passport_issue_date"]}\n" +
-                                $"🏢 Павильон: {userData["pavilion_number"]}\n" +
+                                $"🏢 Павильон: {userData["pavilion_number"]}, {userData["rental_contract"]}\n" +
                                 $"🏢 Компания: {companyName}\n" +
                                 $"📌 Деятельность: {companyActivity}\n\n" +
                                 $"🖼 Фото: \n[Лицо]({userData["face_photo"]})\n" +
