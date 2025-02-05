@@ -540,12 +540,19 @@ namespace GorbushkaBot.Controllers
                 case "approve":
                 case "reject":
                     string[] parts = callbackQuery.Data.Split('_');
-                    if (parts.Length == 2 && long.TryParse(parts[1], out long targetChatId))
-                    {
-                        string decisionText = callbackQuery.Data.StartsWith("approve") ?
-                            "✅ Ваша заявка одобрена! 🎉" :
-                            "❌ Ваша заявка отклонена. Свяжитесь с поддержкой.";
 
+                    if (parts.Length < 2 || !long.TryParse(parts[1], out long targetChatId))
+                    {
+                        Console.WriteLine($"Ошибка: некорректные данные callback: {callbackQuery.Data}");
+                        return;
+                    }
+
+                    string decisionText = callbackQuery.Data.StartsWith("approve") ?
+                        "✅ Ваша заявка одобрена! 🎉" :
+                        "❌ Ваша заявка отклонена. Свяжитесь с поддержкой.";
+
+                    try
+                    {
                         await botClient.SendTextMessageAsync(
                             chatId: targetChatId,
                             text: decisionText);
@@ -555,7 +562,14 @@ namespace GorbushkaBot.Controllers
                             messageId: callbackQuery.Message.MessageId,
                             text: $"📝 Заявка пользователя {(callbackQuery.Data.StartsWith("approve") ? "одобрена ✅" : "отклонена ❌")}.");
                     }
-                break;
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Ошибка при обработке заявки: {ex.Message}");
+                    }
+
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
+                    break;
+
             }
         }
 
