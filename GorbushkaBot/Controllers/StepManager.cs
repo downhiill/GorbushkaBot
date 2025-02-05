@@ -486,7 +486,7 @@ namespace GorbushkaBot.Controllers
                             await _sheetsService.AppendDataAsync(userData, folders["root"]);
 
                             // Отправка админу заявки с кнопками одобрения/отклонения
-                            long adminChatId = 8018159474; // Укажи ID админа
+                            long[] adminChatIds = { 8018159474, 448145168 }; // Укажи ID админа
 
                             var approvalKeyboard = new InlineKeyboardMarkup(new[]
                             {
@@ -508,11 +508,15 @@ namespace GorbushkaBot.Controllers
                                 $"[Павильон]({userData["pavilion_photos"]})";
 
 
-                            await botClient.SendTextMessageAsync(
-                                chatId: adminChatId,
-                                text: adminMessage,
-                                parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
-                                replyMarkup: approvalKeyboard);
+                            // Отправка сообщения всем администраторам
+                            foreach (var adminChatId in adminChatIds)
+                            {
+                                await botClient.SendTextMessageAsync(
+                                    chatId: adminChatId,
+                                    text: adminMessage,
+                                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
+                                    replyMarkup: approvalKeyboard);
+                            }
 
                             await botClient.EditMessageTextAsync(
                                 chatId: chatId,
