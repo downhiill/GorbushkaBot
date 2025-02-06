@@ -590,7 +590,6 @@ namespace GorbushkaBot.Controllers
                         string previousStep = currentStep switch
                         {
                             "fio" => "face_photo",
-                            "phone_number"
                             "role" => "passport",
                             "market_question" => "role",
                             "pavilion_number" => "market_question",
