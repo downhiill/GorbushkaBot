@@ -496,16 +496,23 @@ namespace GorbushkaBot.Controllers
 
                             string companyName = userData.ContainsKey("company_name") ? userData["company_name"] : "Не указано";
                             string companyActivity = userData.ContainsKey("company_activity") ? userData["company_activity"] : "Не указано";
+                            string fio = userData.ContainsKey("fio") ? userData["fio"] : "Не указано";
+                            string passportNumber = userData.ContainsKey("passport_number") ? userData["passport_number"] : "Не указано";
+                            string passportIssueDate = userData.ContainsKey("passport_issue_date") ? userData["passport_issue_date"] : "Не указано";
+                            string pavilionNumber = userData.ContainsKey("pavilion_number") ? userData["pavilion_number"] : "Не указано";
+                            string rentalContract = userData.ContainsKey("rental_contract") ? userData["rental_contract"] : "Не указано";
+                            string facePhoto = userData.ContainsKey("face_photo") ? userData["face_photo"] : "Не указано";
 
                             string adminMessage = $"📌 Новая заявка от пользователя:\n\n" +
-                                $"👤 ФИО: {userData["fio"]}\n" +
-                                $"📄 Паспорт: {userData["passport_number"]}, {userData["passport_issue_date"]}\n" +
-                                $"🏢 Павильон: {userData["pavilion_number"]}, {userData["rental_contract"]}\n" +
+                                $"👤 ФИО: {fio}\n" +
+                                $"📄 Паспорт: {passportNumber}, {passportIssueDate}\n" +
+                                $"🏢 Павильон: {pavilionNumber}, {rentalContract}\n" +
                                 $"🏢 Компания: {companyName}\n" +
                                 $"📌 Деятельность: {companyActivity}\n\n" +
-                                $"🖼 Фото: \n[Лицо]({userData["face_photo"]})\n" +
-                                $"[Паспорт]({userData["passport_photos"]})\n" +
-                                $"[Павильон]({userData["pavilion_photos"]})";
+                                $"🖼 Фото: \n[Лицо]({facePhoto})\n" +
+                                $"[Паспорт]({passportPhotos})\n" +
+                                $"[Павильон]({pavilionPhotos})";
+
 
 
                             // Отправка сообщения всем администраторам
@@ -582,7 +589,9 @@ namespace GorbushkaBot.Controllers
                         // Определяем предыдущий шаг вручную
                         string previousStep = currentStep switch
                         {
-                            "role" => "face_photo",
+                            "fio" => "face_photo",
+                            "phone_number"
+                            "role" => "passport",
                             "market_question" => "role",
                             "pavilion_number" => "market_question",
                             "company_name" => "pavilion_number",
