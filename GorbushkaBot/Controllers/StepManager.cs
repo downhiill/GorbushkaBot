@@ -486,7 +486,7 @@ namespace GorbushkaBot.Controllers
                             await _sheetsService.AppendDataAsync(userData, folders["root"]);
 
                             // Отправка админу заявки с кнопками одобрения/отклонения
-                            long[] adminChatIds = { 8018159474, 448145168 }; // Укажи ID админа
+                            long[] adminChatIds = { 8018159474, 448145168, 388009185 }; // Укажи ID админа
 
                             var approvalKeyboard = new InlineKeyboardMarkup(new[]
                             {
@@ -573,6 +573,54 @@ namespace GorbushkaBot.Controllers
 
                     await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
                     break;
+
+                case "back":
+                    if (UserSteps.TryGetValue(chatId, out var currentStepData))
+                    {
+                        string currentStep = currentStepData.step;
+
+                        // Определяем предыдущий шаг вручную
+                        string previousStep = currentStep switch
+                        {
+                            "role" => "face_photo",
+                            "market_question" => "role",
+                            "pavilion_number" => "market_question",
+                            "company_name" => "pavilion_number",
+                            _ => "face_photo" // начальный шаг
+                        };
+
+                        // Тексты и клавиатуры для предыдущих шагов
+                        var stepData = new Dictionary<string, (string, bool, InlineKeyboardMarkup?)>
+                        {
+                            { "face_photo", ("📸 Первый шаг: Отправьте свою фотографию (лицо крупным планом):", false, null) },
+                            { "role", ("Выберите свою роль:", false, new InlineKeyboardMarkup(new[]
+                                {
+                                    new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
+                                    new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
+                                    new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
+                                }))
+                            },
+                            { "market_question", ("Вы с рынка?", false, new InlineKeyboardMarkup(new[]
+                                {
+                                    new[] { InlineKeyboardButton.WithCallbackData("Да", "market_yes") },
+                                    new[] { InlineKeyboardButton.WithCallbackData("Нет", "market_no") }
+                                }))
+                            },
+                            { "pavilion_number", ("Введите номер вашего павильона:", true, null) },
+                            { "company_name", ("Введите название вашей компании:", true, null) },
+                        };
+
+                        if (stepData.TryGetValue(previousStep, out var stepInfo))
+                        {
+                            await DeleteAndSendNextStep(botClient, chatId, currentStepData.messageId, previousStep, stepInfo.Item1, stepInfo.Item2, stepInfo.Item3);
+
+                            // Обновляем текущий шаг
+                            UserSteps[chatId] = (previousStep, currentStepData.messageId);
+                        }
+                    }
+                    break;
+
+
 
             }
         }
