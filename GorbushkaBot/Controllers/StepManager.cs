@@ -481,8 +481,7 @@ namespace GorbushkaBot.Controllers
 
                     await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
 
-                    UserData.Remove(chatId);
-                    UserSteps.Remove(chatId);
+                    
                     break;
 
                 case "back":
