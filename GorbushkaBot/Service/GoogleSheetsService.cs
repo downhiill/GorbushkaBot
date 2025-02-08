@@ -15,7 +15,7 @@ namespace GorbushkaBot.Service
         private const string Range = "Лист1!A:K";
         private readonly UserApplicationService _userApplicationService;
 
-        public GoogleSheetsService(string credentialPath, string spreadsheetId)
+        public GoogleSheetsService(string credentialPath, string spreadsheetId, UserApplicationService userApplicationService)
         {
             var credential = GoogleCredential.FromFile(credentialPath)
                 .CreateScoped(SheetsService.Scope.Spreadsheets);
@@ -27,6 +27,7 @@ namespace GorbushkaBot.Service
             });
 
             _spreadsheetId = spreadsheetId;
+            _userApplicationService = userApplicationService; // Инициализация
         }
 
         public async Task AppendDataAsync(Dictionary<string, string> userData, string folderUrl)
