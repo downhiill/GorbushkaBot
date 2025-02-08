@@ -590,7 +590,7 @@ namespace GorbushkaBot.Controllers
                         var stepOrder = new List<string>
                         {
                             "face_photo", "fio", "phone_number", "passport_number", "passport_issue_date",
-                            "registration_address", "passport", "company_name", "company_activity",
+                            "registration_address", "passport", "role", "market_question", "company_name", "company_activity",
                             "pavilion_number", "rental_contract", "pavilion_photo"
                         };
 
