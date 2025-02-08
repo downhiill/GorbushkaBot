@@ -2,8 +2,10 @@
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4.Data;
 using Google.Apis.Sheets.v4;
+using GorbushkaBot.Model;
+using GorbushkaBot.AppDbContext;
 
-namespace GorbushkaBot
+namespace GorbushkaBot.Service
 {
     // Сервис для работы с Google Sheets
     public class GoogleSheetsService
@@ -11,6 +13,7 @@ namespace GorbushkaBot
         private readonly SheetsService _service;
         private readonly string _spreadsheetId;
         private const string Range = "Лист1!A:K";
+        private readonly UserApplicationService _userApplicationService;
 
         public GoogleSheetsService(string credentialPath, string spreadsheetId)
         {
@@ -49,6 +52,8 @@ namespace GorbushkaBot
             var request = _service.Spreadsheets.Values.Append(valueRange, _spreadsheetId, Range);
             request.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
             await request.ExecuteAsync();
+
+            await _userApplicationService.SaveUserApplicationAsync(userData, folderUrl);
         }
 
         public async Task DeleteDataAsync(int rowIndex)
@@ -88,6 +93,8 @@ namespace GorbushkaBot
             var request = _service.Spreadsheets.Values.Append(valueRange, _spreadsheetId, "Пользователь!A:M");
             request.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
             await request.ExecuteAsync();
+
+            
         }
 
         public async Task<int> GetRowIndexFromCallbackData(string callbackData)

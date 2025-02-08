@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GorbushkaBot.Service;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -509,8 +510,6 @@ namespace GorbushkaBot.Controllers
                                 $"🖼 Фото: \n[Лицо]({facePhoto})\n" +
                                 $"[Паспорт]({passportPhotos})\n" +
                                 $"[Павильон]({pavilionPhotos})";
-
-
 
                             // Отправка сообщения всем администраторам
                             foreach (var adminChatId in adminChatIds)

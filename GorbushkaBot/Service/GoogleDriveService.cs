@@ -3,7 +3,7 @@ using Google.Apis.Drive.v3;
 using Google.Apis.Services;
 using Telegram.Bot;
 
-namespace GorbushkaBot
+namespace GorbushkaBot.Service
 {
     // Сервис для работы с Google Drive
     public class GoogleDriveService

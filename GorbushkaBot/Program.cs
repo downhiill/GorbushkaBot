@@ -1,4 +1,6 @@
-using GorbushkaBot.Controllers;
+using GorbushkaBot.AppDbContext;
+using GorbushkaBot.Service;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +11,12 @@ builder.Services.AddSwaggerGen();
 
 // Add Telegram bot service
 builder.Services.AddSingleton<TelegramBotService>();
+
+builder.Services.AddScoped<UserApplicationService>();
+builder.Services.AddScoped<GoogleSheetsService>();
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
