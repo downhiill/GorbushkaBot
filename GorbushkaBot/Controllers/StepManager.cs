@@ -180,7 +180,21 @@ namespace GorbushkaBot.Controllers
                 LastErrorMessages.Remove(chatId);
             }
 
-            if (step == "face_photo")
+            if (step == "fio")
+            {
+                if (!Regex.IsMatch(message.Text, "^[А-Яа-яA-Za-z ]+$"))
+                {
+                    var errorMsg = await botClient.SendTextMessageAsync(
+                        chatId,
+                        "Ошибка: ФИО должно содержать только буквы и пробелы."
+                    );
+                    LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
+                    return;
+                }
+                SaveUserData(chatId, "fio", message.Text);
+                await DeleteAndSendNextStep(botClient, chatId, messageId, "face_photo", "📷 Отправьте фото лица:", true);
+            }
+            else if (step == "face_photo")
             {
                 if (message.Photo == null)
                 {
@@ -197,24 +211,10 @@ namespace GorbushkaBot.Controllers
                     botClient,
                     chatId,
                     messageId,
-                    "fio",
-                    "✅ Фото принято!\n\nТеперь введите ваше ФИО:",
+                    "phone_number",
+                    "✅ Фото принято!\n\nТеперь введите ваш номер телефона:",
                     true
                 );
-            }
-            else if (step == "fio")
-            {
-                if (!Regex.IsMatch(message.Text, "^[А-Яа-яA-Za-z ]+$"))
-                {
-                    var errorMsg = await botClient.SendTextMessageAsync(
-                        chatId,
-                        "Ошибка: ФИО должно содержать только буквы и пробелы."
-                    );
-                    LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
-                    return;
-                }
-                SaveUserData(chatId, "fio", message.Text);
-                await DeleteAndSendNextStep(botClient, chatId, messageId, "phone_number", "Введите номер вашего телефона:", true);
             }
             else if (step == "phone_number")
             {
@@ -222,16 +222,47 @@ namespace GorbushkaBot.Controllers
                 {
                     var errorMsg = await botClient.SendTextMessageAsync(
                         chatId,
-                        "Ошибка: Введите корректный номер телефона (формат: +7 1234567891)."
+                        "Ошибка: Введите корректный номер телефона (формат: +71234567891)."
                     );
                     LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
                     return;
                 }
                 SaveUserData(chatId, "phone_number", message.Text);
-                await DeleteAndSendNextStep(botClient, chatId, messageId, "passport_number",
-                    "Введите номер вашего паспорта (формат: 0000 000000):", true);
+                await DeleteAndSendNextStep(botClient, chatId, messageId, "role", "Выберите свою роль:", false,
+                    new InlineKeyboardMarkup(new[]
+                    {
+                new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
+                new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
+                new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
+                    }));
             }
-            else if (step == "passport_number")
+            else if (step == "citizenship")
+            {
+                // Этот шаг обрабатывается в HandleCallbackQuery
+            }
+            else if (step == "passport_rus")
+            {
+                if (message.Photo == null)
+                {
+                    var errorMsg = await botClient.SendTextMessageAsync(
+                        chatId,
+                        "Ошибка: Отправьте фото первой страницы паспорта."
+                    );
+                    LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
+                    return;
+                }
+
+                SaveUserPhoto(chatId, "passport_photo", message.Photo);
+                await DeleteAndSendNextStep(
+                    botClient,
+                    chatId,
+                    messageId,
+                    "passport_rus_data",
+                    "✅ Фото принято!\n\nТеперь введите номер паспорта (формат: 0000 000000):",
+                    true
+                );
+            }
+            else if (step == "passport_rus_data")
             {
                 if (!Regex.IsMatch(message.Text, @"^\d{4} \d{6}$"))
                 {
@@ -262,45 +293,7 @@ namespace GorbushkaBot.Controllers
             else if (step == "registration_address")
             {
                 SaveUserData(chatId, "registration_address", message.Text);
-                await DeleteAndSendNextStep(botClient, chatId, messageId, "passport",
-                    "📷 Отправьте фото страниц своего паспорта, на которых находятся:\n\n" +
-                    "• ФИО\n" +
-                    "• Номер\n" +
-                    "• Дата выдачи\n" +
-                    "• Прописка\n\n" +
-                    "Можно отправить несколько фото за раз.",
-                    true);
-            }
-            else if (step == "passport")
-            {
-                if (message.Photo == null)
-                {
-                    var errorMsg = await botClient.SendTextMessageAsync(
-                        chatId,
-                        "Ошибка: Отправьте именно фото, а не текст или документ."
-                    );
-                    LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
-                    return;
-                }
-
-                // Сохраняем все фото
-                SaveUserPhoto(chatId, "passport_photo", message.Photo);
-
-                // Удаляем предыдущее сообщение с инструкцией и ошибками
-                await DeleteAndSendNextStep(
-                    botClient,
-                    chatId,
-                    messageId,
-                    "passport",
-                    "Фото получено! Если у вас есть ещё страницы, отправьте их. Если все страницы отправлены, нажмите кнопку 'Далее'.",
-                    false,
-                    new InlineKeyboardMarkup(new[] { new[] { InlineKeyboardButton.WithCallbackData("Далее", "next_after_passport") } })
-                );
-            }
-            else if (step == "company_name")
-            {
-                SaveUserData(chatId, "company_name", message.Text);
-                await DeleteAndSendNextStep(botClient, chatId, messageId, "company_activity", "Введите вид деятельности вашей компании:", true);
+                await DeleteAndSendNextStep(botClient, chatId, messageId, "pavilion_number", "Введите номер вашего павильона:", true);
             }
             else if (step == "pavilion_number")
             {
@@ -329,25 +322,15 @@ namespace GorbushkaBot.Controllers
                     botClient,
                     chatId,
                     messageId,
-                    "pavilion_photo",
-                    "✅ Фото принято! Если нужно добавить ещё фото, отправьте их. Иначе нажмите 'Далее'.",
+                    "completed",
+                    "✅ Фото принято! Заявка заполнена.\n\nВыберите действие:",
                     false,
                     new InlineKeyboardMarkup(new[]
                     {
-                    new[] { InlineKeyboardButton.WithCallbackData("Далее", "next_after_pavilion") }
+                new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
+                new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
                     })
                 );
-            }
-            else if (step == "company_activity" )
-            {
-                SaveUserData(chatId, "company_activity", message.Text);
-
-                await DeleteAndSendNextStep(botClient, chatId, messageId, "completed", "Заявка заполнена.\n\nВыберите действие:", false,
-                    new InlineKeyboardMarkup(new[]
-                    {
-                        new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
-                        new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
-                    }));
             }
         }
 
@@ -390,18 +373,23 @@ namespace GorbushkaBot.Controllers
                 break;
 
                 case "seller":
+                case "buyer":
                 case "both":
-                    await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "market_question", "Вы с рынка?", false,
+                    await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "citizenship", "Уточните ваше гражданство:", false,
                         new InlineKeyboardMarkup(new[]
                         {
-                            new[] { InlineKeyboardButton.WithCallbackData("Да", "market_yes") },
-                            new[] { InlineKeyboardButton.WithCallbackData("Нет", "market_no") }
+                    new[] { InlineKeyboardButton.WithCallbackData("РФ", "passport_rus") },
+                    new[] { InlineKeyboardButton.WithCallbackData("Другое", "passport_other") }
                         }));
-                break;
+                    break;
 
-                case "market_yes":
-                    await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "pavilion_number", "Введите номер вашего павильона:", true);
-                break;
+                case "passport_rus":
+                    await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "passport_rus", "📷 Отправьте фото первой страницы паспорта:", true);
+                    break;
+
+                case "passport_other":
+                    await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "passport_other", "📷 Отправьте фото первой страницы паспорта:", true);
+                    break;
 
                 case "next_after_pavilion":
                     await DeleteAndSendNextStep(
@@ -421,15 +409,6 @@ namespace GorbushkaBot.Controllers
 
                 case "market_no":
                     await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "company_name", "Введите название вашей компании:", true);
-                break;
-
-                case "buyer":
-                    await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "completed", "Заявка заполнена.\n\nВыберите действие:", false,
-                        new InlineKeyboardMarkup(new[]
-                        {
-                            new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
-                            new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
-                        }));
                 break;
 
                 case "submit":
@@ -593,7 +572,7 @@ namespace GorbushkaBot.Controllers
                         var stepOrder = new List<string>
                         {
                             "face_photo", "fio", "phone_number", "passport_number", "passport_issue_date",
-                            "registration_address", "passport", "role", "market_question", "company_name", "company_activity",
+                            "registration_address", "passport", "role", "company_name", "company_activity",
                             "pavilion_number", "rental_contract", "pavilion_photo"
                         };
 
