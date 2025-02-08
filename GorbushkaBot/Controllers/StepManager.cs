@@ -75,100 +75,6 @@ namespace GorbushkaBot.Controllers
             }
         }
 
-
-
-
-        private void ClearUserDataAfterStep(long chatId, string step)
-        {
-            if (!UserData.ContainsKey(chatId)) return;
-
-            var stepsToClear = new List<string>();
-
-            switch (step)
-            {
-                case "face_photo":
-                    stepsToClear.AddRange(new[] {
-                    "fio", "phone_number", "passport_number", "passport_issue_date",
-                    "registration_address", "passport", "role", "company_name",
-                    "company_activity", "pavilion_number", "pavilion_photo", "rental_contract"
-                    });
-                    break;
-
-                case "fio":
-                    stepsToClear.AddRange(new[] {
-                    "phone_number", "passport_number", "passport_issue_date",
-                    "registration_address", "passport", "role", "company_name",
-                    "company_activity", "pavilion_number", "pavilion_photo", "rental_contract"
-                    });
-                    break;
-
-                case "phone_number":
-                    stepsToClear.AddRange(new[] {
-                    "passport_number", "passport_issue_date", "registration_address",
-                    "passport", "role", "company_name", "company_activity",
-                    "pavilion_number", "pavilion_photo", "rental_contract"
-                    });
-                    break;
-
-                case "passport_number":
-                    stepsToClear.AddRange(new[] {
-                    "passport_issue_date", "registration_address", "passport",
-                    "role", "company_name", "company_activity", "pavilion_number",
-                    "pavilion_photo", "rental_contract"
-                    });
-                    break;
-
-                case "passport_issue_date":
-                    stepsToClear.AddRange(new[] {
-                    "registration_address", "passport", "role", "company_name",
-                    "company_activity", "pavilion_number", "pavilion_photo", "rental_contract"
-                    });
-                    break;
-
-                case "registration_address":
-                    stepsToClear.AddRange(new[] {
-                    "passport", "role", "company_name", "company_activity",
-                    "pavilion_number", "pavilion_photo", "rental_contract"
-                    });
-                    break;
-
-                case "passport":
-                    stepsToClear.AddRange(new[] {
-                    "role", "company_name", "company_activity", "pavilion_number",
-                    "pavilion_photo", "rental_contract"
-                    });
-                    break;
-
-                case "role":
-                    stepsToClear.AddRange(new[] {
-                    "company_name", "company_activity", "pavilion_number",
-                    "pavilion_photo", "rental_contract"
-                    });
-                    break;
-
-                case "company_name":
-                    stepsToClear.AddRange(new[] {
-                    "company_activity", "pavilion_number", "pavilion_photo", "rental_contract"
-                    });
-                    break;
-
-                case "pavilion_number":
-                    stepsToClear.AddRange(new[] {
-                    "pavilion_photo", "rental_contract"
-                    });
-                    break;
-
-                case "pavilion_photo":
-                    stepsToClear.AddRange(new[] { "rental_contract" });
-                    break;
-            }
-
-            foreach (var key in stepsToClear.Where(UserData[chatId].ContainsKey))
-            {
-                UserData[chatId].Remove(key);
-            }
-        }
-
         public async Task HandleMessage(ITelegramBotClient botClient, long chatId, Message message)
         {
             if (!UserSteps.ContainsKey(chatId)) return;
@@ -220,7 +126,7 @@ namespace GorbushkaBot.Controllers
             }
             else if (step == "phone_number")
             {
-                if (!Regex.IsMatch(message.Text, @"^\+7\d{10}$"))
+                if (!Regex.IsMatch(message.Text, @"^\+\d{10}$"))
                 {
                     var errorMsg = await botClient.SendTextMessageAsync(
                         chatId,
@@ -477,7 +383,8 @@ namespace GorbushkaBot.Controllers
                                     pavilionPhotos.Split(',')
                                 );
                             }
-
+                            UserData.Remove(chatId);
+                            UserSteps.Remove(chatId);
                             // Обновляем данные для таблицы
                             userData["face_photo"] = $"https://drive.google.com/drive/folders/{folders["face"]}";
                             userData["passport_photo"] = $"https://drive.google.com/drive/folders/{folders["passport"]}";
@@ -530,8 +437,7 @@ namespace GorbushkaBot.Controllers
                                     new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") }
                                 }));
 
-                            UserData.Remove(chatId);
-                            UserSteps.Remove(chatId);
+                            
                         }
                         catch (Exception ex)
                         {

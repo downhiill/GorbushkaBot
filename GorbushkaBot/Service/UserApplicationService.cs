@@ -22,10 +22,10 @@ namespace GorbushkaBot.Service
                 PassportNumber = userData["passport_number"],
                 PassportIssueDate = userData["passport_issue_date"],
                 RegistrationAddress = userData["registration_address"],
-                PassportPhotos = userData["passport_photos"],
+                PassportPhotos = userData["passport_photo"],
                 PavilionNumber = userData.GetValueOrDefault("pavilion_number", ""),
                 RentalContract = userData.GetValueOrDefault("rental_contract", ""),
-                PavilionPhotos = userData["pavilion_photos"],
+                PavilionPhotos = userData["pavilion_photo"],
                 FolderUrl = folderUrl
             };
 
