@@ -585,54 +585,59 @@ namespace GorbushkaBot.Controllers
                     if (UserSteps.TryGetValue(chatId, out var currentStepData))
                     {
                         string currentStep = currentStepData.step;
+                        string previousStep = null;
 
-                        // Определяем предыдущий шаг вручную
-                        string previousStep = currentStep switch
+                        // Определяем предыдущий шаг
+                        var stepOrder = new List<string>
                         {
-                            "fio" => "face_photo",
-                            "phone_number" => "fio",
-                            "passport_number" => "phone_number",
-                            "passport_issue_date" => "passport_number",
-                            "registration_address" => "passport_issue_date",
-                            "passport" => "registration_address",
-                            "role" => "passport",
-                            "pavilion_number" => "market_question",
-                            "rental_contract" => "pavilion_number",
-                            "pavilion_photo" => "rental_contract",
-                            "company_name" => "market_question",
-                            "company_activity" => "company_name" 
+                            "face_photo", "fio", "phone_number", "passport_number", "passport_issue_date", "registration_address",
+                            "passport", "role", "market_question", "pavilion_number", "rental_contract", "pavilion_photo", "company_name", "company_activity"
                         };
 
-                        // Тексты и клавиатуры для предыдущих шагов
-                        var stepData = new Dictionary<string, (string, bool, InlineKeyboardMarkup?)>
-                        {
-                            { "face_photo", ("📸 Первый шаг: Отправьте свою фотографию (лицо крупным планом):", false, null) },
-                            { "role", ("Выберите свою роль:", false, new InlineKeyboardMarkup(new[]
-                                {
-                                    new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
-                                    new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
-                                    new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
-                                }))
-                            },
-                            { "market_question", ("Вы с рынка?", false, new InlineKeyboardMarkup(new[]
-                                {
-                                    new[] { InlineKeyboardButton.WithCallbackData("Да", "market_yes") },
-                                    new[] { InlineKeyboardButton.WithCallbackData("Нет", "market_no") }
-                                }))
-                            },
-                            { "pavilion_number", ("Введите номер вашего павильона:", true, null) },
-                            { "company_name", ("Введите название вашей компании:", true, null) },
-                        };
+                        int currentIndex = stepOrder.IndexOf(currentStep);
+                        if (currentIndex > 0)
+                            previousStep = stepOrder[currentIndex - 1];
 
-                        if (stepData.TryGetValue(previousStep, out var stepInfo))
+                        if (previousStep != null)
                         {
-                            await DeleteAndSendNextStep(botClient, chatId, currentStepData.messageId, previousStep, stepInfo.Item1, stepInfo.Item2, stepInfo.Item3);
+                            var stepData = new Dictionary<string, (string, bool, InlineKeyboardMarkup?)>
+                            {
+                                { "face_photo", ("📸 Первый шаг: Отправьте свою фотографию (лицо крупным планом):", false, null) },
+                                { "fio", ("Введите ваше ФИО:", true, null) },
+                                { "phone_number", ("Введите номер вашего телефона:", true, null) },
+                                { "passport_number", ("Введите номер вашего паспорта (формат: 0000 000000):", true, null) },
+                                { "passport_issue_date", ("Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):", true, null) },
+                                { "registration_address", ("Введите свой адрес прописки:", true, null) },
+                                { "passport", ("📷 Отправьте фото паспорта с данными:", false, null) },
+                                { "role", ("Выберите свою роль:", false, new InlineKeyboardMarkup(new[]
+                                    {
+                                        new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
+                                        new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
+                                        new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
+                                    }))
+                                },
+                                { "market_question", ("Вы с рынка?", false, new InlineKeyboardMarkup(new[]
+                                    {
+                                        new[] { InlineKeyboardButton.WithCallbackData("Да", "market_yes") },
+                                        new[] { InlineKeyboardButton.WithCallbackData("Нет", "market_no") }
+                                    }))
+                                },
+                                { "pavilion_number", ("Введите номер вашего павильона:", true, null) },
+                                { "rental_contract", ("Введите номер вашего договора аренды:", true, null) },
+                                { "pavilion_photo", ("📷 Отправьте фото вашего павильона:", true, null) },
+                                { "company_name", ("Введите название вашей компании:", true, null) },
+                                { "company_activity", ("Введите вид деятельности вашей компании:", true, null) }
+                            };
 
-                            // Обновляем текущий шаг
-                            UserSteps[chatId] = (previousStep, currentStepData.messageId);
+                            if (stepData.TryGetValue(previousStep, out var stepInfo))
+                            {
+                                await DeleteAndSendNextStep(botClient, chatId, currentStepData.messageId, previousStep, stepInfo.Item1, stepInfo.Item2, stepInfo.Item3);
+                                UserSteps[chatId] = (previousStep, currentStepData.messageId);
+                            }
                         }
                     }
                     break;
+
 
 
 
