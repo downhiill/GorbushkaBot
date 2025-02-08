@@ -10,7 +10,7 @@ namespace GorbushkaBot
     {
         private readonly SheetsService _service;
         private readonly string _spreadsheetId;
-        private const string Range = "Лист1!A:M";
+        private const string Range = "Лист1!A:K";
 
         public GoogleSheetsService(string credentialPath, string spreadsheetId)
         {
@@ -40,8 +40,6 @@ namespace GorbushkaBot
                     userData["passport_issue_date"],
                     userData["registration_address"],
                     userData["passport_photos"],
-                    userData.GetValueOrDefault("company_name", ""),
-                    userData.GetValueOrDefault("company_activity", ""),
                     userData.GetValueOrDefault("pavilion_number", ""),
                     userData.GetValueOrDefault("rental_contract", ""),
                     userData["pavilion_photos"]
@@ -81,8 +79,6 @@ namespace GorbushkaBot
                     userData["passport_issue_date"],
                     userData["registration_address"],
                     userData["passport_photos"],
-                    userData.GetValueOrDefault("company_name", ""),
-                    userData.GetValueOrDefault("company_activity", ""),
                     userData.GetValueOrDefault("pavilion_number", ""),
                     userData.GetValueOrDefault("rental_contract", ""),
                     userData["pavilion_photos"]

@@ -262,6 +262,28 @@ namespace GorbushkaBot.Controllers
                     true
                 );
             }
+            else if (step == "passport_other")
+            {
+                if (message.Photo == null)
+                {
+                    var errorMsg = await botClient.SendTextMessageAsync(
+                        chatId,
+                        "Ошибка: Отправьте фото первой страницы паспорта."
+                    );
+                    LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
+                    return;
+                }
+
+                SaveUserPhoto(chatId, "passport_photo", message.Photo);
+                await DeleteAndSendNextStep(
+                    botClient,
+                    chatId,
+                    messageId,
+                    "passport_rus_data",
+                    "✅ Фото принято!\n\nТеперь введите номер паспорта (формат: 0000 000000):",
+                    true
+                );
+            }
             else if (step == "passport_rus_data")
             {
                 if (!Regex.IsMatch(message.Text, @"^\d{4} \d{6}$"))
@@ -351,7 +373,7 @@ namespace GorbushkaBot.Controllers
                     // Очищаем предыдущие данные
                     if (UserData.ContainsKey(chatId)) UserData[chatId].Clear();
 
-                    // Начинаем с шага face_photo
+                    // Начинаем с шага fio
                     await DeleteAndSendNextStep(
                         botClient,
                         chatId,
@@ -635,7 +657,7 @@ namespace GorbushkaBot.Controllers
             }
 
             // Добавляем кнопку "Назад", если это не начальный шаг
-            if (nextStep != "role" && nextStep != "face_photo" && nextStep != "market_question" && nextStep != "completed") // Назад добавляется всегда, кроме первого шага и шага выбора роли
+            if (nextStep != "role" && nextStep != "completed") // Назад добавляется всегда, кроме первого шага и шага выбора роли
             {
                 var backButton = InlineKeyboardButton.WithCallbackData("⬅️ Назад", "back");
                 if (keyboard == null)
