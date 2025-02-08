@@ -502,6 +502,8 @@ namespace GorbushkaBot.Controllers
                             string pavilionNumber = userData.ContainsKey("pavilion_number") ? userData["pavilion_number"] : "Не указано";
                             string rentalContract = userData.ContainsKey("rental_contract") ? userData["rental_contract"] : "Не указано";
                             string facePhoto = userData.ContainsKey("face_photo") ? userData["face_photo"] : "Не указано";
+                            string passportphotos = userData.ContainsKey("passport_photos") ? userData["passport_photos"] : "Не указано";
+                            string pavilionphotos = userData.ContainsKey("pavilion_photos") ? userData["pavilion_photos"] : "Не указано";
 
                             string adminMessage = $"📌 Новая заявка от пользователя:\n\n" +
                                 $"👤 ФИО: {fio}\n" +
@@ -568,6 +570,22 @@ namespace GorbushkaBot.Controllers
                             chatId: targetChatId,
                             text: decisionText);
 
+                        // Получаем данные из таблицы "Лист1"
+                        var googleSheetsService = new GoogleSheetsService("path_to_credentials.json", "spreadsheet_id");
+                        var rowIndex = await googleSheetsService.GetRowIndexFromCallbackData(callbackQuery.Data);
+
+                        // Получаем строку данных (по индексу) из Лист1
+                        var userData = await googleSheetsService.GetDataFromRow(rowIndex);
+
+                        if (callbackQuery.Data.StartsWith("approve"))
+                        {
+                            // Добавляем данные в таблицу "Пользователь"
+                            await googleSheetsService.AppendUserDataAsync(userData);
+
+                            // Удаляем данные из таблицы "Лист1"
+                            await googleSheetsService.DeleteDataAsync(rowIndex);
+                        }
+
                         await botClient.EditMessageTextAsync(
                             chatId: callbackQuery.Message.Chat.Id,
                             messageId: callbackQuery.Message.MessageId,
@@ -580,7 +598,6 @@ namespace GorbushkaBot.Controllers
 
                     await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
                     break;
-
                 case "back":
                     if (UserSteps.TryGetValue(chatId, out var currentStepData))
                     {
@@ -667,7 +684,7 @@ namespace GorbushkaBot.Controllers
             }
 
             // Добавляем кнопку "Назад", если это не начальный шаг
-            if (nextStep != "role" && nextStep != "face_photo" && nextStep != "market_question") // Назад добавляется всегда, кроме первого шага и шага выбора роли
+            if (nextStep != "role" && nextStep != "face_photo" && nextStep != "market_question" && nextStep != "completed") // Назад добавляется всегда, кроме первого шага и шага выбора роли
             {
                 var backButton = InlineKeyboardButton.WithCallbackData("⬅️ Назад", "back");
                 if (keyboard == null)
