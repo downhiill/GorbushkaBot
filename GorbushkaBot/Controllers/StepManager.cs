@@ -486,7 +486,7 @@ namespace GorbushkaBot.Controllers
                             await _sheetsService.AppendDataAsync(userData, folders["root"]);
 
                             // Отправка админу заявки с кнопками одобрения/отклонения
-                            long[] adminChatIds = { 8018159474, 448145168, 388009185 }; // Укажи ID админа
+                            long[] adminChatIds = { 8018159474, 448145168, 388009185, 7069858455 }; // Укажи ID админа
 
                             var approvalKeyboard = new InlineKeyboardMarkup(new[]
                             {
@@ -570,22 +570,6 @@ namespace GorbushkaBot.Controllers
                             chatId: targetChatId,
                             text: decisionText);
 
-                        // Получаем данные из таблицы "Лист1"
-                        var googleSheetsService = new GoogleSheetsService("path_to_credentials.json", "spreadsheet_id");
-                        var rowIndex = await googleSheetsService.GetRowIndexFromCallbackData(callbackQuery.Data);
-
-                        // Получаем строку данных (по индексу) из Лист1
-                        var userData = await googleSheetsService.GetDataFromRow(rowIndex);
-
-                        if (callbackQuery.Data.StartsWith("approve"))
-                        {
-                            // Добавляем данные в таблицу "Пользователь"
-                            await googleSheetsService.AppendUserDataAsync(userData);
-
-                            // Удаляем данные из таблицы "Лист1"
-                            await googleSheetsService.DeleteDataAsync(rowIndex);
-                        }
-
                         await botClient.EditMessageTextAsync(
                             chatId: callbackQuery.Message.Chat.Id,
                             messageId: callbackQuery.Message.MessageId,
@@ -598,6 +582,7 @@ namespace GorbushkaBot.Controllers
 
                     await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
                     break;
+
                 case "back":
                     if (UserSteps.TryGetValue(chatId, out var currentStepData))
                     {
