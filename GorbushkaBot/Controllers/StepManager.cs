@@ -383,8 +383,7 @@ namespace GorbushkaBot.Controllers
                                     pavilionPhotos.Split(',')
                                 );
                             }
-                            UserData.Remove(chatId);
-                            UserSteps.Remove(chatId);
+                            
                             // Обновляем данные для таблицы
                             userData["face_photo"] = $"https://drive.google.com/drive/folders/{folders["face"]}";
                             userData["passport_photo"] = $"https://drive.google.com/drive/folders/{folders["passport"]}";
@@ -481,6 +480,9 @@ namespace GorbushkaBot.Controllers
                     }
 
                     await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
+
+                    UserData.Remove(chatId);
+                    UserSteps.Remove(chatId);
                     break;
 
                 case "back":
