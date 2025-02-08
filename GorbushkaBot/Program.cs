@@ -10,10 +10,13 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Add Telegram bot service
-builder.Services.AddSingleton<TelegramBotService>();
-
 builder.Services.AddScoped<UserApplicationService>();
 builder.Services.AddScoped<GoogleSheetsService>();
+builder.Services.AddSingleton<TelegramBotService>(serviceProvider =>
+{
+    var userApplicationService = serviceProvider.GetRequiredService<UserApplicationService>();
+    return new TelegramBotService(userApplicationService); // Передаем userApplicationService в конструктор TelegramBotService
+});
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
