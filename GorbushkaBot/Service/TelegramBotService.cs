@@ -21,6 +21,7 @@ public class TelegramBotService
     private readonly ErrorHandler errorHandler;
     private readonly GoogleSheetsService googleSheetsService;
     private readonly GoogleDriveService googleDriveService;
+    private readonly UserApplicationService userApplicationService;
 
     // Добавляем параметр userApplicationService
     public TelegramBotService(UserApplicationService userApplicationService)
@@ -28,7 +29,7 @@ public class TelegramBotService
         botClient = new TelegramBotClient(BotToken);
         googleSheetsService = new GoogleSheetsService(CredentialPath, SpreadsheetId, userApplicationService); // Передаем userApplicationService
         googleDriveService = new GoogleDriveService();
-        stepManager = new StepManager(botClient, googleSheetsService, googleDriveService);
+        stepManager = new StepManager(botClient, googleSheetsService, googleDriveService, userApplicationService);
         keyboardManager = new KeyboardManager();
         errorHandler = new ErrorHandler();
     }
