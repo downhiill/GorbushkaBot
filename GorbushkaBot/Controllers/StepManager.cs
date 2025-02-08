@@ -571,8 +571,8 @@ namespace GorbushkaBot.Controllers
                         // Модифицируем порядок шагов с учётом новых условий
                         var stepOrder = new List<string>
                         {
-                            "face_photo", "fio", "phone_number", "passport_number", "passport_issue_date",
-                            "registration_address", "passport", "role", "company_name", "company_activity",
+                            "fio", "face_photo", "phone_number","role","citizenship","passport_number", "passport_issue_date",
+                            "registration_address", "passport", "company_name", "company_activity",
                             "pavilion_number", "rental_contract", "pavilion_photo"
                         };
 
@@ -606,12 +606,6 @@ namespace GorbushkaBot.Controllers
                                         new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
                                         new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
                                         new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
-                                    })) },
-                                { "market_question", ("Вы с рынка?", false,
-                                    new InlineKeyboardMarkup(new[]
-                                    {
-                                        new[] { InlineKeyboardButton.WithCallbackData("Да", "market_yes") },
-                                        new[] { InlineKeyboardButton.WithCallbackData("Нет", "market_no") }
                                     })) },
                                 { "company_name", ("Введите название вашей компании:", true, null) },
                                 { "company_activity", ("Введите вид деятельности вашей компании:", true, null) },
