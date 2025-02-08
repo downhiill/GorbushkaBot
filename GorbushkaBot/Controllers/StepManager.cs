@@ -587,6 +587,7 @@ namespace GorbushkaBot.Controllers
                         string currentStep = currentStepData.step;
                         string previousStep = null;
 
+                        // Модифицируем порядок шагов с учётом новых условий
                         var stepOrder = new List<string>
                         {
                             "face_photo", "fio", "phone_number", "passport_number", "passport_issue_date",
@@ -594,9 +595,18 @@ namespace GorbushkaBot.Controllers
                             "pavilion_number", "rental_contract", "pavilion_photo"
                         };
 
-                        int currentIndex = stepOrder.IndexOf(currentStep);
-                        if (currentIndex > 0)
-                            previousStep = stepOrder[currentIndex - 1];
+                        // Если текущий шаг - "pavilion_number", мы должны пропустить шаги "company_name", "company_activity"
+                        if (currentStep == "pavilion_number")
+                        {
+                            // Найдём индекс для шага "market_question" и используем его как предыдущий шаг
+                            previousStep = "market_question";
+                        }
+                        else
+                        {
+                            int currentIndex = stepOrder.IndexOf(currentStep);
+                            if (currentIndex > 0)
+                                previousStep = stepOrder[currentIndex - 1];
+                        }
 
                         if (previousStep != null)
                         {
@@ -623,6 +633,7 @@ namespace GorbushkaBot.Controllers
                         }
                     }
                     break;
+
 
 
 
