@@ -587,11 +587,11 @@ namespace GorbushkaBot.Controllers
                         string currentStep = currentStepData.step;
                         string previousStep = null;
 
-                        // Определяем предыдущий шаг
                         var stepOrder = new List<string>
                         {
-                            "face_photo", "fio", "phone_number", "passport_number", "passport_issue_date", "registration_address",
-                            "passport", "role", "market_question", "pavilion_number", "rental_contract", "pavilion_photo", "company_name", "company_activity"
+                            "face_photo", "fio", "phone_number", "passport_number", "passport_issue_date",
+                            "registration_address", "passport", "company_name", "company_activity",
+                            "pavilion_number", "rental_contract", "pavilion_photo"
                         };
 
                         int currentIndex = stepOrder.IndexOf(currentStep);
@@ -600,43 +600,30 @@ namespace GorbushkaBot.Controllers
 
                         if (previousStep != null)
                         {
-                            var stepData = new Dictionary<string, (string, bool, InlineKeyboardMarkup?)>
+                            var stepData = new Dictionary<string, (string, bool)>
                             {
-                                { "face_photo", ("📸 Первый шаг: Отправьте свою фотографию (лицо крупным планом):", false, null) },
-                                { "fio", ("Введите ваше ФИО:", true, null) },
-                                { "phone_number", ("Введите номер вашего телефона:", true, null) },
-                                { "passport_number", ("Введите номер вашего паспорта (формат: 0000 000000):", true, null) },
-                                { "passport_issue_date", ("Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):", true, null) },
-                                { "registration_address", ("Введите свой адрес прописки:", true, null) },
-                                { "passport", ("📷 Отправьте фото паспорта с данными:", false, null) },
-                                { "role", ("Выберите свою роль:", false, new InlineKeyboardMarkup(new[]
-                                    {
-                                        new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
-                                        new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
-                                        new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
-                                    }))
-                                },
-                                { "market_question", ("Вы с рынка?", false, new InlineKeyboardMarkup(new[]
-                                    {
-                                        new[] { InlineKeyboardButton.WithCallbackData("Да", "market_yes") },
-                                        new[] { InlineKeyboardButton.WithCallbackData("Нет", "market_no") }
-                                    }))
-                                },
-                                { "pavilion_number", ("Введите номер вашего павильона:", true, null) },
-                                { "rental_contract", ("Введите номер вашего договора аренды:", true, null) },
-                                { "pavilion_photo", ("📷 Отправьте фото вашего павильона:", true, null) },
-                                { "company_name", ("Введите название вашей компании:", true, null) },
-                                { "company_activity", ("Введите вид деятельности вашей компании:", true, null) }
+                                { "face_photo", ("📸 Первый шаг: Отправьте свою фотографию (лицо крупным планом):", false) },
+                                { "fio", ("Введите ваше ФИО:", true) },
+                                { "phone_number", ("Введите номер вашего телефона:", true) },
+                                { "passport_number", ("Введите номер вашего паспорта (формат: 0000 000000):", true) },
+                                { "passport_issue_date", ("Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):", true) },
+                                { "registration_address", ("Введите свой адрес прописки:", true) },
+                                { "passport", ("📷 Отправьте фото паспорта с данными:", false) },
+                                { "company_name", ("Введите название вашей компании:", true) },
+                                { "company_activity", ("Введите вид деятельности вашей компании:", true) },
+                                { "pavilion_number", ("Введите номер вашего павильона:", true) },
+                                { "rental_contract", ("Введите номер договора аренды:", true) },
+                                { "pavilion_photo", ("📷 Отправьте фото вашего павильона:", false) }
                             };
 
                             if (stepData.TryGetValue(previousStep, out var stepInfo))
                             {
-                                await DeleteAndSendNextStep(botClient, chatId, currentStepData.messageId, previousStep, stepInfo.Item1, stepInfo.Item2, stepInfo.Item3);
-                                UserSteps[chatId] = (previousStep, currentStepData.messageId);
+                                await DeleteAndSendNextStep(botClient, chatId, currentStepData.messageId, previousStep, stepInfo.Item1, stepInfo.Item2);
                             }
                         }
                     }
                     break;
+
 
 
 
@@ -663,12 +650,19 @@ namespace GorbushkaBot.Controllers
             }
 
             // Добавляем кнопку "Назад", если это не начальный шаг
-            if (nextStep != "fio" && keyboard == null)
+            if (nextStep != "face_photo") // Назад добавляется всегда, кроме первого шага
             {
-                keyboard = new InlineKeyboardMarkup(new[]
+                var backButton = InlineKeyboardButton.WithCallbackData("⬅️ Назад", "back");
+                if (keyboard == null)
                 {
-                    new[] { InlineKeyboardButton.WithCallbackData("Назад", "back") }
-                });
+                    keyboard = new InlineKeyboardMarkup(new[] { new[] { backButton } });
+                }
+                else
+                {
+                    var buttons = keyboard.InlineKeyboard.ToList();
+                    buttons.Add(new[] { backButton });
+                    keyboard = new InlineKeyboardMarkup(buttons);
+                }
             }
 
             // Отправляем новое сообщение
@@ -681,5 +675,6 @@ namespace GorbushkaBot.Controllers
             // Сохраняем новый messageId для следующего шага
             SaveStep(chatId, nextStep, newMessage.MessageId);
         }
+
     }
 }
