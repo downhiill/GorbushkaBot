@@ -297,23 +297,15 @@ namespace GorbushkaBot.Controllers
                     new InlineKeyboardMarkup(new[] { new[] { InlineKeyboardButton.WithCallbackData("Далее", "next_after_passport") } })
                 );
             }
-            else if (step == "pavilion_number")
-            {
-                SaveUserData(chatId, "pavilion_number", message.Text);
-
-                // Пропускаем шаги "company_name" и "company_activity" и сразу переходим к "market_question"
-                await DeleteAndSendNextStep(botClient, chatId, messageId, "market_question", "Вы с рынка?", false,
-                        new InlineKeyboardMarkup(new[]
-                        {
-                            new[] { InlineKeyboardButton.WithCallbackData("Да", "market_yes") },
-                            new[] { InlineKeyboardButton.WithCallbackData("Нет", "market_no") }
-                        })
-                );
-            }
             else if (step == "company_name")
             {
                 SaveUserData(chatId, "company_name", message.Text);
                 await DeleteAndSendNextStep(botClient, chatId, messageId, "company_activity", "Введите вид деятельности вашей компании:", true);
+            }
+            else if (step == "pavilion_number")
+            {
+                SaveUserData(chatId, "pavilion_number", message.Text);
+                await DeleteAndSendNextStep(botClient, chatId, messageId, "rental_contract", "Введите номер вашего договора аренды:", true);
             }
             else if (step == "rental_contract")
             {
@@ -618,27 +610,42 @@ namespace GorbushkaBot.Controllers
 
                         if (previousStep != null)
                         {
-                            var stepData = new Dictionary<string, (string, bool)>
+                            var stepData = new Dictionary<string, (string, bool, InlineKeyboardMarkup?)>
                             {
-                                { "face_photo", ("📸 Первый шаг: Отправьте свою фотографию (лицо крупным планом):", false) },
-                                { "fio", ("Введите ваше ФИО:", true) },
-                                { "phone_number", ("Введите номер вашего телефона:", true) },
-                                { "passport_number", ("Введите номер вашего паспорта (формат: 0000 000000):", true) },
-                                { "passport_issue_date", ("Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):", true) },
-                                { "registration_address", ("Введите свой адрес прописки:", true) },
-                                { "passport", ("📷 Отправьте фото паспорта с данными:", false) },
-                                { "company_name", ("Введите название вашей компании:", true) },
-                                { "company_activity", ("Введите вид деятельности вашей компании:", true) },
-                                { "pavilion_number", ("Введите номер вашего павильона:", true) },
-                                { "rental_contract", ("Введите номер договора аренды:", true) },
-                                { "pavilion_photo", ("📷 Отправьте фото вашего павильона:", false) }
+                                { "face_photo", ("📸 Первый шаг: Отправьте свою фотографию (лицо крупным планом):", false, null) },
+                                { "fio", ("Введите ваше ФИО:", true, null) },
+                                { "phone_number", ("Введите номер вашего телефона:", true, null) },
+                                { "passport_number", ("Введите номер вашего паспорта (формат: 0000 000000):", true, null) },
+                                { "passport_issue_date", ("Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):", true, null) },
+                                { "registration_address", ("Введите свой адрес прописки:", true, null) },
+                                { "passport", ("📷 Отправьте фото паспорта с данными:", false, null) },
+                                { "role", ("Выберите свою роль:", false,
+                                    new InlineKeyboardMarkup(new[]
+                                    {
+                                        new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
+                                        new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
+                                        new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
+                                    })) },
+                                { "market_question", ("Вы с рынка?", false,
+                                    new InlineKeyboardMarkup(new[]
+                                    {
+                                        new[] { InlineKeyboardButton.WithCallbackData("Да", "market_yes") },
+                                        new[] { InlineKeyboardButton.WithCallbackData("Нет", "market_no") }
+                                    })) },
+                                { "company_name", ("Введите название вашей компании:", true, null) },
+                                { "company_activity", ("Введите вид деятельности вашей компании:", true, null) },
+                                { "pavilion_number", ("Введите номер вашего павильона:", true, null) },
+                                { "rental_contract", ("Введите номер договора аренды:", true, null) },
+                                { "pavilion_photo", ("📷 Отправьте фото вашего павильона:", false, null) }
                             };
 
                             if (stepData.TryGetValue(previousStep, out var stepInfo))
                             {
-                                await DeleteAndSendNextStep(botClient, chatId, currentStepData.messageId, previousStep, stepInfo.Item1, stepInfo.Item2);
+                                // Примечание: Мы передаем keyboard в метод DeleteAndSendNextStep
+                                await DeleteAndSendNextStep(botClient, chatId, currentStepData.messageId, previousStep, stepInfo.Item1, stepInfo.Item2, stepInfo.Item3);
                             }
                         }
+
                     }
                     break;
 
