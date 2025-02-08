@@ -354,60 +354,7 @@ namespace GorbushkaBot.Controllers
                 new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
                     })
                 );
-            }
-            else if (step == "check_conditions")
-            {
-                try
-                {
-                    // Отправляем тестовое сообщение
-                    var sentMessage = await botClient.SendTextMessageAsync(
-                        chatId,
-                        "Это тестовое сообщение для проверки. Оно будет удалено через 3 секунды."
-                    );
-
-                    // Ждем 3 секунды
-                    await Task.Delay(3000);
-
-                    // Удаляем сообщение
-                    await botClient.DeleteMessageAsync(chatId, sentMessage.MessageId);
-
-                    // Уведомляем пользователя, что проверка прошла успешно
-                    await botClient.SendTextMessageAsync(chatId, "✅ Проверка завершена! Вы можете получать сообщения от незнакомцев.");
-
-                    // Переходим к следующему шагу
-                    await DeleteAndSendNextStep(botClient, chatId, messageId, "fio", "Введите ваше ФИО:", true);
-                }
-                catch (ApiRequestException ex) when (ex.ErrorCode == 403)
-                {
-                    // Сообщение не доставлено, пользователь ограничил получение сообщений
-                    await botClient.SendTextMessageAsync(
-                        chatId,
-                        "❌ Вы ограничили получение сообщений от незнакомцев. Пожалуйста, разрешите получение сообщений от всех в настройках Telegram."
-                    );
-                }
-                catch (Exception ex)
-                {
-                    // Обработка других ошибок
-                    Console.WriteLine($"Ошибка: {ex.Message}");
-                    await botClient.SendTextMessageAsync(chatId, "⚠️ Произошла ошибка при проверке. Попробуйте позже.");
-                }
-
-
-                // Переходим к следующему шагу
-                await DeleteAndSendNextStep(
-                    botClient,
-                    chatId,
-                    messageId,
-                    "completed",
-                    "✅ Все условия выполнены.\n\nВыберите действие:",
-                    false,
-                    new InlineKeyboardMarkup(new[]
-                    {
-                        new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
-                        new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
-                    })
-                );
-            }
+            }   
         }
 
         public async Task HandleCallbackQuery(ITelegramBotClient botClient, long chatId, CallbackQuery callbackQuery)
@@ -532,8 +479,8 @@ namespace GorbushkaBot.Controllers
 
                             // Обновляем данные для таблицы
                             userData["face_photo"] = $"https://drive.google.com/drive/folders/{folders["face"]}";
-                            userData["passport_photos"] = $"https://drive.google.com/drive/folders/{folders["passport"]}";
-                            userData["pavilion_photos"] = $"https://drive.google.com/drive/folders/{folders["pavilion"]}";
+                            userData["passport_photo"] = $"https://drive.google.com/drive/folders/{folders["passport"]}";
+                            userData["pavilion_photo"] = $"https://drive.google.com/drive/folders/{folders["pavilion"]}";
 
                             await _sheetsService.AppendDataAsync(userData, folders["root"]);
 
@@ -693,8 +640,6 @@ namespace GorbushkaBot.Controllers
             }
         }
 
-
-
         private async Task DeleteAndSendNextStep(ITelegramBotClient botClient, long chatId, int messageId, string nextStep, string messageText, bool isTextInput, InlineKeyboardMarkup? keyboard = null)
         {
             // Удаляем предыдущее сообщение
@@ -732,36 +677,6 @@ namespace GorbushkaBot.Controllers
 
             // Сохраняем новый messageId для следующего шага
             SaveStep(chatId, nextStep, newMessage.MessageId);
-        }
-
-        public async Task SendAndDeleteMessage(long chatId, ITelegramBotClient botClient)
-        {
-            try
-            {
-                // Отправляем сообщение
-                var sentMessage = await botClient.SendTextMessageAsync(
-                    chatId,
-                    "Это тестовое сообщение. Оно будет удалено через 5 секунд."
-                );
-
-                // Ждем 5 секунд
-                await Task.Delay(5000);
-
-                // Удаляем сообщение
-                await botClient.DeleteMessageAsync(chatId, sentMessage.MessageId);
-
-                await botClient.SendTextMessageAsync(chatId, "Сообщение удалено!");
-            }
-            catch (ApiRequestException ex)
-            {
-                // Обработка ошибок Telegram API
-                Console.WriteLine($"Ошибка Telegram API: {ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                // Обработка других ошибок
-                Console.WriteLine($"Ошибка: {ex.Message}");
-            }
         }
 
     }
