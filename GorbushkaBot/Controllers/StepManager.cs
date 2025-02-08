@@ -297,15 +297,23 @@ namespace GorbushkaBot.Controllers
                     new InlineKeyboardMarkup(new[] { new[] { InlineKeyboardButton.WithCallbackData("Далее", "next_after_passport") } })
                 );
             }
+            else if (step == "pavilion_number")
+            {
+                SaveUserData(chatId, "pavilion_number", message.Text);
+
+                // Пропускаем шаги "company_name" и "company_activity" и сразу переходим к "market_question"
+                await DeleteAndSendNextStep(botClient, chatId, messageId, "market_question", "Вы с рынка?", false,
+                        new InlineKeyboardMarkup(new[]
+                        {
+                            new[] { InlineKeyboardButton.WithCallbackData("Да", "market_yes") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Нет", "market_no") }
+                        })
+                );
+            }
             else if (step == "company_name")
             {
                 SaveUserData(chatId, "company_name", message.Text);
                 await DeleteAndSendNextStep(botClient, chatId, messageId, "company_activity", "Введите вид деятельности вашей компании:", true);
-            }
-            else if (step == "pavilion_number")
-            {
-                SaveUserData(chatId, "pavilion_number", message.Text);
-                await DeleteAndSendNextStep(botClient, chatId, messageId, "rental_contract", "Введите номер вашего договора аренды:", true);
             }
             else if (step == "rental_contract")
             {
@@ -634,19 +642,10 @@ namespace GorbushkaBot.Controllers
                     }
                     break;
 
-
-
-
-
-
             }
         }
 
-        private string GetFolderIdFromUrl(string url)
-        {
-            var parts = url.Split(new[] { "folders/" }, StringSplitOptions.None);
-            return parts.Length > 1 ? parts[1].Split('?')[0] : null;
-        }
+
 
         private async Task DeleteAndSendNextStep(ITelegramBotClient botClient, long chatId, int messageId, string nextStep, string messageText, bool isTextInput, InlineKeyboardMarkup? keyboard = null)
         {
@@ -661,7 +660,7 @@ namespace GorbushkaBot.Controllers
             }
 
             // Добавляем кнопку "Назад", если это не начальный шаг
-            if (nextStep != "face_photo") // Назад добавляется всегда, кроме первого шага
+            if (nextStep != "role" && nextStep != "face_photo" && nextStep != "market_question") // Назад добавляется всегда, кроме первого шага и шага выбора роли
             {
                 var backButton = InlineKeyboardButton.WithCallbackData("⬅️ Назад", "back");
                 if (keyboard == null)
