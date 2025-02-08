@@ -473,8 +473,6 @@ namespace GorbushkaBot.Controllers
                                 new[] { InlineKeyboardButton.WithCallbackData("❌ Отклонить", $"reject_{chatId}") }
                             });
 
-                            string companyName = userData.ContainsKey("company_name") ? userData["company_name"] : "Не указано";
-                            string companyActivity = userData.ContainsKey("company_activity") ? userData["company_activity"] : "Не указано";
                             string fio = userData.ContainsKey("fio") ? userData["fio"] : "Не указано";
                             string passportNumber = userData.ContainsKey("passport_number") ? userData["passport_number"] : "Не указано";
                             string passportIssueDate = userData.ContainsKey("passport_issue_date") ? userData["passport_issue_date"] : "Не указано";
@@ -488,8 +486,6 @@ namespace GorbushkaBot.Controllers
                                 $"👤 ФИО: {fio}\n" +
                                 $"📄 Паспорт: {passportNumber}, {passportIssueDate}\n" +
                                 $"🏢 Павильон: {pavilionNumber}, {rentalContract}\n" +
-                                $"🏢 Компания: {companyName}\n" +
-                                $"📌 Деятельность: {companyActivity}\n\n" +
                                 $"🖼 Фото: \n[Лицо]({facePhoto})\n" +
                                 $"[Паспорт]({passportPhotos})\n" +
                                 $"[Павильон]({pavilionPhotos})";
@@ -572,8 +568,7 @@ namespace GorbushkaBot.Controllers
                         var stepOrder = new List<string>
                         {
                             "fio", "face_photo", "phone_number","role","citizenship","passport_number", "passport_issue_date",
-                            "registration_address", "passport", "company_name", "company_activity",
-                            "pavilion_number", "rental_contract", "pavilion_photo"
+                            "registration_address", "passport","pavilion_number", "rental_contract", "pavilion_photo"
                         };
 
                         // Если текущий шаг - "pavilion_number", мы должны пропустить шаги "company_name", "company_activity"
@@ -607,8 +602,6 @@ namespace GorbushkaBot.Controllers
                                         new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
                                         new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
                                     })) },
-                                { "company_name", ("Введите название вашей компании:", true, null) },
-                                { "company_activity", ("Введите вид деятельности вашей компании:", true, null) },
                                 { "pavilion_number", ("Введите номер вашего павильона:", true, null) },
                                 { "rental_contract", ("Введите номер договора аренды:", true, null) },
                                 { "pavilion_photo", ("📷 Отправьте фото вашего павильона:", false, null) }
