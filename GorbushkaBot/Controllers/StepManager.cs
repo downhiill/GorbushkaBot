@@ -356,8 +356,8 @@ namespace GorbushkaBot.Controllers
                         botClient,
                         chatId,
                         callbackQuery.Message.MessageId,
-                        "face_photo",
-                        "📸 Первый шаг: Отправьте свою фотографию (лицо крупным планом):",
+                        "fio",
+                        "Введите ваше ФИО:",
                         false
                     );
                 break;
@@ -588,8 +588,8 @@ namespace GorbushkaBot.Controllers
                         {
                             var stepData = new Dictionary<string, (string, bool, InlineKeyboardMarkup?)>
                             {
-                                { "face_photo", ("📸 Первый шаг: Отправьте свою фотографию (лицо крупным планом):", false, null) },
                                 { "fio", ("Введите ваше ФИО:", true, null) },
+                                { "face_photo", ("📸 Первый шаг: Отправьте свою фотографию (лицо крупным планом):", false, null) },
                                 { "phone_number", ("Введите номер вашего телефона:", true, null) },
                                 { "passport_number", ("Введите номер вашего паспорта (формат: 0000 000000):", true, null) },
                                 { "passport_issue_date", ("Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):", true, null) },
