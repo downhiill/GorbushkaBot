@@ -590,11 +590,17 @@ namespace GorbushkaBot.Controllers
                         string previousStep = currentStep switch
                         {
                             "fio" => "face_photo",
+                            "phone_number" => "fio",
+                            "passport_number" => "phone_number",
+                            "passport_issue_date" => "passport_number",
+                            "registration_address" => "passport_issue_date",
+                            "passport" => "registration_address",
                             "role" => "passport",
-                            "market_question" => "role",
                             "pavilion_number" => "market_question",
-                            "company_name" => "pavilion_number",
-                            _ => "face_photo" // начальный шаг
+                            "rental_contract" => "pavilion_number",
+                            "pavilion_photo" => "rental_contract",
+                            "company_name" => "market_question",
+                            "company_activity" => "company_name" 
                         };
 
                         // Тексты и клавиатуры для предыдущих шагов
