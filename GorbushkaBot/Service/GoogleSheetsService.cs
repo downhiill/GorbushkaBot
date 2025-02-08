@@ -42,10 +42,10 @@ namespace GorbushkaBot.Service
                     userData["passport_number"],
                     userData["passport_issue_date"],
                     userData["registration_address"],
-                    userData["passport_photos"],
+                    userData["passport_photo"],
                     userData.GetValueOrDefault("pavilion_number", ""),
                     userData.GetValueOrDefault("rental_contract", ""),
-                    userData["pavilion_photos"]
+                    userData["pavilion_photo"]
                 }}
             };
 
