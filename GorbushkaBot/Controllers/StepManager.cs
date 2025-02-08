@@ -1,4 +1,6 @@
-﻿using GorbushkaBot.Service;
+﻿using GorbushkaBot.AppDbContext;
+using GorbushkaBot.Service;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -18,13 +20,15 @@ namespace GorbushkaBot.Controllers
         private readonly TelegramBotClient botClient;
         private readonly GoogleSheetsService _sheetsService;
         private readonly GoogleDriveService _driveService;
+        private readonly UserApplicationService _userApplicationService;
         private static readonly string bottoken = Environment.GetEnvironmentVariable("BOT_TOKEN");
 
-        public StepManager(TelegramBotClient botClient, GoogleSheetsService sheetsService,GoogleDriveService driveService)
+        public StepManager(TelegramBotClient botClient, GoogleSheetsService sheetsService,GoogleDriveService driveService, UserApplicationService userApplicationService)
         {
             this.botClient = botClient;
             _sheetsService = sheetsService;
             _driveService = driveService;
+            _userApplicationService = userApplicationService;
         }
 
         public void SaveStep(long chatId, string step, int messageId)
@@ -390,6 +394,7 @@ namespace GorbushkaBot.Controllers
                             userData["pavilion_photo"] = $"https://drive.google.com/drive/folders/{folders["pavilion"]}";
 
                             await _sheetsService.AppendDataAsync(userData, folders["root"]);
+                            await _userApplicationService.SaveUserApplicationAsync(userData, folders["root"],chatId);
 
                             // Отправка админу заявки с кнопками одобрения/отклонения
                             long[] adminChatIds = { 8018159474, 448145168, 388009185, 7069858455 }; // Укажи ID админа
@@ -406,8 +411,8 @@ namespace GorbushkaBot.Controllers
                             string pavilionNumber = userData.ContainsKey("pavilion_number") ? userData["pavilion_number"] : "Не указано";
                             string rentalContract = userData.ContainsKey("rental_contract") ? userData["rental_contract"] : "Не указано";
                             string facePhoto = userData.ContainsKey("face_photo") ? userData["face_photo"] : "Не указано";
-                            string passportphotos = userData.ContainsKey("passport_photos") ? userData["passport_photos"] : "Не указано";
-                            string pavilionphotos = userData.ContainsKey("pavilion_photos") ? userData["pavilion_photos"] : "Не указано";
+                            string passportphotos = userData.ContainsKey("passport_photo") ? userData["passport_photos"] : "Не указано";
+                            string pavilionphotos = userData.ContainsKey("pavilion_photo") ? userData["pavilion_photos"] : "Не указано";
 
                             string adminMessage = $"📌 Новая заявка от пользователя:\n\n" +
                                 $"👤 ФИО: {fio}\n" +
@@ -459,30 +464,42 @@ namespace GorbushkaBot.Controllers
                         return;
                     }
 
-                    string decisionText = callbackQuery.Data.StartsWith("approve") ?
-                        "✅ Ваша заявка одобрена! 🎉" :
-                        "❌ Ваша заявка отклонена. Свяжитесь с поддержкой.";
-
-                    try
+                    // Загружаем данные заявки из базы
+                    using (var dbContext = new ApplicationDbContext(new DbContextOptions<ApplicationDbContext>()))
                     {
-                        await botClient.SendTextMessageAsync(
-                            chatId: targetChatId,
-                            text: decisionText);
+                        var userApplication = await dbContext.UserApplications
+                            .FirstOrDefaultAsync(u => u.ChatId == targetChatId);
 
-                        await botClient.EditMessageTextAsync(
-                            chatId: callbackQuery.Message.Chat.Id,
-                            messageId: callbackQuery.Message.MessageId,
-                            text: $"📝 Заявка пользователя {(callbackQuery.Data.StartsWith("approve") ? "одобрена ✅" : "отклонена ❌")}.");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Ошибка при обработке заявки: {ex.Message}");
+                        if (userApplication == null)
+                        {
+                            Console.WriteLine($"Ошибка: заявка пользователя с chatId {targetChatId} не найдена в базе данных.");
+                            return;
+                        }
+
+                        string decisionText = callbackQuery.Data.StartsWith("approve")
+                            ? $"✅ Ваша заявка одобрена! 🎉\n\n**Данные:**\nФИО: {userApplication.Fio}\nТелефон: {userApplication.PhoneNumber}"
+                            : $"❌ Ваша заявка отклонена. Свяжитесь с поддержкой.\n\n**Данные:**\nФИО: {userApplication.Fio}\nТелефон: {userApplication.PhoneNumber}";
+
+                        try
+                        {
+                            await botClient.SendTextMessageAsync(
+                                chatId: targetChatId,
+                                text: decisionText);
+
+                            await botClient.EditMessageTextAsync(
+                                chatId: callbackQuery.Message.Chat.Id,
+                                messageId: callbackQuery.Message.MessageId,
+                                text: $"📝 Заявка пользователя {(callbackQuery.Data.StartsWith("approve") ? "одобрена ✅" : "отклонена ❌")}\n\nФИО: {userApplication.Fio}\nТелефон: {userApplication.PhoneNumber}");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Ошибка при обработке заявки: {ex.Message}");
+                        }
                     }
 
                     await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
-
-                    
                     break;
+
 
                 case "back":
                     if (UserSteps.TryGetValue(chatId, out var currentStepData))

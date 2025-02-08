@@ -54,7 +54,7 @@ namespace GorbushkaBot.Service
             request.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
             await request.ExecuteAsync();
 
-            await _userApplicationService.SaveUserApplicationAsync(userData, folderUrl);
+            
         }
 
         public async Task DeleteDataAsync(int rowIndex)

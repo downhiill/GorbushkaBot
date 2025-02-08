@@ -12,10 +12,11 @@ namespace GorbushkaBot.Service
             _dbContext = dbContext;
         }
 
-        public async Task SaveUserApplicationAsync(Dictionary<string, string> userData, string folderUrl)
+        public async Task SaveUserApplicationAsync(Dictionary<string, string> userData, string folderUrl, long chatId)
         {
             var userApplication = new UserApplication
             {
+                ChatId = chatId,
                 FacePhoto = userData["face_photo"],
                 Fio = userData["fio"],
                 PhoneNumber = userData["phone_number"],
