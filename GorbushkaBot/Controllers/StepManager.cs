@@ -411,8 +411,8 @@ namespace GorbushkaBot.Controllers
                             string pavilionNumber = userData.ContainsKey("pavilion_number") ? userData["pavilion_number"] : "Не указано";
                             string rentalContract = userData.ContainsKey("rental_contract") ? userData["rental_contract"] : "Не указано";
                             string facePhoto = userData.ContainsKey("face_photo") ? userData["face_photo"] : "Не указано";
-                            string passportphotos = userData.ContainsKey("passport_photo") ? userData["passport_photos"] : "Не указано";
-                            string pavilionphotos = userData.ContainsKey("pavilion_photo") ? userData["pavilion_photos"] : "Не указано";
+                            string passportphotos = userData.ContainsKey("passport_photo") ? userData["passport_photo"] : "Не указано";
+                            string pavilionphotos = userData.ContainsKey("pavilion_photo") ? userData["pavilion_photo"] : "Не указано";
 
                             string adminMessage = $"📌 Новая заявка от пользователя:\n\n" +
                                 $"👤 ФИО: {fio}\n" +
