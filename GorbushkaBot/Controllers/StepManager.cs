@@ -524,28 +524,30 @@ namespace GorbushkaBot.Controllers
 
                     try
                     {
-                        var userData = new Dictionary<string, string>
+                        // Сохраняем данные в таблицу UserAccept
+                        var userAccept = new UserAccept
                         {
-                            { "fio", userApplication.Fio },
-                            { "phone_number", userApplication.PhoneNumber },
-                            { "passport_number", userApplication.PassportNumber },
-                            { "passport_issue_date", userApplication.PassportIssueDate },
-                            { "registration_address", userApplication.RegistrationAddress },
-                            { "face_photo", userApplication.FacePhoto },
-                            { "passport_photo", userApplication.PassportPhotos },
-                            { "pavilion_number", userApplication.PavilionNumber ?? "" },
-                            { "rental_contract", userApplication.RentalContract ?? "" },
-                            { "pavilion_photo", userApplication.PavilionPhotos }
+                            Fio = userApplication.Fio,
+                            PhoneNumber = userApplication.PhoneNumber,
+                            PassportNumber = userApplication.PassportNumber,
+                            PassportIssueDate = userApplication.PassportIssueDate,
+                            RegistrationAddress = userApplication.RegistrationAddress ?? "",
+                            FacePhoto = userApplication.FacePhoto,
+                            PassportPhotos = userApplication.PassportPhotos,
+                            PavilionNumber = userApplication.PavilionNumber ?? "",
+                            RentalContract = userApplication.RentalContract ?? "",
+                            PavilionPhotos = userApplication.PavilionPhotos,
+                            FolderUrl = userApplication.FolderUrl,
+                            ChatId = userApplication.ChatId
                         };
 
-                        // Save data in the UserAccept table
-                        await _userAcceptService.SaveUserAcceptAsync(userData, userApplication.FolderUrl, userApplication.ChatId);
+                        _dbContext.UserAccepts.Add(userAccept);
 
-                        // Remove the approved application
+                        // Удаляем одобренную заявку
                         _dbContext.UserApplications.Remove(userApplication);
                         await _dbContext.SaveChangesAsync();
 
-                        // Update the admin's message
+                        // Обновляем сообщение администратору
                         await botClient.EditMessageTextAsync(
                             chatId: callbackQuery.Message.Chat.Id,
                             messageId: callbackQuery.Message.MessageId,
@@ -559,8 +561,6 @@ namespace GorbushkaBot.Controllers
 
                     await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
                     break;
-
-
 
                 case "reject":
                     string[] rejectParts = callbackQuery.Data.Split('_');
