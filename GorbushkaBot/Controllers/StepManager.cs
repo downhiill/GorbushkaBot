@@ -130,7 +130,7 @@ namespace GorbushkaBot.Controllers
                     chatId,
                     messageId,
                     "phone_number",
-                    "✅ Фото принято!\n\nТеперь введите <b>контактный,</b> номер телефона:",
+                    "✅ Фото принято!\n\nТеперь введите КОНТАКТНЫЙ, номер телефона:",
                     true
                 );
             }
@@ -294,27 +294,58 @@ namespace GorbushkaBot.Controllers
 
                 // Итоговое сообщение
                 string completedMessage = $"✅ Заявка заполнена!\n\n" +
-                    $"{passportPhotos}"+ $"{pavilionPhotos}" + $"{facePhoto}"+
                     $"👤 <b>ФИО:</b> {fio}\n" +
                     $"📄 <b>Паспорт:</b> {passportNumber}, {passportIssueDate}\n" +
                     $"📞 <b>Телефон (контактный):</b> {phoneNumber}\n" +
                     $"💼 <b>Роль:</b> {role}\n" +
-                    $"🏢 <b>Павильон:</b> {pavilionNumber}, {rentalContract}\n";
+                    $"🏢 <b>Павильон:</b> {pavilionNumber}, {rentalContract}\n" +
+                    $"🖼 <b>Фото:</b> ниже ⬇️";
 
-                // Отправляем итоговое сообщение с кнопками
-                await DeleteAndSendNextStep(
-                    botClient,
+                // Отправляем текст с данными
+                await botClient.SendTextMessageAsync(
                     chatId,
-                    messageId,
-                    "completed",
                     completedMessage,
-                    false,
-                    new InlineKeyboardMarkup(new[]
+                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+                );
+
+                // Отправляем фото лица
+                if (!string.IsNullOrEmpty(facePhoto))
+                {
+                    await botClient.SendPhotoAsync(
+                        chatId,
+                        new InputFileId(facePhoto)
+                    );
+                }
+
+                // Отправляем фото паспорта
+                if (!string.IsNullOrEmpty(passportPhotos))
+                {
+                    await botClient.SendPhotoAsync(
+                        chatId,
+                        new InputFileId(passportPhotos)
+                    );
+                }
+
+                // Отправляем фото павильона
+                if (!string.IsNullOrEmpty(pavilionPhotos))
+                {
+                    await botClient.SendPhotoAsync(
+                        chatId,
+                        new InputFileId(pavilionPhotos)
+                    );
+                }
+
+                // Отправляем кнопки
+                await botClient.SendTextMessageAsync(
+                    chatId,
+                    "Выберите действие:",
+                    replyMarkup: new InlineKeyboardMarkup(new[]
                     {
                         new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
                         new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
                     })
                 );
+
             }
 
         }
