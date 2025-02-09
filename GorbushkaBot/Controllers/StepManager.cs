@@ -196,8 +196,8 @@ namespace GorbushkaBot.Controllers
                     botClient,
                     chatId,
                     messageId,
-                    "passport_rus_data",
-                    "✅ Фото принято!\n\nТеперь введите номер паспорта (формат: 0000 000000):",
+                    "passport_other_data",
+                    "✅ Фото принято!\n\nТеперь введите номер паспорта :",
                     true
                 );
             }
