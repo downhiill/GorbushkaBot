@@ -616,19 +616,6 @@ namespace GorbushkaBot.Controllers
                             "registration_address", "passport","pavilion_number", "rental_contract", "pavilion_photo"
                         };
 
-                        // Если текущий шаг - "pavilion_number", мы должны пропустить шаги "company_name", "company_activity"
-                        if (currentStep == "pavilion_number")
-                        {
-                            // Найдём индекс для шага "market_question" и используем его как предыдущий шаг
-                            previousStep = "market_question";
-                        }
-                        else
-                        {
-                            int currentIndex = stepOrder.IndexOf(currentStep);
-                            if (currentIndex > 0)
-                                previousStep = stepOrder[currentIndex - 1];
-                        }
-
                         if (previousStep != null)
                         {
                             var stepData = new Dictionary<string, (string, bool, InlineKeyboardMarkup?)>
