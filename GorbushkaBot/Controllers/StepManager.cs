@@ -324,9 +324,8 @@ namespace GorbushkaBot.Controllers
                 {
                     await botClient.SendMediaGroupAsync(chatId, mediaList);
 
-
                     // Отправляем кнопки
-                    await DeleteAndSendNextStep(botClient, chatId, messageId, "completed", "Выберите свою роль:", false,
+                    await DeleteAndSendNextStep(botClient, chatId, messageId, "completed", "Выберите действие:", false,
                         new InlineKeyboardMarkup(new[]
                         {
                             new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
