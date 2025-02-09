@@ -15,6 +15,7 @@ namespace GorbushkaBot.Controllers
 {
     public class StepManager
     {
+        long[] adminChatIds = { 8018159474, 448145168, 388009185, 7069858455 };
         private static readonly Dictionary<long, (string step, int messageId)> UserSteps = new();
         private static readonly Dictionary<long, Dictionary<string, string>> UserData = new();
         private static readonly Dictionary<long, (int errorMsgId, int userMsgId)> LastErrorMessages = new(); // Новый словарь для ошибок
@@ -129,7 +130,7 @@ namespace GorbushkaBot.Controllers
                     chatId,
                     messageId,
                     "phone_number",
-                    "✅ Фото принято!\n\nТеперь введите ваш номер телефона:",
+                    "✅ Фото принято!\n\nТеперь введите <b>контактный,</b> номер телефона:",
                     true
                 );
             }
@@ -276,20 +277,46 @@ namespace GorbushkaBot.Controllers
                 }
 
                 SaveUserPhoto(chatId, "pavilion_photo", message.Photo);
+
+                // Получаем сохраненные данные пользователя
+                var userData = UserData[chatId];
+
+                string fio = userData["fio"];
+                string passportNumber = userData["passport_number"];
+                string passportIssueDate = userData["passport_issue_date"];
+                string phoneNumber = userData["phone_number"];
+                string role = userData["role"];
+                string pavilionNumber = userData["pavilion_number"];
+                string rentalContract = userData["rental_contract"];
+                string facePhoto = userData["face_photo"];
+                string passportPhotos = userData["passport_photo"];
+                string pavilionPhotos = userData["pavilion_photo"];
+
+                // Итоговое сообщение
+                string completedMessage = $"✅ Заявка заполнена!\n\n" +
+                    $"{passportPhotos}"+ $"{pavilionPhotos}" + $"{facePhoto}"+
+                    $"👤 <b>ФИО:</b> {fio}\n" +
+                    $"📄 <b>Паспорт:</b> {passportNumber}, {passportIssueDate}\n" +
+                    $"📞 <b>Телефон (контактный):</b> {phoneNumber}\n" +
+                    $"💼 <b>Роль:</b> {role}\n" +
+                    $"🏢 <b>Павильон:</b> {pavilionNumber}, {rentalContract}\n";
+
+                // Отправляем итоговое сообщение с кнопками
                 await DeleteAndSendNextStep(
                     botClient,
                     chatId,
                     messageId,
                     "completed",
-                    "✅ Фото принято! Заявка заполнена.\n\nВыберите действие:",
+                    completedMessage,
                     false,
                     new InlineKeyboardMarkup(new[]
                     {
-                new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
-                new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
+                        new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
+                        new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
                     })
                 );
-            }   
+            }
+
         }
 
         public async Task HandleCallbackQuery(ITelegramBotClient botClient, long chatId, CallbackQuery callbackQuery)
@@ -443,8 +470,6 @@ namespace GorbushkaBot.Controllers
                             await _sheetsService.AppendDataAsync(userData, folders["root"],chatId);
                             await _userApplicationService.SaveUserApplicationAsync(userData, folders["root"],chatId);
 
-                            // Отправка админу заявки с кнопками одобрения/отклонения
-                            long[] adminChatIds = { 8018159474, 448145168, 388009185, 7069858455 }; // Укажи ID админа
 
                             var approvalKeyboard = new InlineKeyboardMarkup(new[]
                             {
