@@ -226,7 +226,7 @@ namespace GorbushkaBot.Controllers
                     LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
                     return;
                 }
-                SaveUserData(chatId, "passport_issue_date_rus", message.Text);
+                SaveUserData(chatId, "passport_issue_date", message.Text);
                 await DeleteAndSendNextStep(botClient, chatId, messageId, "registration_address", "Введите свой адрес прописки:", true);
             }
             else if (step == "passport_other_data")
@@ -245,7 +245,7 @@ namespace GorbushkaBot.Controllers
                     LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
                     return;
                 }
-                SaveUserData(chatId, "passport_issue_date_rus", message.Text);
+                SaveUserData(chatId, "passport_issue_date", message.Text);
                 await DeleteAndSendNextStep(botClient, chatId, messageId, "pavilion_number", "Введите номер вашего павильона:", true);
             }
             else if (step == "registration_address")
