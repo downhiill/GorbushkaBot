@@ -118,6 +118,25 @@ namespace GorbushkaBot.Service
                 await request.UploadAsync();
             }
         }
+
+        public async Task<string> DownloadFileAsync(string fileId)
+        {
+            string destinationPath = Path.Combine(Path.GetTempPath(), $"{fileId}.jpg");
+
+            using (var stream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write))
+            {
+                await _service.Files.Get(fileId).DownloadAsync(stream);
+            }
+
+            return destinationPath;
+        }
+
+        public async Task<string> GetFileUrlAsync(ITelegramBotClient botClient, string fileId)
+        {
+            var file = await botClient.GetFileAsync(fileId);
+            return $"https://api.telegram.org/file/bot{_botToken}/{file.FilePath}";
+        }
+
     }
 }
 
