@@ -43,6 +43,7 @@ namespace GorbushkaBot.Service
                     userData["fio"],
                     userData["phone_number"],
                     userData["passport_number"],
+                    userData["role"],
                     userData["passport_issue_date"],
                     userData["registration_address"],
                     userData["passport_photo"],
@@ -59,7 +60,7 @@ namespace GorbushkaBot.Service
             
         }
 
-        public async Task AppendUserDataAsync(Dictionary<string, string> userData)
+        public async Task AppendUserDataAsync(Dictionary<string, string> userData, string folderUrl)
         {
             var valueRange = new ValueRange
             {
@@ -70,6 +71,7 @@ namespace GorbushkaBot.Service
                     userData["fio"],
                     userData["phone_number"],
                     userData["passport_number"],
+                    userData["role"],
                     userData["passport_issue_date"],
                     userData["registration_address"],
                     userData["passport_photo"],

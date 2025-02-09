@@ -21,6 +21,7 @@ namespace GorbushkaBot.Service
                 Fio = userData["fio"],
                 PhoneNumber = userData["phone_number"],
                 PassportNumber = userData["passport_number"],
+                Role = userData["role"],
                 PassportIssueDate = userData["passport_issue_date"],
                 RegistrationAddress = userData["registration_address"],
                 PassportPhotos = userData["passport_photo"],

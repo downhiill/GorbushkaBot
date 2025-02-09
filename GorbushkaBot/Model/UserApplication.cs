@@ -9,6 +9,7 @@
         public string Fio { get; set; }
         public string PhoneNumber { get; set; }
         public string PassportNumber { get; set; }
+        public string Role { get; set; }
         public string PassportIssueDate { get; set; }
         public string RegistrationAddress { get; set; }
         public string PassportPhotos { get; set; }

@@ -135,7 +135,7 @@ namespace GorbushkaBot.Controllers
             }
             else if (step == "phone_number")
             {
-                if (!Regex.IsMatch(message.Text, @"^\+\d{10}$"))
+                if (!Regex.IsMatch(message.Text, @"^\+\d+$"))
                 {
                     var errorMsg = await botClient.SendTextMessageAsync(
                         chatId,
@@ -203,11 +203,11 @@ namespace GorbushkaBot.Controllers
             }
             else if (step == "passport_rus_data")
             {
-                if (!Regex.IsMatch(message.Text, @"^\d{4} \d{6}$"))
+                if (!Regex.IsMatch(message.Text, @"^[A-Za-z0-9 ]+$"))
                 {
                     var errorMsg = await botClient.SendTextMessageAsync(
                         chatId,
-                        "Ошибка: Введите корректный номер паспорта (формат: 0000 000000)."
+                        "Ошибка: Введите корректный номер паспорта (формат: 0000 000000 или с буквами и пробелами)."
                     );
                     LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
                     return;
@@ -314,11 +314,14 @@ namespace GorbushkaBot.Controllers
                 case "seller":
                 case "buyer":
                 case "both":
+                    // Сохраняем выбранную роль
+                    SaveUserData(chatId, "role", data); // data содержит "seller", "buyer" или "both"
+
                     await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "citizenship", "Уточните ваше гражданство:", false,
                         new InlineKeyboardMarkup(new[]
                         {
-                    new[] { InlineKeyboardButton.WithCallbackData("РФ", "passport_rus") },
-                    new[] { InlineKeyboardButton.WithCallbackData("Другое", "passport_other") }
+                            new[] { InlineKeyboardButton.WithCallbackData("РФ", "passport_rus") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Другое", "passport_other") }
                         }));
                     break;
 
@@ -412,6 +415,8 @@ namespace GorbushkaBot.Controllers
 
                             string fio = userData.ContainsKey("fio") ? userData["fio"] : "Не указано";
                             string passportNumber = userData.ContainsKey("passport_number") ? userData["passport_number"] : "Не указано";
+                            string role = userData.ContainsKey("role") ? userData["role"] : "Не указано";
+                            string phoneNumber = userData.ContainsKey("phone_number") ? userData["phone_number"] : "Не указано";
                             string passportIssueDate = userData.ContainsKey("passport_issue_date") ? userData["passport_issue_date"] : "Не указано";
                             string pavilionNumber = userData.ContainsKey("pavilion_number") ? userData["pavilion_number"] : "Не указано";
                             string rentalContract = userData.ContainsKey("rental_contract") ? userData["rental_contract"] : "Не указано";
@@ -422,6 +427,8 @@ namespace GorbushkaBot.Controllers
                             string adminMessage = $"📌 Новая заявка от пользователя:\n\n" +
                                 $"👤 ФИО: {fio}\n" +
                                 $"📄 Паспорт: {passportNumber}, {passportIssueDate}\n" +
+                                $"📞 Телефон: {phoneNumber}\n" +
+                                $"💼 Роль: {role}\n" +
                                 $"🏢 Павильон: {pavilionNumber}, {rentalContract}\n" +
                                 $"🖼 Фото: \n[Лицо]({facePhoto})\n" +
                                 $"[Паспорт]({passportPhotos})\n" +
@@ -467,7 +474,6 @@ namespace GorbushkaBot.Controllers
                         return;
                     }
 
-                    // Загружаем данные заявки из базы
                     var userApplication = await _dbContext.UserApplications
                         .FirstOrDefaultAsync(u => u.ChatId == targetChatId);
 
@@ -479,7 +485,6 @@ namespace GorbushkaBot.Controllers
 
                     try
                     {
-                        // Формируем данные для записи в таблицу "UserAccepts"
                         var userData = new Dictionary<string, string>
                         {
                             { "fio", userApplication.Fio },
@@ -494,14 +499,14 @@ namespace GorbushkaBot.Controllers
                             { "pavilion_photo", userApplication.PavilionPhotos }
                         };
 
-                        // Сохраняем данные в таблицу UserAccepts
+                        // Save data in the UserAccept table
                         await _userAcceptService.SaveUserAcceptAsync(userData, userApplication.FolderUrl, userApplication.ChatId);
 
-                        // Удаляем заявку из базы данных
+                        // Remove the approved application
                         _dbContext.UserApplications.Remove(userApplication);
                         await _dbContext.SaveChangesAsync();
 
-                        // Обновляем сообщение в чате администратора
+                        // Update the admin's message
                         await botClient.EditMessageTextAsync(
                             chatId: callbackQuery.Message.Chat.Id,
                             messageId: callbackQuery.Message.MessageId,
@@ -517,6 +522,7 @@ namespace GorbushkaBot.Controllers
                     break;
 
 
+
                 case "reject":
                     string[] rejectParts = callbackQuery.Data.Split('_');
                     if (rejectParts.Length < 2 || !long.TryParse(rejectParts[1], out long rejectChatId))
@@ -525,7 +531,6 @@ namespace GorbushkaBot.Controllers
                         return;
                     }
 
-                    // Загружаем заявку из базы
                     var rejectedApplication = await _dbContext.UserApplications
                         .FirstOrDefaultAsync(u => u.ChatId == rejectChatId);
 
@@ -537,11 +542,11 @@ namespace GorbushkaBot.Controllers
 
                     try
                     {
-                        // Удаляем заявку из базы
+                        // Remove the rejected application
                         _dbContext.UserApplications.Remove(rejectedApplication);
                         await _dbContext.SaveChangesAsync();
 
-                        // Обновляем сообщение в чате администратора
+                        // Update the admin's message
                         await botClient.EditMessageTextAsync(
                             chatId: callbackQuery.Message.Chat.Id,
                             messageId: callbackQuery.Message.MessageId,
