@@ -13,7 +13,7 @@ namespace GorbushkaBot.Service
     {
         private readonly SheetsService _service;
         private readonly string _spreadsheetId;
-        private const string Range = "Лист1!A:L";
+        private const string Range = "Лист1!A:M";
         private readonly UserApplicationService _userApplicationService;
         private readonly UserAcceptService _userAcceptService;
 
@@ -46,7 +46,7 @@ namespace GorbushkaBot.Service
                     userData["passport_number"],
                     userData["role"],
                     userData["passport_issue_date"],
-                    userData["registration_address"],
+                    userData.GetValueOrDefault("registration_address", ""),
                     userData["passport_photo"],
                     userData.GetValueOrDefault("pavilion_number", ""),
                     userData.GetValueOrDefault("rental_contract", ""),
@@ -84,7 +84,7 @@ namespace GorbushkaBot.Service
                 }}
             };
 
-            var request = _service.Spreadsheets.Values.Append(valueRange, _spreadsheetId, "Пользователь!A:L");
+            var request = _service.Spreadsheets.Values.Append(valueRange, _spreadsheetId, "Пользователь!A:M");
             request.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
             await request.ExecuteAsync();
 
