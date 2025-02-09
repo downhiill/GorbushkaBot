@@ -14,8 +14,9 @@ namespace GorbushkaBot.Service
         private readonly string _spreadsheetId;
         private const string Range = "Лист1!A:K";
         private readonly UserApplicationService _userApplicationService;
+        private readonly UserAcceptService _userAcceptService;
 
-        public GoogleSheetsService(string credentialPath, string spreadsheetId, UserApplicationService userApplicationService)
+        public GoogleSheetsService(string credentialPath, string spreadsheetId, UserApplicationService userApplicationService, UserAcceptService userAcceptService)
         {
             var credential = GoogleCredential.FromFile(credentialPath)
                 .CreateScoped(SheetsService.Scope.Spreadsheets);
@@ -28,6 +29,7 @@ namespace GorbushkaBot.Service
 
             _spreadsheetId = spreadsheetId;
             _userApplicationService = userApplicationService; // Инициализация
+            _userAcceptService = userAcceptService;
         }
 
         public async Task AppendDataAsync(Dictionary<string, string> userData, string folderUrl)
@@ -62,7 +64,7 @@ namespace GorbushkaBot.Service
             try
             {
                 // Удаление данных в строке (по индексу)
-                var request = _service.Spreadsheets.Values.Clear(new ClearValuesRequest(), _spreadsheetId, $"Лист1!A{rowIndex}:M{rowIndex}");
+                var request = _service.Spreadsheets.Values.Clear(new ClearValuesRequest(), _spreadsheetId, $"Лист1!A{rowIndex}:K{rowIndex}");
                 await request.ExecuteAsync();
             }
             catch (Exception ex)
@@ -91,7 +93,7 @@ namespace GorbushkaBot.Service
                 }}
             };
 
-            var request = _service.Spreadsheets.Values.Append(valueRange, _spreadsheetId, "Пользователь!A:M");
+            var request = _service.Spreadsheets.Values.Append(valueRange, _spreadsheetId, "Пользователь!A:K");
             request.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
             await request.ExecuteAsync();
 

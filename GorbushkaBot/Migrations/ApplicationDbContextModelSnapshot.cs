@@ -22,6 +22,69 @@ namespace GorbushkaBot.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("GorbushkaBot.Model.UserAccept", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<long>("ChatId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FacePhoto")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Fio")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FolderUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PassportIssueDate")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PassportNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PassportPhotos")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PavilionNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PavilionPhotos")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RegistrationAddress")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RentalContract")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("user_accepts", (string)null);
+                });
+
             modelBuilder.Entity("GorbushkaBot.Model.UserApplication", b =>
                 {
                     b.Property<int>("Id")

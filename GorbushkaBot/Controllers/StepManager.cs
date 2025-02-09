@@ -22,15 +22,17 @@ namespace GorbushkaBot.Controllers
         private readonly GoogleSheetsService _sheetsService;
         private readonly GoogleDriveService _driveService;
         private readonly UserApplicationService _userApplicationService;
+        private readonly UserAcceptService _userAcceptService;
         private readonly ApplicationDbContext _dbContext;
         private static readonly string bottoken = Environment.GetEnvironmentVariable("BOT_TOKEN");
 
-        public StepManager(TelegramBotClient botClient, GoogleSheetsService sheetsService,GoogleDriveService driveService, UserApplicationService userApplicationService, ApplicationDbContext dbContext)
+        public StepManager(TelegramBotClient botClient, GoogleSheetsService sheetsService,GoogleDriveService driveService, UserApplicationService userApplicationService, ApplicationDbContext dbContext, UserAcceptService userAcceptService)
         {
             this.botClient = botClient;
             _sheetsService = sheetsService;
             _driveService = driveService;
             _userApplicationService = userApplicationService;
+            _userAcceptService = userAcceptService;
             _dbContext = dbContext;
         }
 
@@ -496,24 +498,8 @@ namespace GorbushkaBot.Controllers
                         // Сохранение в Google Sheets (в таблицу "Пользователь")
                         await _sheetsService.AppendUserDataAsync(userData);
 
-                        // Сохранение в таблицу пользователей в БД
-                        var newUser = new UserAccept
-                        {
-                            ChatId = targetChatId,
-                            Fio = userApplication.Fio,
-                            PhoneNumber = userApplication.PhoneNumber,
-                            PassportNumber = userApplication.PassportNumber,
-                            PassportIssueDate = userApplication.PassportIssueDate,
-                            RegistrationAddress = userApplication.RegistrationAddress,
-                            FacePhoto = userApplication.FacePhoto,
-                            PassportPhotos = userApplication.PassportPhotos,
-                            PavilionNumber = userApplication.PavilionNumber,
-                            RentalContract = userApplication.RentalContract,
-                            PavilionPhotos = userApplication.PavilionPhotos
-                        };
+                        await _userAcceptService.SaveUserAcceptAsync(userData, userApplication.FolderUrl, userApplication.ChatId);
 
-                        _dbContext.UserAccepts.Add(newUser);
-                        await _dbContext.SaveChangesAsync();
 
                         // Обновляем сообщение в чате администратора
                         await botClient.EditMessageTextAsync(
