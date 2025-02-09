@@ -21,14 +21,16 @@ namespace GorbushkaBot.Controllers
         private readonly GoogleSheetsService _sheetsService;
         private readonly GoogleDriveService _driveService;
         private readonly UserApplicationService _userApplicationService;
+        private readonly ApplicationDbContext _dbContext;
         private static readonly string bottoken = Environment.GetEnvironmentVariable("BOT_TOKEN");
 
-        public StepManager(TelegramBotClient botClient, GoogleSheetsService sheetsService,GoogleDriveService driveService, UserApplicationService userApplicationService)
+        public StepManager(TelegramBotClient botClient, GoogleSheetsService sheetsService,GoogleDriveService driveService, UserApplicationService userApplicationService, ApplicationDbContext dbContext)
         {
             this.botClient = botClient;
             _sheetsService = sheetsService;
             _driveService = driveService;
             _userApplicationService = userApplicationService;
+            _dbContext = dbContext;
         }
 
         public void SaveStep(long chatId, string step, int messageId)
@@ -465,40 +467,38 @@ namespace GorbushkaBot.Controllers
                     }
 
                     // Загружаем данные заявки из базы
-                    using (var dbContext = new ApplicationDbContext(new DbContextOptions<ApplicationDbContext>()))
+                    var userApplication = await _dbContext.UserApplications
+                        .FirstOrDefaultAsync(u => u.ChatId == targetChatId);
+
+                    if (userApplication == null)
                     {
-                        var userApplication = await dbContext.UserApplications
-                            .FirstOrDefaultAsync(u => u.ChatId == targetChatId);
+                        Console.WriteLine($"Ошибка: заявка пользователя с chatId {targetChatId} не найдена в базе данных.");
+                        return;
+                    }
 
-                        if (userApplication == null)
-                        {
-                            Console.WriteLine($"Ошибка: заявка пользователя с chatId {targetChatId} не найдена в базе данных.");
-                            return;
-                        }
+                    string decisionText = callbackQuery.Data.StartsWith("approve")
+                        ? $"✅ Ваша заявка одобрена! 🎉\n\n**Данные:**\nФИО: {userApplication.Fio}\nТелефон: {userApplication.PhoneNumber}"
+                        : $"❌ Ваша заявка отклонена. Свяжитесь с поддержкой.\n\n**Данные:**\nФИО: {userApplication.Fio}\nТелефон: {userApplication.PhoneNumber}";
 
-                        string decisionText = callbackQuery.Data.StartsWith("approve")
-                            ? $"✅ Ваша заявка одобрена! 🎉\n\n**Данные:**\nФИО: {userApplication.Fio}\nТелефон: {userApplication.PhoneNumber}"
-                            : $"❌ Ваша заявка отклонена. Свяжитесь с поддержкой.\n\n**Данные:**\nФИО: {userApplication.Fio}\nТелефон: {userApplication.PhoneNumber}";
+                    try
+                    {
+                        await botClient.SendTextMessageAsync(
+                            chatId: targetChatId,
+                            text: decisionText);
 
-                        try
-                        {
-                            await botClient.SendTextMessageAsync(
-                                chatId: targetChatId,
-                                text: decisionText);
-
-                            await botClient.EditMessageTextAsync(
-                                chatId: callbackQuery.Message.Chat.Id,
-                                messageId: callbackQuery.Message.MessageId,
-                                text: $"📝 Заявка пользователя {(callbackQuery.Data.StartsWith("approve") ? "одобрена ✅" : "отклонена ❌")}\n\nФИО: {userApplication.Fio}\nТелефон: {userApplication.PhoneNumber}");
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Ошибка при обработке заявки: {ex.Message}");
-                        }
+                        await botClient.EditMessageTextAsync(
+                            chatId: callbackQuery.Message.Chat.Id,
+                            messageId: callbackQuery.Message.MessageId,
+                            text: $"📝 Заявка пользователя {(callbackQuery.Data.StartsWith("approve") ? "одобрена ✅" : "отклонена ❌")}\n\nФИО: {userApplication.Fio}\nТелефон: {userApplication.PhoneNumber}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Ошибка при обработке заявки: {ex.Message}");
                     }
 
                     await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
                     break;
+
 
 
                 case "back":
