@@ -461,7 +461,6 @@ namespace GorbushkaBot.Controllers
 
                 case "approve":
                     string[] parts = callbackQuery.Data.Split('_');
-
                     if (parts.Length < 2 || !long.TryParse(parts[1], out long targetChatId))
                     {
                         Console.WriteLine($"Ошибка: некорректные данные callback: {callbackQuery.Data}");
@@ -480,7 +479,7 @@ namespace GorbushkaBot.Controllers
 
                     try
                     {
-                        // Формируем данные для таблицы "Пользователь"
+                        // Формируем данные для записи в таблицу "UserAccepts"
                         var userData = new Dictionary<string, string>
                         {
                             { "fio", userApplication.Fio },
@@ -495,11 +494,12 @@ namespace GorbushkaBot.Controllers
                             { "pavilion_photo", userApplication.PavilionPhotos }
                         };
 
-                        // Сохранение в Google Sheets (в таблицу "Пользователь")
-                        await _sheetsService.AppendUserDataAsync(userData);
-
+                        // Сохраняем данные в таблицу UserAccepts
                         await _userAcceptService.SaveUserAcceptAsync(userData, userApplication.FolderUrl, userApplication.ChatId);
 
+                        // Удаляем заявку из базы данных
+                        _dbContext.UserApplications.Remove(userApplication);
+                        await _dbContext.SaveChangesAsync();
 
                         // Обновляем сообщение в чате администратора
                         await botClient.EditMessageTextAsync(
@@ -516,9 +516,9 @@ namespace GorbushkaBot.Controllers
                     await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
                     break;
 
+
                 case "reject":
                     string[] rejectParts = callbackQuery.Data.Split('_');
-
                     if (rejectParts.Length < 2 || !long.TryParse(rejectParts[1], out long rejectChatId))
                     {
                         Console.WriteLine($"Ошибка: некорректные данные callback: {callbackQuery.Data}");
@@ -555,6 +555,7 @@ namespace GorbushkaBot.Controllers
 
                     await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
                     break;
+
 
 
 
