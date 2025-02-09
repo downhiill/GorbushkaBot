@@ -3,6 +3,7 @@ using GorbushkaBot.Service;
 using Telegram.Bot.Types.ReplyMarkups;
 using Telegram.Bot.Types;
 using Telegram.Bot;
+using GorbushkaBot.AppDbContext;
 
 public class TelegramBotService
 {
@@ -22,6 +23,7 @@ public class TelegramBotService
     private readonly GoogleSheetsService googleSheetsService;
     private readonly GoogleDriveService googleDriveService;
     private readonly UserApplicationService userApplicationService;
+    private readonly ApplicationDbContext applicationDbContext;
 
     // Добавляем параметр userApplicationService
     public TelegramBotService(UserApplicationService userApplicationService)
@@ -29,7 +31,7 @@ public class TelegramBotService
         botClient = new TelegramBotClient(BotToken);
         googleSheetsService = new GoogleSheetsService(CredentialPath, SpreadsheetId, userApplicationService); // Передаем userApplicationService
         googleDriveService = new GoogleDriveService();
-        stepManager = new StepManager(botClient, googleSheetsService, googleDriveService, userApplicationService);
+        stepManager = new StepManager(botClient, googleSheetsService, googleDriveService, userApplicationService, applicationDbContext);
         keyboardManager = new KeyboardManager();
         errorHandler = new ErrorHandler();
     }
