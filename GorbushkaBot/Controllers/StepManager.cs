@@ -1,4 +1,5 @@
 ﻿using GorbushkaBot.AppDbContext;
+using GorbushkaBot.Model;
 using GorbushkaBot.Service;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -457,7 +458,6 @@ namespace GorbushkaBot.Controllers
                 break;
 
                 case "approve":
-                case "reject":
                     string[] parts = callbackQuery.Data.Split('_');
 
                     if (parts.Length < 2 || !long.TryParse(parts[1], out long targetChatId))
@@ -476,24 +476,95 @@ namespace GorbushkaBot.Controllers
                         return;
                     }
 
-                    string decisionText = callbackQuery.Data.StartsWith("approve")
-                        ? $"✅ Ваша заявка одобрена! 🎉\n\n**Данные:**\nФИО: {userApplication.Fio}\nТелефон: {userApplication.PhoneNumber}"
-                        : $"❌ Ваша заявка отклонена. Свяжитесь с поддержкой.\n\n**Данные:**\nФИО: {userApplication.Fio}\nТелефон: {userApplication.PhoneNumber}";
-
                     try
                     {
-                        await botClient.SendTextMessageAsync(
-                            chatId: targetChatId,
-                            text: decisionText);
+                        // Формируем данные для таблицы "Пользователь"
+                        var userData = new Dictionary<string, string>
+                        {
+                            { "fio", userApplication.Fio },
+                            { "phone_number", userApplication.PhoneNumber },
+                            { "passport_number", userApplication.PassportNumber },
+                            { "passport_issue_date", userApplication.PassportIssueDate },
+                            { "registration_address", userApplication.RegistrationAddress },
+                            { "face_photo", userApplication.FacePhoto },
+                            { "passport_photo", userApplication.PassportPhotos },
+                            { "pavilion_number", userApplication.PavilionNumber ?? "" },
+                            { "rental_contract", userApplication.RentalContract ?? "" },
+                            { "pavilion_photo", userApplication.PavilionPhotos }
+                        };
 
+                        // Сохранение в Google Sheets (в таблицу "Пользователь")
+                        await _sheetsService.AppendUserDataAsync(userData);
+
+                        // Сохранение в таблицу пользователей в БД
+                        var newUser = new UserAccept
+                        {
+                            ChatId = targetChatId,
+                            Fio = userApplication.Fio,
+                            PhoneNumber = userApplication.PhoneNumber,
+                            PassportNumber = userApplication.PassportNumber,
+                            PassportIssueDate = userApplication.PassportIssueDate,
+                            RegistrationAddress = userApplication.RegistrationAddress,
+                            FacePhoto = userApplication.FacePhoto,
+                            PassportPhotos = userApplication.PassportPhotos,
+                            PavilionNumber = userApplication.PavilionNumber,
+                            RentalContract = userApplication.RentalContract,
+                            PavilionPhotos = userApplication.PavilionPhotos
+                        };
+
+                        _dbContext.UserAccepts.Add(newUser);
+                        await _dbContext.SaveChangesAsync();
+
+                        // Обновляем сообщение в чате администратора
                         await botClient.EditMessageTextAsync(
                             chatId: callbackQuery.Message.Chat.Id,
                             messageId: callbackQuery.Message.MessageId,
-                            text: $"📝 Заявка пользователя {(callbackQuery.Data.StartsWith("approve") ? "одобрена ✅" : "отклонена ❌")}\n\nФИО: {userApplication.Fio}\nТелефон: {userApplication.PhoneNumber}");
+                            text: $"✅ Заявка пользователя одобрена и сохранена в базе данных\n\nФИО: {userApplication.Fio}\nТелефон: {userApplication.PhoneNumber}"
+                        );
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Ошибка при обработке заявки: {ex.Message}");
+                    }
+
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
+                    break;
+
+                case "reject":
+                    string[] rejectParts = callbackQuery.Data.Split('_');
+
+                    if (rejectParts.Length < 2 || !long.TryParse(rejectParts[1], out long rejectChatId))
+                    {
+                        Console.WriteLine($"Ошибка: некорректные данные callback: {callbackQuery.Data}");
+                        return;
+                    }
+
+                    // Загружаем заявку из базы
+                    var rejectedApplication = await _dbContext.UserApplications
+                        .FirstOrDefaultAsync(u => u.ChatId == rejectChatId);
+
+                    if (rejectedApplication == null)
+                    {
+                        Console.WriteLine($"Ошибка: заявка пользователя с chatId {rejectChatId} не найдена в базе данных.");
+                        return;
+                    }
+
+                    try
+                    {
+                        // Удаляем заявку из базы
+                        _dbContext.UserApplications.Remove(rejectedApplication);
+                        await _dbContext.SaveChangesAsync();
+
+                        // Обновляем сообщение в чате администратора
+                        await botClient.EditMessageTextAsync(
+                            chatId: callbackQuery.Message.Chat.Id,
+                            messageId: callbackQuery.Message.MessageId,
+                            text: $"❌ Заявка пользователя {rejectedApplication.Fio} отклонена и удалена."
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Ошибка при удалении заявки: {ex.Message}");
                     }
 
                     await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
