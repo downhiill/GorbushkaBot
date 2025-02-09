@@ -517,14 +517,30 @@ namespace GorbushkaBot.Controllers
                                 $"[Паспорт]({passportPhotos})\n" +
                                 $"[Павильон]({pavilionPhotos})";
 
+                            // Собираем список фотографий
+                            var mediaList = new List<IAlbumInputMedia>();
+
+                            if (!string.IsNullOrEmpty(passportPhotos))
+                                mediaList.Add(new InputMediaPhoto(new InputFileId(passportPhotos)));
+
+                            if (!string.IsNullOrEmpty(pavilionPhotos))
+                                mediaList.Add(new InputMediaPhoto(new InputFileId(pavilionPhotos)));
+
+                            if (!string.IsNullOrEmpty(facePhoto))
+                                mediaList.Add(new InputMediaPhoto(new InputFileId(facePhoto)));
                             // Отправка сообщения всем администраторам
                             foreach (var adminChatId in adminChatIds)
                             {
-                                await botClient.SendTextMessageAsync(
+                                if(mediaList.Count > 0)
+                                {
+                                    await botClient.SendMediaGroupAsync(chatId, mediaList);
+                                    await botClient.SendTextMessageAsync(
                                     chatId: adminChatId,
                                     text: adminMessage,
                                     parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
                                     replyMarkup: approvalKeyboard);
+                                }
+                                
                             }
 
                             await botClient.EditMessageTextAsync(
