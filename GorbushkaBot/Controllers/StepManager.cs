@@ -203,7 +203,7 @@ namespace GorbushkaBot.Controllers
             }
             else if (step == "passport_rus_data")
             {
-                if (!Regex.IsMatch(message.Text, @"^[A-Za-z0-9 ]+$"))
+                if (!Regex.IsMatch(message.Text, @"^\d{4} \d{6}$"))
                 {
                     var errorMsg = await botClient.SendTextMessageAsync(
                         chatId,
@@ -213,9 +213,9 @@ namespace GorbushkaBot.Controllers
                     return;
                 }
                 SaveUserData(chatId, "passport_number", message.Text);
-                await DeleteAndSendNextStep(botClient, chatId, messageId, "passport_issue_date", "Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):", true);
+                await DeleteAndSendNextStep(botClient, chatId, messageId, "passport_issue_date_rus", "Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):", true);
             }
-            else if (step == "passport_issue_date")
+            else if (step == "passport_issue_date_rus")
             {
                 if (!Regex.IsMatch(message.Text, @"^\d{2}\.\d{2}\.\d{4}$"))
                 {
@@ -226,8 +226,27 @@ namespace GorbushkaBot.Controllers
                     LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
                     return;
                 }
-                SaveUserData(chatId, "passport_issue_date", message.Text);
+                SaveUserData(chatId, "passport_issue_date_rus", message.Text);
                 await DeleteAndSendNextStep(botClient, chatId, messageId, "registration_address", "Введите свой адрес прописки:", true);
+            }
+            else if (step == "passport_other_data")
+            {
+                SaveUserData(chatId, "passport_number", message.Text);
+                await DeleteAndSendNextStep(botClient, chatId, messageId, "passport_issue_date_other", "Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):", true);
+            }
+            else if (step == "passport_issue_date_other")
+            {
+                if (!Regex.IsMatch(message.Text, @"^\d{2}\.\d{2}\.\d{4}$"))
+                {
+                    var errorMsg = await botClient.SendTextMessageAsync(
+                        chatId,
+                        "Ошибка: Введите корректную дату в формате ДД.ММ.ГГГГ."
+                    );
+                    LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
+                    return;
+                }
+                SaveUserData(chatId, "passport_issue_date_rus", message.Text);
+                await DeleteAndSendNextStep(botClient, chatId, messageId, "pavilion_number", "Введите номер вашего павильона:", true);
             }
             else if (step == "registration_address")
             {
@@ -312,10 +331,30 @@ namespace GorbushkaBot.Controllers
                 break;
 
                 case "seller":
+
+                    SaveUserData(chatId, "role", "Продавец");
+
+                    await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "citizenship", "Уточните ваше гражданство:", false,
+                       new InlineKeyboardMarkup(new[]
+                       {
+                            new[] { InlineKeyboardButton.WithCallbackData("РФ", "passport_rus") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Другое", "passport_other") }
+                       }));
+                    break;
                 case "buyer":
+                    
+                    SaveUserData(chatId, "role", "Покупатель");
+
+                    await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "citizenship", "Уточните ваше гражданство:", false,
+                       new InlineKeyboardMarkup(new[]
+                       {
+                            new[] { InlineKeyboardButton.WithCallbackData("РФ", "passport_rus") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Другое", "passport_other") }
+                       }));
+                    break;
                 case "both":
-                    // Сохраняем выбранную роль
-                    SaveUserData(chatId, "role", data); // data содержит "seller", "buyer" или "both"
+                    
+                    SaveUserData(chatId, "role", "Продавец и Покупатель"); 
 
                     await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "citizenship", "Уточните ваше гражданство:", false,
                         new InlineKeyboardMarkup(new[]
@@ -427,7 +466,7 @@ namespace GorbushkaBot.Controllers
                             string adminMessage = $"📌 Новая заявка от пользователя:\n\n" +
                                 $"👤 ФИО: {fio}\n" +
                                 $"📄 Паспорт: {passportNumber}, {passportIssueDate}\n" +
-                                $"📞 Телефон: {phoneNumber}\n" +
+                                $"📞 Телефон (контактный): {phoneNumber}\n" +
                                 $"💼 Роль: {role}\n" +
                                 $"🏢 Павильон: {pavilionNumber}, {rentalContract}\n" +
                                 $"🖼 Фото: \n[Лицо]({facePhoto})\n" +

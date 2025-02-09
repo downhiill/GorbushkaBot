@@ -80,6 +80,10 @@ namespace GorbushkaBot.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.ToTable("user_accepts", (string)null);
@@ -140,6 +144,10 @@ namespace GorbushkaBot.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("RentalContract")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Role")
                         .IsRequired()
                         .HasColumnType("text");
 
