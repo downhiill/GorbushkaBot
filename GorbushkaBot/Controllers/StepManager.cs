@@ -440,7 +440,7 @@ namespace GorbushkaBot.Controllers
                             userData["passport_photo"] = $"https://drive.google.com/drive/folders/{folders["passport"]}";
                             userData["pavilion_photo"] = $"https://drive.google.com/drive/folders/{folders["pavilion"]}";
 
-                            await _sheetsService.AppendDataAsync(userData, folders["root"]);
+                            await _sheetsService.AppendDataAsync(userData, folders["root"],chatId);
                             await _userApplicationService.SaveUserApplicationAsync(userData, folders["root"],chatId);
 
                             // Отправка админу заявки с кнопками одобрения/отклонения

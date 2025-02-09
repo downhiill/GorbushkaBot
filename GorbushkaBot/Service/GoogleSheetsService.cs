@@ -4,6 +4,7 @@ using Google.Apis.Sheets.v4.Data;
 using Google.Apis.Sheets.v4;
 using GorbushkaBot.Model;
 using GorbushkaBot.AppDbContext;
+using Telegram.Bot.Types;
 
 namespace GorbushkaBot.Service
 {
@@ -32,7 +33,7 @@ namespace GorbushkaBot.Service
             _userAcceptService = userAcceptService;
         }
 
-        public async Task AppendDataAsync(Dictionary<string, string> userData, string folderUrl)
+        public async Task AppendDataAsync(Dictionary<string, string> userData, string folderUrl, long chatId)
         {
             var valueRange = new ValueRange
             {
@@ -49,7 +50,8 @@ namespace GorbushkaBot.Service
                     userData["passport_photo"],
                     userData.GetValueOrDefault("pavilion_number", ""),
                     userData.GetValueOrDefault("rental_contract", ""),
-                    userData["pavilion_photo"]
+                    userData["pavilion_photo"],
+                    chatId
                 }}
             };
 
@@ -60,7 +62,7 @@ namespace GorbushkaBot.Service
             
         }
 
-        public async Task AppendUserDataAsync(Dictionary<string, string> userData, string folderUrl)
+        public async Task AppendUserDataAsync(Dictionary<string, string> userData, string folderUrl, long chatId)
         {
             var valueRange = new ValueRange
             {
@@ -77,7 +79,8 @@ namespace GorbushkaBot.Service
                     userData["passport_photo"],
                     userData.GetValueOrDefault("pavilion_number", ""),
                     userData.GetValueOrDefault("rental_contract", ""),
-                    userData["pavilion_photo"]
+                    userData["pavilion_photo"],
+                    chatId
                 }}
             };
 
