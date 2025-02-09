@@ -292,8 +292,7 @@ namespace GorbushkaBot.Controllers
                 string passportPhotos = userData["passport_photo"];
                 string pavilionPhotos = userData["pavilion_photo"];
 
-                // Итоговое сообщение
-                string completedMessage = $"✅ Заявка заполнена!\n\n" +
+                string completedMessage = $"✅ <b>Заявка заполнена!</b>\n\n" +
                     $"👤 <b>ФИО:</b> {fio}\n" +
                     $"📄 <b>Паспорт:</b> {passportNumber}, {passportIssueDate}\n" +
                     $"📞 <b>Телефон (контактный):</b> {phoneNumber}\n" +
@@ -308,43 +307,33 @@ namespace GorbushkaBot.Controllers
                     parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
                 );
 
-                // Отправляем фото лица
-                if (!string.IsNullOrEmpty(facePhoto))
-                {
-                    await botClient.SendPhotoAsync(
-                        chatId,
-                        new InputFileId(facePhoto)
-                    );
-                }
+                // Собираем список фотографий
+                var mediaList = new List<IAlbumInputMedia>();
 
-                // Отправляем фото паспорта
                 if (!string.IsNullOrEmpty(passportPhotos))
-                {
-                    await botClient.SendPhotoAsync(
-                        chatId,
-                        new InputFileId(passportPhotos)
-                    );
-                }
+                    mediaList.Add(new InputMediaPhoto(new InputFileId(passportPhotos)));
 
-                // Отправляем фото павильона
                 if (!string.IsNullOrEmpty(pavilionPhotos))
+                    mediaList.Add(new InputMediaPhoto(new InputFileId(pavilionPhotos)));
+
+                if (!string.IsNullOrEmpty(facePhoto))
+                    mediaList.Add(new InputMediaPhoto(new InputFileId(facePhoto)));
+
+                // Отправляем все фото одним сообщением, если есть хотя бы одно фото
+                if (mediaList.Count > 0)
                 {
-                    await botClient.SendPhotoAsync(
-                        chatId,
-                        new InputFileId(pavilionPhotos)
-                    );
+                    await botClient.SendMediaGroupAsync(chatId, mediaList);
+
+
+                    // Отправляем кнопки
+                    await DeleteAndSendNextStep(botClient, chatId, messageId, "completed", "Выберите свою роль:", false,
+                        new InlineKeyboardMarkup(new[]
+                        {
+                            new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
+                        }));
                 }
 
-                // Отправляем кнопки
-                await botClient.SendTextMessageAsync(
-                    chatId,
-                    "Выберите действие:",
-                    replyMarkup: new InlineKeyboardMarkup(new[]
-                    {
-                        new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
-                        new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
-                    })
-                );
 
             }
 
