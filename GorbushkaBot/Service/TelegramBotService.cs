@@ -26,11 +26,12 @@ public class TelegramBotService
     private readonly UserAcceptService userAcceptService;
     private readonly ApplicationDbContext applicationDbContext;
 
-    // Добавляем параметр userApplicationService
+    private readonly List<long> adminIds = new List<long> { 123456789, 987654321 }; // Список ID администраторов
+
     public TelegramBotService(UserApplicationService userApplicationService)
     {
         botClient = new TelegramBotClient(BotToken);
-        googleSheetsService = new GoogleSheetsService(CredentialPath, SpreadsheetId, userApplicationService, userAcceptService); // Передаем userApplicationService
+        googleSheetsService = new GoogleSheetsService(CredentialPath, SpreadsheetId, userApplicationService, userAcceptService);
         googleDriveService = new GoogleDriveService();
         stepManager = new StepManager(botClient, googleSheetsService, googleDriveService, userApplicationService, applicationDbContext, userAcceptService);
         keyboardManager = new KeyboardManager();
@@ -61,13 +62,29 @@ public class TelegramBotService
 
         if (message.Text == "/start")
         {
-            var inlineKeyboard = keyboardManager.CreateInlineKeyboard(new[]
-            {
+            var inlineKeyboard = keyboardManager.CreateInlineKeyboard(new[] {
                 new[] { InlineKeyboardButton.WithCallbackData("Перейти к верификации", "verify") }
             });
 
             Message sentMessage = await botClient.SendTextMessageAsync(chatId, "Добро пожаловать в систему!", replyMarkup: inlineKeyboard);
             stepManager.SaveStep(chatId, "start", sentMessage.MessageId);
+        }
+        else if (message.Text == "/menu")
+        {
+            // Проверка на администратора
+            if (adminIds.Contains(chatId))
+            {
+                var menuKeyboard = keyboardManager.CreateInlineKeyboard(new[] {
+                    new[] { InlineKeyboardButton.WithCallbackData("Найти заявку", "find_application") },
+                    new[] { InlineKeyboardButton.WithCallbackData("Заявки", "applications") }
+                });
+
+                await botClient.SendTextMessageAsync(chatId, "Меню администратора", replyMarkup: menuKeyboard);
+            }
+            else
+            {
+                await botClient.SendTextMessageAsync(chatId, "У вас нет доступа к этой команде.");
+            }
         }
         else
         {
@@ -81,3 +98,4 @@ public class TelegramBotService
         await stepManager.HandleCallbackQuery(botClient, chatId, callbackQuery);
     }
 }
+
