@@ -60,14 +60,23 @@ public class TelegramBotService
     {
         long chatId = message.Chat.Id;
 
+        // Проверяем, является ли пользователь администратором
         if (message.Text == "/start")
         {
-            var inlineKeyboard = keyboardManager.CreateInlineKeyboard(new[] {
+            // Если это администратор, не выполняем команду /start
+            if (adminIds.Contains(chatId))
+            {
+                await botClient.SendTextMessageAsync(chatId, "Вы уже являетесь администратором, верификация не требуется.");
+            }
+            else
+            {
+                var inlineKeyboard = keyboardManager.CreateInlineKeyboard(new[] {
                 new[] { InlineKeyboardButton.WithCallbackData("Перейти к верификации", "verify") }
             });
 
-            Message sentMessage = await botClient.SendTextMessageAsync(chatId, "Добро пожаловать в систему!", replyMarkup: inlineKeyboard);
-            stepManager.SaveStep(chatId, "start", sentMessage.MessageId);
+                Message sentMessage = await botClient.SendTextMessageAsync(chatId, "Добро пожаловать в систему!", replyMarkup: inlineKeyboard);
+                stepManager.SaveStep(chatId, "start", sentMessage.MessageId);
+            }
         }
         else if (message.Text == "/menu")
         {
@@ -75,9 +84,9 @@ public class TelegramBotService
             if (adminIds.Contains(chatId))
             {
                 var menuKeyboard = keyboardManager.CreateInlineKeyboard(new[] {
-                    new[] { InlineKeyboardButton.WithCallbackData("Найти заявку", "find_application") },
-                    new[] { InlineKeyboardButton.WithCallbackData("Заявки", "applications") }
-                });
+                new[] { InlineKeyboardButton.WithCallbackData("Найти заявку", "find_application") },
+                new[] { InlineKeyboardButton.WithCallbackData("Заявки", "applications") }
+            });
 
                 await botClient.SendTextMessageAsync(chatId, "Меню администратора", replyMarkup: menuKeyboard);
             }
@@ -91,6 +100,7 @@ public class TelegramBotService
             await stepManager.HandleMessage(botClient, chatId, message);
         }
     }
+
 
     private async Task HandleCallbackQuery(ITelegramBotClient botClient, CallbackQuery callbackQuery)
     {
