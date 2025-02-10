@@ -111,7 +111,18 @@ public class TelegramBotService
     private async Task HandleCallbackQuery(ITelegramBotClient botClient, CallbackQuery callbackQuery)
     {
         long chatId = callbackQuery.Message.Chat.Id;
-        await stepManager.HandleCallbackQuery(botClient, chatId, callbackQuery);
+        string callbackData = callbackQuery.Data;
+
+        if (adminIds.Contains(chatId))
+        {
+            // Обрабатываем кнопки только для админов
+            await stepManagerAdmin.HandleCallbackQuery(botClient, chatId, callbackQuery);
+        }
+        else
+        {
+            await stepManager.HandleCallbackQuery(botClient, chatId, callbackQuery);
+        }
     }
+
 }
 

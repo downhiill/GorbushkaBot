@@ -65,5 +65,29 @@ namespace GorbushkaBot.Controllers
                 SaveStep(chatId, "menu", message.MessageId);
             }
         }
+
+        public async Task HandleCallbackQuery(ITelegramBotClient botClient, long chatId, CallbackQuery callbackQuery)
+        {
+            string data = callbackQuery.Data;
+
+            if (data == "find_application")
+            {
+                await botClient.SendTextMessageAsync(chatId, "Введите ID заявки для поиска:");
+                SaveStep(chatId, "waiting_for_application_id", callbackQuery.Message.MessageId);
+            }
+            else if (data == "applications")
+            {
+                var applications = await _applicationService.GetAllApplicationsAsync();
+                if (applications.Count == 0)
+                {
+                    await botClient.SendTextMessageAsync(chatId, "Заявки не найдены.");
+                }
+                else
+                {
+                    string formattedApplications = _applicationService.FormatApplications(applications);
+                    await botClient.SendTextMessageAsync(chatId, formattedApplications);
+                }
+            }
+        }
     }
 }
