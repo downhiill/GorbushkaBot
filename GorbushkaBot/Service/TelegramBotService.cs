@@ -26,7 +26,7 @@ public class TelegramBotService
     private readonly UserAcceptService userAcceptService;
     private readonly ApplicationDbContext applicationDbContext;
 
-    private readonly List<long> adminIds = new List<long> { 123456789, 987654321 }; // Список ID администраторов
+    long[] adminIds = { 8018159474, 448145168, 388009185, 7069858455 }; // Список ID администраторов
 
     public TelegramBotService(UserApplicationService userApplicationService)
     {
