@@ -12,6 +12,7 @@ builder.Services.AddSwaggerGen();
 // Add Telegram bot service
 builder.Services.AddScoped<UserApplicationService>();
 builder.Services.AddScoped<UserAcceptService>();
+builder.Services.AddScoped<ApplicationService>();
 builder.Services.AddScoped<GoogleSheetsService>(provider =>
 {
     var credentialPath = "GOOGLE_CREDENTIALS_PATH"; // Укажите правильный путь
@@ -24,7 +25,8 @@ builder.Services.AddScoped<GoogleSheetsService>(provider =>
 builder.Services.AddSingleton<TelegramBotService>(serviceProvider =>
 {
     var userApplicationService = serviceProvider.GetRequiredService<UserApplicationService>();
-    return new TelegramBotService(userApplicationService); // Передаем userApplicationService в конструктор TelegramBotService
+    var applicationService = serviceProvider.GetRequiredService<ApplicationService>();
+    return new TelegramBotService(userApplicationService, applicationService); // Передаем userApplicationService в конструктор TelegramBotService
 });
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

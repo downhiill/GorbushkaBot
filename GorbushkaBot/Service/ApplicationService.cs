@@ -24,15 +24,15 @@ namespace GorbushkaBot.Service
         }
 
         // Метод для поиска заявки по ID
-        public async Task<UserApplication> GetApplicationByIdAsync(int id)
+        public async Task<UserApplication> GetApplicationByIdAsync(long chatId)
         {
-            return await _dbContext.UserApplications.FirstOrDefaultAsync(a => a.Id == id);
+            return await _dbContext.UserApplications.FirstOrDefaultAsync(a => a.ChatId == chatId);
         }
 
         // Форматирование одной заявки
         public string FormatApplication(UserApplication application)
         {
-            return $"🆔 ID: {application.Id}\n" +
+            return $"🆔 ID: {application.ChatId}\n" +
                    $"👤 ФИО: {application.Fio}\n" +
                    $"📞 Телефон: {application.PhoneNumber}\n" +
                    $"🛠 Роль: {application.Role}\n" +
