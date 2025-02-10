@@ -25,6 +25,9 @@ public class TelegramBotService
     private readonly UserApplicationService userApplicationService;
     private readonly UserAcceptService userAcceptService;
     private readonly ApplicationDbContext applicationDbContext;
+    private readonly ApplicationService applicationService;
+    private readonly StepManagerAdmin stepManagerAdmin;
+
 
     long[] adminIds = { 8018159474, 448145168, 388009185, 7069858455 }; // Список ID администраторов
 
@@ -34,6 +37,7 @@ public class TelegramBotService
         googleSheetsService = new GoogleSheetsService(CredentialPath, SpreadsheetId, userApplicationService, userAcceptService);
         googleDriveService = new GoogleDriveService();
         stepManager = new StepManager(botClient, googleSheetsService, googleDriveService, userApplicationService, applicationDbContext, userAcceptService);
+        stepManagerAdmin = new StepManagerAdmin(applicationService);
         keyboardManager = new KeyboardManager();
         errorHandler = new ErrorHandler();
     }
