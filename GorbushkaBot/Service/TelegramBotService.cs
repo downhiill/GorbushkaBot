@@ -64,7 +64,6 @@ public class TelegramBotService
         {
             if (adminIds.Contains(chatId))
             {
-                // Если пользователь администратор, отправляем ему меню
                 var menuKeyboard = keyboardManager.CreateInlineKeyboard(new[]
                 {
                 new[] { InlineKeyboardButton.WithCallbackData("Найти заявку", "find_application") },
@@ -75,7 +74,6 @@ public class TelegramBotService
             }
             else
             {
-                // Если обычный пользователь, отправляем сообщение о верификации
                 var inlineKeyboard = keyboardManager.CreateInlineKeyboard(new[]
                 {
                 new[] { InlineKeyboardButton.WithCallbackData("Перейти к верификации", "verify") }
@@ -95,7 +93,11 @@ public class TelegramBotService
 
             await botClient.SendTextMessageAsync(chatId, "Меню администратора", replyMarkup: menuKeyboard);
         }
-        else if (!adminIds.Contains(chatId))
+        else if (adminIds.Contains(chatId))
+        {
+            await stepManagerAdmin.HandleMessage(botClient, chatId, message);
+        }
+        else
         {
             await stepManager.HandleMessage(botClient, chatId, message);
         }
