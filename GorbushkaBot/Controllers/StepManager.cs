@@ -491,12 +491,6 @@ namespace GorbushkaBot.Controllers
                             await _userApplicationService.SaveUserApplicationAsync(userData, folders["root"],chatId);
 
 
-                            var approvalKeyboard = new InlineKeyboardMarkup(new[]
-                            {
-                                new[] { InlineKeyboardButton.WithCallbackData("✅ Одобрить", $"approve_{chatId}") },
-                                new[] { InlineKeyboardButton.WithCallbackData("❌ Отклонить", $"reject_{chatId}") }
-                            });
-
                             string fio = userData.ContainsKey("fio") ? userData["fio"] : "Не указано";
                             string passportNumber = userData.ContainsKey("passport_number") ? userData["passport_number"] : "Не указано";
                             string role = userData.ContainsKey("role") ? userData["role"] : "Не указано";
@@ -507,103 +501,6 @@ namespace GorbushkaBot.Controllers
                             string facePhoto = userData.ContainsKey("face_photo") ? userData["face_photo"] : "Не указано";
                             string passportphotos = userData.ContainsKey("passport_photo") ? userData["passport_photo"] : "Не указано";
                             string pavilionphotos = userData.ContainsKey("pavilion_photo") ? userData["pavilion_photo"] : "Не указано";
-
-                            string adminMessage = $"📌 Новая заявка от пользователя:\n\n" +
-                                $"👤 ФИО: {fio}\n" +
-                                $"📄 Паспорт: {passportNumber}, {passportIssueDate}\n" +
-                                $"📞 Телефон (контактный): {phoneNumber}\n" +
-                                $"💼 Роль: {role}\n" +
-                                $"🏢 Павильон: {pavilionNumber}, {rentalContract}\n" +
-                                $"🖼 Фото: \n[Лицо]({facePhoto})\n" +
-                                $"[Паспорт]({passportPhotos})\n" +
-                                $"[Павильон]({pavilionPhotos})";
-
-                            foreach (var adminChatId in adminChatIds)
-                            {
-                                List<IAlbumInputMedia> mediaList = new List<IAlbumInputMedia>();
-
-                                if (!string.IsNullOrEmpty(passportPhotos))
-                                {
-                                    var passportPath = await _driveService.DownloadFileAsync(passportPhotos); // Скачиваем фото паспорта
-                                    using (var fileStream = new FileStream(passportPath, FileMode.Open, FileAccess.Read))
-                                    {
-                                        mediaList.Add(new InputMediaPhoto(new InputFileStream(fileStream, Path.GetFileName(passportPath))));
-                                    }
-                                }
-
-                                if (!string.IsNullOrEmpty(pavilionPhotos))
-                                {
-                                    var pavilionPath = await _driveService.DownloadFileAsync(pavilionPhotos); // Скачиваем фото павильона
-                                    using (var fileStream = new FileStream(pavilionPath, FileMode.Open, FileAccess.Read))
-                                    {
-                                        mediaList.Add(new InputMediaPhoto(new InputFileStream(fileStream, Path.GetFileName(pavilionPath))));
-                                    }
-                                }
-
-                                if (!string.IsNullOrEmpty(facePhoto))
-                                {
-                                    var facePath = await _driveService.DownloadFileAsync(facePhoto); // Скачиваем фото лица
-                                    using (var fileStream = new FileStream(facePath, FileMode.Open, FileAccess.Read))
-                                    {
-                                        mediaList.Add(new InputMediaPhoto(new InputFileStream(fileStream, Path.GetFileName(facePath))));
-                                    }
-                                }
-
-                                if (mediaList.Count > 0)
-                                {
-                                    await botClient.SendMediaGroupAsync(adminChatId, mediaList);
-                                }
-
-                                await botClient.SendTextMessageAsync(
-                                    chatId: adminChatId,
-                                    text: adminMessage,
-                                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
-                                    replyMarkup: approvalKeyboard);
-                            }
-                            foreach (var adminChatId in adminChatIds)
-                            {
-                                List<IAlbumInputMedia> mediaList = new List<IAlbumInputMedia>();
-
-                                if (!string.IsNullOrEmpty(passportPhotos))
-                                {
-                                    var passportPath = await _driveService.DownloadFileAsync(passportPhotos); // Скачиваем фото паспорта
-                                    using (var fileStream = new FileStream(passportPath, FileMode.Open, FileAccess.Read))
-                                    {
-                                        mediaList.Add(new InputMediaPhoto(new InputFileStream(fileStream, Path.GetFileName(passportPath))));
-                                    }
-                                }
-
-                                if (!string.IsNullOrEmpty(pavilionPhotos))
-                                {
-                                    var pavilionPath = await _driveService.DownloadFileAsync(pavilionPhotos); // Скачиваем фото павильона
-                                    using (var fileStream = new FileStream(pavilionPath, FileMode.Open, FileAccess.Read))
-                                    {
-                                        mediaList.Add(new InputMediaPhoto(new InputFileStream(fileStream, Path.GetFileName(pavilionPath))));
-                                    }
-                                }
-
-                                if (!string.IsNullOrEmpty(facePhoto))
-                                {
-                                    var facePath = await _driveService.DownloadFileAsync(facePhoto); // Скачиваем фото лица
-                                    using (var fileStream = new FileStream(facePath, FileMode.Open, FileAccess.Read))
-                                    {
-                                        mediaList.Add(new InputMediaPhoto(new InputFileStream(fileStream, Path.GetFileName(facePath))));
-                                    }
-                                }
-
-                                if (mediaList.Count > 0)
-                                {
-                                    await botClient.SendMediaGroupAsync(adminChatId, mediaList);
-                                }
-
-                                await botClient.SendTextMessageAsync(
-                                    chatId: adminChatId,
-                                    text: adminMessage,
-                                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
-                                    replyMarkup: approvalKeyboard);
-                            }
-
-
 
 
                             await botClient.EditMessageTextAsync(
