@@ -78,19 +78,14 @@ namespace GorbushkaBot.Controllers
 
             if (data == "find_application")
             {
-                // Ищем заявку по `chatId`
-                var application = await _applicationService.GetApplicationByIdAsync(chatId);
+                if (data == "find_application")
+                {
+                    // Отправляем запрос на ввод ID заявки
+                    await botClient.SendTextMessageAsync(chatId, "Введите ID заявки для поиска:");
 
-                if (application == null)
-                {
-                    await botClient.SendTextMessageAsync(chatId, "Заявка не найдена.");
+                    // Сохраняем шаг ожидания ID
+                    SaveStep(chatId, "waiting_for_application_id", callbackQuery.Message.MessageId);
                 }
-                else
-                {
-                    string formattedApplication = _applicationService.FormatApplication(application);
-                    await botClient.SendTextMessageAsync(chatId, formattedApplication);
-                }
-                SaveStep(chatId, "waiting_for_application_id", callbackQuery.Message.MessageId);
             }
             else if (data == "applications")
             {

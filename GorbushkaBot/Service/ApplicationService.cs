@@ -32,8 +32,7 @@ namespace GorbushkaBot.Service
         // Форматирование одной заявки
         public string FormatApplication(UserApplication application)
         {
-            return $"🆔 ID: {application.ChatId}\n" +
-                   $"👤 ФИО: {application.Fio}\n" +
+            return $"👤 ФИО: {application.Fio}\n" +
                    $"📞 Телефон: {application.PhoneNumber}\n" +
                    $"🛠 Роль: {application.Role}\n" +
                    $"📅 Дата заявки: {application.CreatedAt:dd.MM.yyyy}";
@@ -45,7 +44,7 @@ namespace GorbushkaBot.Service
             var formattedApplications = new StringBuilder();
             foreach (var app in applications)
             {
-                formattedApplications.AppendLine($"ID: {app.Id}, ФИО: {app.Fio}, Телефон: {app.PhoneNumber}, Роль: {app.Role}");
+                formattedApplications.AppendLine($"ФИО: {app.Fio}, Телефон: {app.PhoneNumber}, Роль: {app.Role}");
                 formattedApplications.AppendLine("-------------------");
             }
             return formattedApplications.ToString();
