@@ -1,4 +1,3 @@
-using Google;
 using GorbushkaBot.AppDbContext;
 using GorbushkaBot.Service;
 using Microsoft.EntityFrameworkCore;
@@ -27,9 +26,7 @@ builder.Services.AddSingleton<TelegramBotService>(serviceProvider =>
 {
     var userApplicationService = serviceProvider.GetRequiredService<UserApplicationService>();
     var applicationService = serviceProvider.GetRequiredService<ApplicationService>();
-    var userAcceptService = serviceProvider.GetRequiredService<UserAcceptService>();
-    var applicationDbContext = serviceProvider.GetRequiredService<ApplicationDbContext>();
-    return new TelegramBotService(userApplicationService, applicationService, userAcceptService, applicationDbContext); // Передаем userApplicationService в конструктор TelegramBotService
+    return new TelegramBotService(userApplicationService, applicationService); // Передаем userApplicationService в конструктор TelegramBotService
 });
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

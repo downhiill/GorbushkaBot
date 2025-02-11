@@ -31,17 +31,8 @@ public class TelegramBotService
 
     long[] adminIds = { 8018159474, 448145168, 388009185, 7069858455 }; // Список ID администраторов
 
-    public TelegramBotService(
-     UserApplicationService userApplicationService,
-     ApplicationService applicationService,
-     UserAcceptService userAcceptService,
-     ApplicationDbContext applicationDbContext)
+    public TelegramBotService(UserApplicationService userApplicationService, ApplicationService applicationService)
     {
-        this.userApplicationService = userApplicationService;
-        this.applicationService = applicationService;
-        this.userAcceptService = userAcceptService;
-        this.applicationDbContext = applicationDbContext;
-
         botClient = new TelegramBotClient(BotToken);
         googleSheetsService = new GoogleSheetsService(CredentialPath, SpreadsheetId, userApplicationService, userAcceptService);
         googleDriveService = new GoogleDriveService();
@@ -50,7 +41,6 @@ public class TelegramBotService
         keyboardManager = new KeyboardManager();
         errorHandler = new ErrorHandler();
     }
-
 
     public void Start()
     {
