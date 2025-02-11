@@ -68,17 +68,33 @@ namespace GorbushkaBot.Controllers
 
         public async Task HandleCallbackQuery(ITelegramBotClient botClient, long chatId, CallbackQuery callbackQuery)
         {
+            if (callbackQuery?.Message == null)
+            {
+                await botClient.SendTextMessageAsync(chatId, "Произошла ошибка: callbackQuery.Message == null");
+                return;
+            }
+
             string data = callbackQuery.Data;
 
             if (data == "find_application")
             {
-                await botClient.SendTextMessageAsync(chatId, "Введите ID заявки для поиска:");
-                SaveStep(chatId, "waiting_for_application_id", callbackQuery.Message.MessageId);
+                // Ищем заявку по `chatId`
+                var application = await _applicationService.GetApplicationByIdAsync(chatId);
+
+                if (application == null)
+                {
+                    await botClient.SendTextMessageAsync(chatId, "Заявка не найдена.");
+                }
+                else
+                {
+                    string formattedApplication = _applicationService.FormatApplication(application);
+                    await botClient.SendTextMessageAsync(chatId, formattedApplication);
+                }
             }
             else if (data == "applications")
             {
                 var applications = await _applicationService.GetAllApplicationsAsync();
-                if (applications.Count == 0)
+                if (applications == null || applications.Count == 0)
                 {
                     await botClient.SendTextMessageAsync(chatId, "Заявки не найдены.");
                 }
@@ -89,5 +105,6 @@ namespace GorbushkaBot.Controllers
                 }
             }
         }
+
     }
 }
