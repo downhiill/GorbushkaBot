@@ -22,17 +22,15 @@ namespace GorbushkaBot.Controllers
 
         public async Task HandleMessage(ITelegramBotClient botClient, long chatId, Message message)
         {
-            if (!AdminSteps.ContainsKey(chatId)) return;
+            if (!AdminSteps.ContainsKey(chatId))
+            {
+                await botClient.SendTextMessageAsync(chatId, "Выберите действие из меню.");
+                return;
+            }
+
             var (step, messageId) = AdminSteps[chatId];
 
-            if (step == "find_application")
-            {
-                await botClient.SendTextMessageAsync(chatId, "Введите ID заявки для поиска:");
-
-                // Сохраняем шаг ожидания ID заявки
-                SaveStep(chatId, "waiting_for_application_id", message.MessageId);
-            }
-            else if (step == "waiting_for_application_id")
+            if (step == "waiting_for_application_id")
             {
                 int applicationId;
                 if (!int.TryParse(message.Text, out applicationId))
@@ -54,7 +52,7 @@ namespace GorbushkaBot.Controllers
                     await botClient.SendTextMessageAsync(chatId, formattedApplication);
                 }
 
-                // Возвращаем в главное меню
+                // После обработки заявки возвращаем в главное меню
                 var menuKeyboard = new InlineKeyboardMarkup(new[]
                 {
                     new[] { InlineKeyboardButton.WithCallbackData("Найти заявку", "find_application") },
@@ -62,9 +60,12 @@ namespace GorbushkaBot.Controllers
                 });
 
                 await botClient.SendTextMessageAsync(chatId, "Меню администратора", replyMarkup: menuKeyboard);
-                SaveStep(chatId, "menu", message.MessageId);
+
+                // Очищаем шаг
+                AdminSteps.Remove(chatId);
             }
         }
+
 
         public async Task HandleCallbackQuery(ITelegramBotClient botClient, long chatId, CallbackQuery callbackQuery)
         {
@@ -78,14 +79,11 @@ namespace GorbushkaBot.Controllers
 
             if (data == "find_application")
             {
-                if (data == "find_application")
-                {
-                    // Отправляем запрос на ввод ID заявки
-                    await botClient.SendTextMessageAsync(chatId, "Введите ID заявки для поиска:");
+                // Отправляем запрос на ввод ID заявки
+                await botClient.SendTextMessageAsync(chatId, "Введите ID заявки для поиска:");
 
-                    // Сохраняем шаг ожидания ID
-                    SaveStep(chatId, "waiting_for_application_id", callbackQuery.Message.MessageId);
-                }
+                // Сохраняем шаг ожидания ID заявки
+                SaveStep(chatId, "waiting_for_application_id", callbackQuery.Message.MessageId);
             }
             else if (data == "applications")
             {
