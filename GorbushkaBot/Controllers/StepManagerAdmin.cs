@@ -90,6 +90,7 @@ namespace GorbushkaBot.Controllers
                     string formattedApplication = _applicationService.FormatApplication(application);
                     await botClient.SendTextMessageAsync(chatId, formattedApplication);
                 }
+                SaveStep(chatId, "waiting_for_application_id", callbackQuery.Message.MessageId);
             }
             else if (data == "applications")
             {
