@@ -92,7 +92,7 @@ namespace GorbushkaBot.Controllers
                     page = parsedPage;
                 }
 
-                const int pageSize = 10; // Количество заявок на одной странице
+                const int pageSize = 10;
                 var applications = await _applicationService.GetAllApplicationsAsync();
 
                 if (applications == null || applications.Count == 0)
@@ -101,7 +101,6 @@ namespace GorbushkaBot.Controllers
                     return;
                 }
 
-                // Определяем, какие заявки показывать на текущей странице
                 var paginatedApplications = applications.Skip(page * pageSize).Take(pageSize).ToList();
 
                 if (paginatedApplications.Count == 0)
@@ -110,32 +109,22 @@ namespace GorbushkaBot.Controllers
                     return;
                 }
 
-                string formattedApplications = _applicationService.FormatApplications(paginatedApplications);
+                var (formattedApplications, inlineKeyboard) = _applicationService.FormatApplications(paginatedApplications);
 
-                // Формируем кнопки пагинации
-                var inlineKeyboard = new List<List<InlineKeyboardButton>>();
-
+                var paginationButtons = new List<InlineKeyboardButton>();
                 if (page > 0)
-                {
-                    inlineKeyboard.Add(new List<InlineKeyboardButton>
-            {
-                InlineKeyboardButton.WithCallbackData("⬅️ Назад", $"applications_{page - 1}")
-            });
-                }
-
+                    paginationButtons.Add(InlineKeyboardButton.WithCallbackData("⬅️ Назад", $"applications_{page - 1}"));
                 if ((page + 1) * pageSize < applications.Count)
-                {
-                    if (inlineKeyboard.Count == 0)
-                        inlineKeyboard.Add(new List<InlineKeyboardButton>());
+                    paginationButtons.Add(InlineKeyboardButton.WithCallbackData("➡️ Вперед", $"applications_{page + 1}"));
 
-                    inlineKeyboard[0].Add(InlineKeyboardButton.WithCallbackData("➡️ Вперед", $"applications_{page + 1}"));
-                }
+                if (paginationButtons.Count > 0)
+                    inlineKeyboard.InlineKeyboard = inlineKeyboard.InlineKeyboard.Append(paginationButtons).ToArray();
 
                 await botClient.EditMessageTextAsync(
                     chatId: chatId,
                     messageId: callbackQuery.Message.MessageId,
                     text: formattedApplications,
-                    replyMarkup: new InlineKeyboardMarkup(inlineKeyboard)
+                    replyMarkup: inlineKeyboard
                 );
             }
             else if (data.StartsWith("approve_"))

@@ -3,6 +3,7 @@ using GorbushkaBot.Model;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 using System.Threading.Tasks;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace GorbushkaBot.Service
 {
@@ -55,15 +56,24 @@ namespace GorbushkaBot.Service
 
 
         // Форматирование списка заявок
-        public string FormatApplications(List<UserApplication> applications)
+        public (string text, InlineKeyboardMarkup keyboard) FormatApplications(List<UserApplication> applications)
         {
             var formattedApplications = new StringBuilder();
+            var inlineKeyboardButtons = new List<List<InlineKeyboardButton>>();
+
             foreach (var app in applications)
             {
-                formattedApplications.AppendLine($"ФИО: {app.Fio}, Телефон: {app.PhoneNumber}, Роль: {app.Role}");
+                formattedApplications.AppendLine($"👤 {app.Fio} | 📞 {app.PhoneNumber} | 🛠 {app.Role}");
                 formattedApplications.AppendLine("-------------------");
+
+                inlineKeyboardButtons.Add(new List<InlineKeyboardButton>
+                {
+                    InlineKeyboardButton.WithCallbackData($"📄 {app.Fio}", $"application_{app.ChatId}")
+                });
             }
-            return formattedApplications.ToString();
+
+            return (formattedApplications.ToString(), new InlineKeyboardMarkup(inlineKeyboardButtons));
         }
+
     }
 }
