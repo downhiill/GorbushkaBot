@@ -23,7 +23,7 @@ namespace GorbushkaBot.Service
                 PassportNumber = userData["passport_number"],
                 Role = userData["role"],
                 PassportIssueDate = userData["passport_issue_date"],
-                RegistrationAddress = userData["registration_address"],
+                RegistrationAddress = userData.GetValueOrDefault("registration_address"),
                 PassportPhotos = userData["passport_photo"],
                 PavilionNumber = userData.GetValueOrDefault("pavilion_number", ""),
                 RentalContract = userData.GetValueOrDefault("rental_contract", ""),
