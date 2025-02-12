@@ -43,6 +43,19 @@ namespace GorbushkaBot.Service
             return (applications, totalPages);
         }
 
+        // Метод для удаления заявки
+        public async Task<bool> DeleteApplicationAsync(long chatId)
+        {
+            var application = await _dbContext.UserApplications.FirstOrDefaultAsync(a => a.ChatId == chatId);
+            if (application == null)
+                return false;
+
+            _dbContext.UserApplications.Remove(application);
+            await _dbContext.SaveChangesAsync();
+            return true;
+        }
+
+
 
         // Форматирование одной заявки
         public string FormatApplication(UserApplication application)

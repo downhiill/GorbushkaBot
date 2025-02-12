@@ -235,11 +235,9 @@ namespace GorbushkaBot.Controllers
 
                 await _googleSheetsService.AppendUserDataAsync(userData, folderUrl, applicantChatId);
 
-                // 6. Удаляем заявку из таблицы UserApplications, если нужно
-                //await _applicationService.DeleteApplicationAsync(applicantChatId);
+                // 6. Удаляем заявку из таблицы UserApplications
+                await _applicationService.DeleteApplicationAsync(applicantChatId);
 
-                // 7. Отправляем сообщение администратору или оператору
-                await botClient.SendTextMessageAsync(chatId, $"✅ Заявка пользователя {applicantChatId} одобрена и сохранена.");
 
                 // 8. Отправляем сообщение пользователю о том, что его заявка одобрена
                 await botClient.SendTextMessageAsync(applicantChatId, "Ваша заявка была одобрен! ✅");
@@ -252,8 +250,7 @@ namespace GorbushkaBot.Controllers
             {
                 long applicantChatId = long.Parse(data.Split('_')[1]);
 
-                // Отправляем сообщение администратору или оператору
-                await botClient.SendTextMessageAsync(chatId, $"❌ Заявка пользователя {applicantChatId} отклонена.");
+                await _applicationService.DeleteApplicationAsync(applicantChatId);
 
                 // Отправляем сообщение пользователю о том, что его заявка отклонена
                 await botClient.SendTextMessageAsync(applicantChatId, "К сожалению, ваша заявка была отклонена. ❌");
