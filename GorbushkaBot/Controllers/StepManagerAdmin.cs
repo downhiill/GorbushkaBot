@@ -156,10 +156,13 @@ namespace GorbushkaBot.Controllers
                 }
 
                 // Форматируем полное сообщение о заявке
-                string formattedApplication = $"👤 {application.Fio}\n" +
-                                              $"📞 {application.PhoneNumber}\n" +
-                                              $"🛠 {application.Role}\n";
-
+                string formattedApplication = $"👤 ФИО: {application.Fio}\n" +
+                                              $"📄 Паспорт:{application.PassportNumber}, {application.PassportIssueDate}\n" +
+                                              $"📞 Телефон (контактный): {application.PhoneNumber}\n" +
+                                              $"🛠 Роль: {application.Role}\n" +
+                                              $"🏢 Павильон: {application.PavilionNumber}, {application.RentalContract}\n" +
+                                              $"🖼 Фото: \n Лицо: {application.FacePhoto}\n Паспорт: {application.PassportPhotos}\n Павильон: {application.PavilionPhotos}";
+                                              
                 // Создаем кнопки для одобрения и отказа
                 var approveButton = InlineKeyboardButton.WithCallbackData("✅ Одобрить", $"approve_{applicationChatId}");
                 var rejectButton = InlineKeyboardButton.WithCallbackData("❌ Отказать", $"reject_{applicationChatId}");

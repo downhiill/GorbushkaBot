@@ -48,9 +48,11 @@ namespace GorbushkaBot.Service
         public string FormatApplication(UserApplication application)
         {
             return $"👤 ФИО: {application.Fio}\n" +
-                   $"📞 Телефон: {application.PhoneNumber}\n" +
+                   $"📄 Паспорт:{application.PassportNumber}, {application.PassportIssueDate}\n" +
+                   $"📞 Телефон (контактный): {application.PhoneNumber}\n" +
                    $"🛠 Роль: {application.Role}\n" +
-                   $"📅 Дата заявки: {application.CreatedAt:dd.MM.yyyy}";
+                   $"🏢 Павильон: {application.PavilionNumber}, {application.RentalContract}\n" +
+                   $"🖼 Фото: \n Лицо: {application.FacePhoto}\n Паспорт: {application.PassportPhotos}\n Павильон: {application.PavilionPhotos}";
         }
 
 
