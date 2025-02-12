@@ -28,6 +28,20 @@ namespace GorbushkaBot.Service
         {
             return await _dbContext.UserApplications.FirstOrDefaultAsync(a => a.ChatId == chatId);
         }
+        public async Task<(List<UserApplication> Applications, int TotalPages)> GetApplicationsByPageAsync(int page, int pageSize)
+        {
+            int totalCount = await _dbContext.UserApplications.CountAsync();
+            int totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            var applications = await _dbContext.UserApplications
+                                               .OrderBy(a => a.CreatedAt)
+                                               .Skip((page - 1) * pageSize)
+                                               .Take(pageSize)
+                                               .ToListAsync();
+
+            return (applications, totalPages);
+        }
+
 
         // Форматирование одной заявки
         public string FormatApplication(UserApplication application)
@@ -37,6 +51,8 @@ namespace GorbushkaBot.Service
                    $"🛠 Роль: {application.Role}\n" +
                    $"📅 Дата заявки: {application.CreatedAt:dd.MM.yyyy}";
         }
+
+
 
         // Форматирование списка заявок
         public string FormatApplications(List<UserApplication> applications)

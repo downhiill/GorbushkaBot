@@ -8,6 +8,7 @@ namespace GorbushkaBot.Controllers
     public class StepManagerAdmin
     {
         private static readonly Dictionary<long, (string step, int messageId)> AdminSteps = new();
+        private static readonly Dictionary<long, int> AdminCurrentPage = new();
         private readonly ApplicationService _applicationService;
 
         public StepManagerAdmin(ApplicationService applicationService)
@@ -82,18 +83,60 @@ namespace GorbushkaBot.Controllers
                 await botClient.SendTextMessageAsync(chatId, "Введите ID заявки для поиска:");
                 SaveStep(chatId, "waiting_for_application_id", callbackQuery.Message.MessageId);
             }
-            else if (data == "applications")
+            else if (data.StartsWith("applications"))
             {
+                int page = 0;
+                var parts = data.Split('_');
+                if (parts.Length > 1 && int.TryParse(parts[1], out int parsedPage))
+                {
+                    page = parsedPage;
+                }
+
+                const int pageSize = 10; // Количество заявок на одной странице
                 var applications = await _applicationService.GetAllApplicationsAsync();
+
                 if (applications == null || applications.Count == 0)
                 {
                     await botClient.SendTextMessageAsync(chatId, "Заявки не найдены.");
+                    return;
                 }
-                else
+
+                // Определяем, какие заявки показывать на текущей странице
+                var paginatedApplications = applications.Skip(page * pageSize).Take(pageSize).ToList();
+
+                if (paginatedApplications.Count == 0)
                 {
-                    string formattedApplications = _applicationService.FormatApplications(applications);
-                    await botClient.SendTextMessageAsync(chatId, formattedApplications);
+                    await botClient.SendTextMessageAsync(chatId, "На этой странице нет заявок.");
+                    return;
                 }
+
+                string formattedApplications = _applicationService.FormatApplications(paginatedApplications);
+
+                // Формируем кнопки пагинации
+                var inlineKeyboard = new List<List<InlineKeyboardButton>>();
+
+                if (page > 0)
+                {
+                    inlineKeyboard.Add(new List<InlineKeyboardButton>
+            {
+                InlineKeyboardButton.WithCallbackData("⬅️ Назад", $"applications_{page - 1}")
+            });
+                }
+
+                if ((page + 1) * pageSize < applications.Count)
+                {
+                    if (inlineKeyboard.Count == 0)
+                        inlineKeyboard.Add(new List<InlineKeyboardButton>());
+
+                    inlineKeyboard[0].Add(InlineKeyboardButton.WithCallbackData("➡️ Вперед", $"applications_{page + 1}"));
+                }
+
+                await botClient.EditMessageTextAsync(
+                    chatId: chatId,
+                    messageId: callbackQuery.Message.MessageId,
+                    text: formattedApplications,
+                    replyMarkup: new InlineKeyboardMarkup(inlineKeyboard)
+                );
             }
             else if (data.StartsWith("approve_"))
             {
