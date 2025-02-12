@@ -64,16 +64,16 @@ namespace GorbushkaBot.Service
             foreach (var app in applications)
             {
                 formattedApplications.AppendLine($"👤 {app.Fio} | 📞 {app.PhoneNumber} | 🛠 {app.Role}");
-                formattedApplications.AppendLine("-------------------");
 
                 inlineKeyboardButtons.Add(new List<InlineKeyboardButton>
-                {
-                    InlineKeyboardButton.WithCallbackData($"📄 {app.Fio}", $"application_{app.ChatId}")
+{
+                    InlineKeyboardButton.WithCallbackData($"👤 {app.Fio} | 📞 {app.PhoneNumber} | 🛠 {app.Role}", $"application_{app.ChatId}")
                 });
             }
 
             return (formattedApplications.ToString(), new InlineKeyboardMarkup(inlineKeyboardButtons));
         }
+
 
     }
 }

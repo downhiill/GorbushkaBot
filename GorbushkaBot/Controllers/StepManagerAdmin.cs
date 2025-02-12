@@ -109,8 +109,18 @@ namespace GorbushkaBot.Controllers
                     return;
                 }
 
-                var (formattedApplications, inlineKeyboard) = _applicationService.FormatApplications(paginatedApplications);
+                var inlineKeyboardButtons = new List<List<InlineKeyboardButton>>();
 
+                // Добавляем кнопки для каждой заявки
+                foreach (var app in paginatedApplications)
+                {
+                    inlineKeyboardButtons.Add(new List<InlineKeyboardButton>
+                    {
+                        InlineKeyboardButton.WithCallbackData($"👤 {app.Fio} | 📞 {app.PhoneNumber} | 🛠 {app.Role}", $"application_{app.ChatId}")
+                    });
+                }
+
+                // Добавляем кнопки пагинации
                 var paginationButtons = new List<InlineKeyboardButton>();
                 if (page > 0)
                     paginationButtons.Add(InlineKeyboardButton.WithCallbackData("⬅️ Назад", $"applications_{page - 1}"));
@@ -118,15 +128,18 @@ namespace GorbushkaBot.Controllers
                     paginationButtons.Add(InlineKeyboardButton.WithCallbackData("➡️ Вперед", $"applications_{page + 1}"));
 
                 if (paginationButtons.Count > 0)
-                    inlineKeyboard.InlineKeyboard = inlineKeyboard.InlineKeyboard.Append(paginationButtons).ToArray();
+                    inlineKeyboardButtons.Add(paginationButtons);
+
+                var inlineKeyboard = new InlineKeyboardMarkup(inlineKeyboardButtons);
 
                 await botClient.EditMessageTextAsync(
                     chatId: chatId,
                     messageId: callbackQuery.Message.MessageId,
-                    text: formattedApplications,
+                    text: "📋 Список заявок:\n\n" + string.Join("\n", paginatedApplications.Select(a => $"{a.Fio} - {a.Role}")),
                     replyMarkup: inlineKeyboard
                 );
             }
+
             else if (data.StartsWith("approve_"))
             {
                 long applicantChatId = long.Parse(data.Split('_')[1]);
