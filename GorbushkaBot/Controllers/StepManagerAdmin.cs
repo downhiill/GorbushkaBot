@@ -170,23 +170,31 @@ namespace GorbushkaBot.Controllers
                 // Отправляем полную информацию о заявке с кнопками
                 await botClient.SendTextMessageAsync(chatId, formattedApplication, replyMarkup: inlineKeyboard);
             }
-
-
-
             else if (data.StartsWith("approve_"))
             {
                 long applicantChatId = long.Parse(data.Split('_')[1]);
+
+                // Отправляем сообщение администратору или оператору
                 await botClient.SendTextMessageAsync(chatId, $"✅ Заявка пользователя {applicantChatId} одобрена.");
+
+                // Отправляем сообщение пользователю о том, что его заявка одобрена
+                await botClient.SendTextMessageAsync(applicantChatId, "Ваша заявка была одобрена! ✅");
 
                 // Можно добавить логику обновления статуса в базе данных
             }
             else if (data.StartsWith("reject_"))
             {
                 long applicantChatId = long.Parse(data.Split('_')[1]);
+
+                // Отправляем сообщение администратору или оператору
                 await botClient.SendTextMessageAsync(chatId, $"❌ Заявка пользователя {applicantChatId} отклонена.");
+
+                // Отправляем сообщение пользователю о том, что его заявка отклонена
+                await botClient.SendTextMessageAsync(applicantChatId, "К сожалению, ваша заявка была отклонена. ❌");
 
                 // Можно добавить логику обновления статуса в базе данных
             }
+
         }
     }
 }
