@@ -11,11 +11,13 @@ namespace GorbushkaBot.Controllers
         private static readonly Dictionary<long, int> AdminCurrentPage = new();
         private readonly ApplicationService _applicationService;
         private readonly UserAcceptService _userAcceptService;
+        private readonly GoogleSheetsService _googleSheetsService;
 
-        public StepManagerAdmin(ApplicationService applicationService, UserAcceptService userAcceptService)
+        public StepManagerAdmin(ApplicationService applicationService, UserAcceptService userAcceptService, GoogleSheetsService googleSheetsService)
         {
             _applicationService = applicationService;
             _userAcceptService = userAcceptService;
+            _googleSheetsService = googleSheetsService;
         }
 
         public void SaveStep(long chatId, string step, int messageId)
@@ -220,16 +222,18 @@ namespace GorbushkaBot.Controllers
                     { "pavilion_photo", application.PavilionPhotos ?? "" },
                 };
 
-                // 5. Сохраняем данные в таблицу UserAccepts
-                try
-                {
-                    await _userAcceptService.SaveUserAcceptAsync(userData, folderUrl, applicantChatId);
-                }
-                catch (Exception ex)
-                {
-                    await botClient.SendTextMessageAsync(chatId, $"Ошибка при сохранении данных: {ex.Message}");
-                    return;
-                }
+                //// 5. Сохраняем данные в таблицу UserAccepts
+                //try
+                //{
+                //    await _userAcceptService.SaveUserAcceptAsync(userData, folderUrl, applicantChatId);
+                //}
+                //catch (Exception ex)
+                //{
+                //    await botClient.SendTextMessageAsync(chatId, $"Ошибка при сохранении данных: {ex.Message}");
+                //    return;
+                //}
+
+                await _googleSheetsService.AppendUserDataAsync(userData, folderUrl, applicantChatId);
 
                 // 6. Удаляем заявку из таблицы UserApplications, если нужно
                 //await _applicationService.DeleteApplicationAsync(applicantChatId);
@@ -238,7 +242,9 @@ namespace GorbushkaBot.Controllers
                 await botClient.SendTextMessageAsync(chatId, $"✅ Заявка пользователя {applicantChatId} одобрена и сохранена.");
 
                 // 8. Отправляем сообщение пользователю о том, что его заявка одобрена
-                await botClient.SendTextMessageAsync(applicantChatId, "Ваша заявка была одобрена и сохранена! ✅");
+                await botClient.SendTextMessageAsync(applicantChatId, "Ваша заявка была одобрен! ✅");
+
+
             }
 
 

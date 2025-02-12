@@ -37,7 +37,7 @@ public class TelegramBotService
         googleSheetsService = new GoogleSheetsService(CredentialPath, SpreadsheetId, userApplicationService, userAcceptService);
         googleDriveService = new GoogleDriveService();
         stepManager = new StepManager(botClient, googleSheetsService, googleDriveService, userApplicationService, applicationDbContext, userAcceptService);
-        stepManagerAdmin = new StepManagerAdmin(applicationService, userAcceptService);
+        stepManagerAdmin = new StepManagerAdmin(applicationService, userAcceptService, googleSheetsService);
         keyboardManager = new KeyboardManager();
         errorHandler = new ErrorHandler();
     }
