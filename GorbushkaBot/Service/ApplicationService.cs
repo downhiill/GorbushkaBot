@@ -63,7 +63,6 @@ namespace GorbushkaBot.Service
 
             foreach (var app in applications)
             {
-                formattedApplications.AppendLine($"👤 {app.Fio} | 📞 {app.PhoneNumber} | 🛠 {app.Role}");
 
                 inlineKeyboardButtons.Add(new List<InlineKeyboardButton>
 {
