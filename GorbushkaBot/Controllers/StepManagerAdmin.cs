@@ -115,9 +115,9 @@ namespace GorbushkaBot.Controllers
                 foreach (var app in paginatedApplications)
                 {
                     inlineKeyboardButtons.Add(new List<InlineKeyboardButton>
-                    {
-                        InlineKeyboardButton.WithCallbackData($"👤 {app.Fio} | 📞 {app.PhoneNumber} | 🛠 {app.Role}", $"application_{app.ChatId}")
-                    });
+        {
+            InlineKeyboardButton.WithCallbackData($"👤 {app.Fio} | 📞 {app.PhoneNumber} | 🛠 {app.Role}", $"application_{app.ChatId}")
+        });
                 }
 
                 // Добавляем кнопки пагинации
@@ -132,6 +132,7 @@ namespace GorbushkaBot.Controllers
 
                 var inlineKeyboard = new InlineKeyboardMarkup(inlineKeyboardButtons);
 
+                // Отправляем сообщение со списком заявок и кнопками
                 await botClient.EditMessageTextAsync(
                     chatId: chatId,
                     messageId: callbackQuery.Message.MessageId,
@@ -139,6 +140,29 @@ namespace GorbushkaBot.Controllers
                     replyMarkup: inlineKeyboard
                 );
             }
+            else if (data.StartsWith("application_"))
+            {
+                // Извлекаем ChatId из callbackData (например, "application_12345")
+                long applicationChatId = long.Parse(data.Split('_')[1]);
+
+                // Получаем информацию о заявке по ChatId
+                var application = await _applicationService.GetApplicationByIdAsync(applicationChatId);
+
+                if (application == null)
+                {
+                    await botClient.SendTextMessageAsync(chatId, "Заявка не найдена.");
+                    return;
+                }
+
+                // Форматируем полное сообщение о заявке
+                string formattedApplication = $"👤 {application.Fio}\n" +
+                                              $"📞 {application.PhoneNumber}\n" +
+                                              $"🛠 {application.Role}\n";
+
+                // Отправляем полную информацию о заявке
+                await botClient.SendTextMessageAsync(chatId, formattedApplication);
+            }
+
 
             else if (data.StartsWith("approve_"))
             {

@@ -64,7 +64,6 @@ namespace GorbushkaBot.Service
             foreach (var app in applications)
             {
 
-
                 inlineKeyboardButtons.Add(new List<InlineKeyboardButton>
 {
                     InlineKeyboardButton.WithCallbackData($"👤 {app.Fio} | 📞 {app.PhoneNumber} | 🛠 {app.Role}", $"application_{app.ChatId}")
