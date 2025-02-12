@@ -188,37 +188,59 @@ namespace GorbushkaBot.Controllers
                     return;
                 }
 
-                // 2. Получаем ссылку на существующую папку (предполагаем, что она уже была создана)
-                var folderUrl = application.FolderUrl; // Ссылка на папку в Google Drive уже сохранена в таблице UserApplications
+                // 2. Проверка, что FolderUrl не null
+                if (string.IsNullOrEmpty(application.FolderUrl))
+                {
+                    await botClient.SendTextMessageAsync(chatId, "Не найдена ссылка на папку в Google Drive.");
+                    return;
+                }
 
-                // 3. Переносим данные из заявки в новый объект для сохранения в таблице UserAccepts
+                var folderUrl = application.FolderUrl; // Ссылка на папку в Google Drive
+
+                // 3. Проверка на null для других полей заявки
+                if (application.FacePhoto == null || application.Fio == null || application.PhoneNumber == null)
+                {
+                    await botClient.SendTextMessageAsync(chatId, "Некоторые обязательные данные заявки отсутствуют.");
+                    return;
+                }
+
+                // 4. Переносим данные из заявки в новый объект для сохранения в таблице UserAccepts
                 var userData = new Dictionary<string, string>
                 {
                     { "face_photo", application.FacePhoto },
                     { "fio", application.Fio },
                     { "phone_number", application.PhoneNumber },
-                    { "passport_number", application.PassportNumber },
-                    { "role", application.Role },
-                    { "passport_issue_date", application.PassportIssueDate },
-                    { "registration_address", application.RegistrationAddress },
-                    { "passport_photo", application.PassportPhotos },
+                    { "passport_number", application.PassportNumber ?? "" }, // Обработка возможных null значений
+                    { "role", application.Role ?? "" },
+                    { "passport_issue_date", application.PassportIssueDate ?? "" },
+                    { "registration_address", application.RegistrationAddress ?? "" },
+                    { "passport_photo", application.PassportPhotos ?? "" },
                     { "pavilion_number", application.PavilionNumber ?? "" },
                     { "rental_contract", application.RentalContract ?? "" },
-                    { "pavilion_photo", application.PavilionPhotos },
+                    { "pavilion_photo", application.PavilionPhotos ?? "" },
                 };
 
-                // 4. Сохраняем данные в таблицу UserAccepts, используя ссылку на существующую папку
-                await _userAcceptService.SaveUserAcceptAsync(userData, folderUrl, applicantChatId);
+                // 5. Сохраняем данные в таблицу UserAccepts
+                try
+                {
+                    await _userAcceptService.SaveUserAcceptAsync(userData, folderUrl, applicantChatId);
+                }
+                catch (Exception ex)
+                {
+                    await botClient.SendTextMessageAsync(chatId, $"Ошибка при сохранении данных: {ex.Message}");
+                    return;
+                }
 
-                // 5. Удаляем заявку из таблицы UserApplications, если нужно
+                // 6. Удаляем заявку из таблицы UserApplications, если нужно
                 //await _applicationService.DeleteApplicationAsync(applicantChatId);
 
-                // 6. Отправляем сообщение администратору или оператору
-                await botClient.SendTextMessageAsync(chatId, $"✅ Заявка пользователя {applicantChatId} одобрена и сохранена");
+                // 7. Отправляем сообщение администратору или оператору
+                await botClient.SendTextMessageAsync(chatId, $"✅ Заявка пользователя {applicantChatId} одобрена и сохранена.");
 
-                // 7. Отправляем сообщение пользователю о том, что его заявка одобрена
-                await botClient.SendTextMessageAsync(applicantChatId, "Ваша заявка была одобрена ! ✅");
+                // 8. Отправляем сообщение пользователю о том, что его заявка одобрена
+                await botClient.SendTextMessageAsync(applicantChatId, "Ваша заявка была одобрена и сохранена! ✅");
             }
+
 
             else if (data.StartsWith("reject_"))
             {
