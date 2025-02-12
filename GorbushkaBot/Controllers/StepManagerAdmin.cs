@@ -32,8 +32,7 @@ namespace GorbushkaBot.Controllers
 
             if (step == "waiting_for_application_id")
             {
-                int applicationId;
-                if (!int.TryParse(message.Text, out applicationId))
+                if (!int.TryParse(message.Text, out int applicationId))
                 {
                     await botClient.SendTextMessageAsync(chatId, "Ошибка: Введите корректный ID заявки (число).");
                     return;
@@ -49,23 +48,24 @@ namespace GorbushkaBot.Controllers
                 else
                 {
                     string formattedApplication = _applicationService.FormatApplication(application);
-                    await botClient.SendTextMessageAsync(chatId, formattedApplication);
+
+                    // Создаем кнопки для одобрения и отклонения заявки
+                    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+                    {
+                        new[]
+                        {
+                            InlineKeyboardButton.WithCallbackData("✅ Одобрить", $"approve_{application.ChatId}"),
+                            InlineKeyboardButton.WithCallbackData("❌ Отклонить", $"reject_{application.ChatId}")
+                        }
+                    });
+
+                    await botClient.SendTextMessageAsync(chatId, formattedApplication, replyMarkup: inlineKeyboard);
                 }
-
-                // После обработки заявки возвращаем в главное меню
-                var menuKeyboard = new InlineKeyboardMarkup(new[]
-                {
-                    new[] { InlineKeyboardButton.WithCallbackData("Найти заявку", "find_application") },
-                    new[] { InlineKeyboardButton.WithCallbackData("Заявки", "applications") }
-                });
-
-                await botClient.SendTextMessageAsync(chatId, "Меню администратора", replyMarkup: menuKeyboard);
 
                 // Очищаем шаг
                 AdminSteps.Remove(chatId);
             }
         }
-
 
         public async Task HandleCallbackQuery(ITelegramBotClient botClient, long chatId, CallbackQuery callbackQuery)
         {
@@ -79,10 +79,7 @@ namespace GorbushkaBot.Controllers
 
             if (data == "find_application")
             {
-                // Отправляем запрос на ввод ID заявки
                 await botClient.SendTextMessageAsync(chatId, "Введите ID заявки для поиска:");
-
-                // Сохраняем шаг ожидания ID заявки
                 SaveStep(chatId, "waiting_for_application_id", callbackQuery.Message.MessageId);
             }
             else if (data == "applications")
@@ -98,7 +95,20 @@ namespace GorbushkaBot.Controllers
                     await botClient.SendTextMessageAsync(chatId, formattedApplications);
                 }
             }
-        }
+            else if (data.StartsWith("approve_"))
+            {
+                long applicantChatId = long.Parse(data.Split('_')[1]);
+                await botClient.SendTextMessageAsync(chatId, $"✅ Заявка пользователя {applicantChatId} одобрена.");
 
+                // Можно добавить логику обновления статуса в базе данных
+            }
+            else if (data.StartsWith("reject_"))
+            {
+                long applicantChatId = long.Parse(data.Split('_')[1]);
+                await botClient.SendTextMessageAsync(chatId, $"❌ Заявка пользователя {applicantChatId} отклонена.");
+
+                // Можно добавить логику обновления статуса в базе данных
+            }
+        }
     }
 }
