@@ -10,10 +10,12 @@ namespace GorbushkaBot.Controllers
         private static readonly Dictionary<long, (string step, int messageId)> AdminSteps = new();
         private static readonly Dictionary<long, int> AdminCurrentPage = new();
         private readonly ApplicationService _applicationService;
+        private readonly UserAcceptService _userAcceptService;
 
-        public StepManagerAdmin(ApplicationService applicationService)
+        public StepManagerAdmin(ApplicationService applicationService, UserAcceptService userAcceptService)
         {
             _applicationService = applicationService;
+            _userAcceptService = userAcceptService;
         }
 
         public void SaveStep(long chatId, string step, int messageId)
@@ -177,14 +179,47 @@ namespace GorbushkaBot.Controllers
             {
                 long applicantChatId = long.Parse(data.Split('_')[1]);
 
-                // Отправляем сообщение администратору или оператору
-                await botClient.SendTextMessageAsync(chatId, $"✅ Заявка пользователя {applicantChatId} одобрена.");
+                // 1. Извлекаем данные из таблицы UserApplications
+                var application = await _applicationService.GetApplicationByIdAsync(applicantChatId);
 
-                // Отправляем сообщение пользователю о том, что его заявка одобрена
-                await botClient.SendTextMessageAsync(applicantChatId, "Ваша заявка была одобрена! ✅");
+                if (application == null)
+                {
+                    await botClient.SendTextMessageAsync(chatId, "Заявка не найдена.");
+                    return;
+                }
 
-                // Можно добавить логику обновления статуса в базе данных
+                // 2. Получаем ссылку на существующую папку (предполагаем, что она уже была создана)
+                var folderUrl = application.FolderUrl; // Ссылка на папку в Google Drive уже сохранена в таблице UserApplications
+
+                // 3. Переносим данные из заявки в новый объект для сохранения в таблице UserAccepts
+                var userData = new Dictionary<string, string>
+                {
+                    { "face_photo", application.FacePhoto },
+                    { "fio", application.Fio },
+                    { "phone_number", application.PhoneNumber },
+                    { "passport_number", application.PassportNumber },
+                    { "role", application.Role },
+                    { "passport_issue_date", application.PassportIssueDate },
+                    { "registration_address", application.RegistrationAddress },
+                    { "passport_photo", application.PassportPhotos },
+                    { "pavilion_number", application.PavilionNumber ?? "" },
+                    { "rental_contract", application.RentalContract ?? "" },
+                    { "pavilion_photo", application.PavilionPhotos },
+                };
+
+                // 4. Сохраняем данные в таблицу UserAccepts, используя ссылку на существующую папку
+                await _userAcceptService.SaveUserAcceptAsync(userData, folderUrl, applicantChatId);
+
+                // 5. Удаляем заявку из таблицы UserApplications, если нужно
+                //await _applicationService.DeleteApplicationAsync(applicantChatId);
+
+                // 6. Отправляем сообщение администратору или оператору
+                await botClient.SendTextMessageAsync(chatId, $"✅ Заявка пользователя {applicantChatId} одобрена и сохранена");
+
+                // 7. Отправляем сообщение пользователю о том, что его заявка одобрена
+                await botClient.SendTextMessageAsync(applicantChatId, "Ваша заявка была одобрена ! ✅");
             }
+
             else if (data.StartsWith("reject_"))
             {
                 long applicantChatId = long.Parse(data.Split('_')[1]);
