@@ -135,7 +135,7 @@ namespace GorbushkaBot.Controllers
                 await botClient.EditMessageTextAsync(
                     chatId: chatId,
                     messageId: callbackQuery.Message.MessageId,
-                    text: "📋 Список заявок:\n\n" + string.Join("\n", paginatedApplications.Select(a => $"{a.Fio} - {a.Role}")),
+                    text: "📋 Список заявок:\n",
                     replyMarkup: inlineKeyboard
                 );
             }
