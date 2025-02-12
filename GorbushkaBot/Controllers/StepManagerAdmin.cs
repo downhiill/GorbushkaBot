@@ -115,10 +115,11 @@ namespace GorbushkaBot.Controllers
                 foreach (var app in paginatedApplications)
                 {
                     inlineKeyboardButtons.Add(new List<InlineKeyboardButton>
-        {
-            InlineKeyboardButton.WithCallbackData($"👤 {app.Fio} | 📞 {app.PhoneNumber} | 🛠 {app.Role}", $"application_{app.ChatId}")
-        });
+                    {
+                        InlineKeyboardButton.WithCallbackData($"👤 {app.Fio} | 📞 {app.PhoneNumber} | 🛠 {app.Role}", $"application_{app.ChatId}")  // Убедитесь, что передаете уникальный ChatId
+                    });
                 }
+
 
                 // Добавляем кнопки пагинации
                 var paginationButtons = new List<InlineKeyboardButton>();
@@ -159,9 +160,17 @@ namespace GorbushkaBot.Controllers
                                               $"📞 {application.PhoneNumber}\n" +
                                               $"🛠 {application.Role}\n";
 
-                // Отправляем полную информацию о заявке
-                await botClient.SendTextMessageAsync(chatId, formattedApplication);
+                // Создаем кнопки для одобрения и отказа
+                var approveButton = InlineKeyboardButton.WithCallbackData("✅ Одобрить", $"approve_{applicationChatId}");
+                var rejectButton = InlineKeyboardButton.WithCallbackData("❌ Отказать", $"reject_{applicationChatId}");
+
+                // Формируем клавиатуру с кнопками
+                var inlineKeyboard = new InlineKeyboardMarkup(new[] { new InlineKeyboardButton[] { approveButton, rejectButton } });
+
+                // Отправляем полную информацию о заявке с кнопками
+                await botClient.SendTextMessageAsync(chatId, formattedApplication, replyMarkup: inlineKeyboard);
             }
+
 
 
             else if (data.StartsWith("approve_"))
