@@ -1,4 +1,5 @@
 using GorbushkaBot.AppDbContext;
+using GorbushkaBot.Controllers;
 using GorbushkaBot.Service;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,11 +23,27 @@ builder.Services.AddScoped<GoogleSheetsService>(provider =>
 
     return new GoogleSheetsService(credentialPath, spreadsheetId, userApplicationService, userAcceptService);
 });
-builder.Services.AddSingleton<TelegramBotService>(serviceProvider =>
+builder.Services.AddScoped<TelegramBotService>(serviceProvider =>
 {
     var userApplicationService = serviceProvider.GetRequiredService<UserApplicationService>();
     var applicationService = serviceProvider.GetRequiredService<ApplicationService>();
-    return new TelegramBotService(userApplicationService, applicationService); // Передаем userApplicationService в конструктор TelegramBotService
+    var googleSheetsService = serviceProvider.GetRequiredService<GoogleSheetsService>();
+    var googleDriveService = serviceProvider.GetRequiredService<GoogleDriveService>();
+    var stepManager = serviceProvider.GetRequiredService<StepManager>();
+    var stepManagerAdmin = serviceProvider.GetRequiredService<StepManagerAdmin>();
+    var keyboardManager = serviceProvider.GetRequiredService<KeyboardManager>();
+    var errorHandler = serviceProvider.GetRequiredService<ErrorHandler>();
+
+    return new TelegramBotService(
+        userApplicationService,
+        applicationService,
+        googleSheetsService,
+        googleDriveService,
+        stepManager,
+        stepManagerAdmin,
+        keyboardManager,
+        errorHandler
+    );
 });
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
