@@ -3,6 +3,8 @@ using GorbushkaBot.Model;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 using System.Threading.Tasks;
+using Telegram.Bot;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace GorbushkaBot.Service
@@ -10,10 +12,89 @@ namespace GorbushkaBot.Service
     public class ApplicationService
     {
         private readonly ApplicationDbContext _dbContext;
+        private readonly ITelegramBotClient _botClient;
+        private readonly long _groupChatId = -1001234567890;
 
         public ApplicationService(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;
+        }
+
+        // Метод для добавления пользователя в группу с настройкой прав
+        public async Task<bool> AddUserToGroupAsync(long applicantChatId)
+        {
+            var application = await GetApplicationByIdAsync(applicantChatId);
+            if (application == null)
+            {
+                await _botClient.SendTextMessageAsync(applicantChatId, "Заявка не найдена.");
+                return false;
+            }
+
+            ChatPermissions permissions;
+            switch (application.Role)
+            {
+                case "Покупатель":
+                    permissions = new ChatPermissions
+                    {
+                        CanSendMessages = true,
+                        CanSendAudios = true,
+                        CanSendDocuments = true,
+                        CanSendPhotos = true,
+                        CanSendVideos = true,
+                        CanSendVideoNotes = true,
+                        CanSendVoiceNotes = true,
+                        CanSendOtherMessages = true
+                    };
+                    break;
+                case "Продавец":
+                    permissions = new ChatPermissions
+                    {
+                        CanSendMessages = false,
+                        CanSendAudios = false,
+                        CanSendDocuments = false,
+                        CanSendPhotos = false,
+                        CanSendVideos = false,
+                        CanSendVideoNotes = false,
+                        CanSendVoiceNotes = false,
+                        CanSendOtherMessages = false
+                    };
+                    break;
+                case "Покупатель,Продавец":
+                    permissions = new ChatPermissions
+                    {
+                        CanSendMessages = true,
+                        CanSendAudios = true,
+                        CanSendDocuments = true,
+                        CanSendPhotos = true,
+                        CanSendVideos = true,
+                        CanSendVideoNotes = true,
+                        CanSendVoiceNotes = true,
+                        CanSendOtherMessages = true
+                    };
+                    break;
+                default:
+                    await _botClient.SendTextMessageAsync(applicantChatId, "Роль пользователя не определена.");
+                    return false;
+            }
+
+            try
+            {
+                // Приглашаем пользователя в группу
+                await _botClient.SendTextMessageAsync(_groupChatId, $"👤 {application.Fio} добавлен в чат с ролью: {application.Role}");
+
+                // Устанавливаем права пользователя в чате
+                await _botClient.RestrictChatMemberAsync(_groupChatId, applicantChatId, permissions);
+
+                // Отправляем уведомление пользователю
+                await _botClient.SendTextMessageAsync(applicantChatId, "✅ Вы добавлены в группу с соответствующими правами!");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await _botClient.SendTextMessageAsync(applicantChatId, $"Ошибка при добавлении в чат: {ex.Message}");
+                return false;
+            }
         }
 
         // Метод для получения всех заявок

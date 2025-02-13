@@ -222,28 +222,24 @@ namespace GorbushkaBot.Controllers
                     { "pavilion_photo", application.PavilionPhotos ?? "" },
                 };
 
-                //// 5. Сохраняем данные в таблицу UserAccepts
-                //try
-                //{
-                //    await _userAcceptService.SaveUserAcceptAsync(userData, folderUrl, applicantChatId);
-                //}
-                //catch (Exception ex)
-                //{
-                //    await botClient.SendTextMessageAsync(chatId, $"Ошибка при сохранении данных: {ex.Message}");
-                //    return;
-                //}
-
+                // 5. Сохраняем данные в Google Sheets
                 await _googleSheetsService.AppendUserDataAsync(userData, folderUrl, applicantChatId);
 
                 // 6. Удаляем заявку из таблицы UserApplications
                 await _applicationService.DeleteApplicationAsync(applicantChatId);
 
+                // 7. Добавляем пользователя в чат
+                bool addedToChat = await _applicationService.AddUserToGroupAsync(applicantChatId);
+                if (!addedToChat)
+                {
+                    await botClient.SendTextMessageAsync(chatId, "Ошибка при добавлении пользователя в чат.");
+                    return;
+                }
 
                 // 8. Отправляем сообщение пользователю о том, что его заявка одобрена
-                await botClient.SendTextMessageAsync(applicantChatId, "Ваша заявка была одобрен! ✅");
-
-
+                await botClient.SendTextMessageAsync(applicantChatId, "Ваша заявка была одобрена! ✅");
             }
+
 
 
             else if (data.StartsWith("reject_"))
