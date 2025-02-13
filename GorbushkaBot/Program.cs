@@ -2,6 +2,7 @@ using GorbushkaBot.AppDbContext;
 using GorbushkaBot.Controllers;
 using GorbushkaBot.Service;
 using Microsoft.EntityFrameworkCore;
+using Telegram.Bot;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +39,11 @@ builder.Services.AddScoped<TelegramBotService>(serviceProvider =>
     );
 });
 
+builder.Services.AddSingleton<TelegramBotClient>(provider =>
+{
+    var botToken = Environment.GetEnvironmentVariable("BOT_TOKEN"); // Замените на ваш реальный токен бота
+    return new TelegramBotClient(botToken);
+});
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
