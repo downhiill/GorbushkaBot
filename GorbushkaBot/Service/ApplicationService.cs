@@ -12,7 +12,7 @@ namespace GorbushkaBot.Service
     public class ApplicationService
     {
         private readonly ApplicationDbContext _dbContext;
-        private readonly ITelegramBotClient _botClient;
+        private readonly TelegramBotClient _botClient;
         private readonly long _groupChatId = -10023418528690;
 
         public ApplicationService(ApplicationDbContext dbContext)
