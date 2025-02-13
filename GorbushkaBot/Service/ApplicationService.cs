@@ -82,7 +82,7 @@ namespace GorbushkaBot.Service
             try
             {
                 // Приглашаем пользователя через ссылку
-                var inviteLink = "https://t.me/your_group_link"; // Замените на вашу ссылку для приглашения
+                var inviteLink = "https://t.me/+Nz5qqO88Qf4xNjRi"; // Замените на вашу ссылку для приглашения
                 await _botClient.SendTextMessageAsync(applicantChatId, $"Для присоединения к группе, перейдите по следующей ссылке: {inviteLink}");
 
                 // Ожидаем, пока пользователь присоединится (это необходимо для применения прав)
