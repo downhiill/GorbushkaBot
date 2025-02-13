@@ -227,7 +227,7 @@ namespace GorbushkaBot.Controllers
 
 
                 // 7. Добавляем пользователя в чат
-                bool addedToChat = await _applicationService.AddUserToGroupAsync(applicantChatId);
+                bool addedToChat = await _applicationService.AddUserToGroupWithRoleAsync(applicantChatId);
                 if (!addedToChat)
                 {
                     await botClient.SendTextMessageAsync(chatId, "Ошибка при добавлении пользователя в чат.");
