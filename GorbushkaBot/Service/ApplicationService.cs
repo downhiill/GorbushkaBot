@@ -94,9 +94,6 @@ namespace GorbushkaBot.Service
                 // Уведомление о добавлении
                 await _botClient.SendTextMessageAsync(_groupChatId, $"👤 {application.Fio} добавлен в чат с ролью: {application.Role}");
 
-                // Отправляем уведомление пользователю
-                await _botClient.SendTextMessageAsync(applicantChatId, "✅ Вы добавлены в группу с соответствующими правами!");
-
                 return true;
             }
             catch (Exception ex)
