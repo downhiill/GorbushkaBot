@@ -27,24 +27,17 @@ builder.Services.AddScoped<TelegramBotService>(serviceProvider =>
 {
     var userApplicationService = serviceProvider.GetRequiredService<UserApplicationService>();
     var applicationService = serviceProvider.GetRequiredService<ApplicationService>();
-    var googleSheetsService = serviceProvider.GetRequiredService<GoogleSheetsService>();
-    var googleDriveService = serviceProvider.GetRequiredService<GoogleDriveService>();
-    var stepManager = serviceProvider.GetRequiredService<StepManager>();
-    var stepManagerAdmin = serviceProvider.GetRequiredService<StepManagerAdmin>();
-    var keyboardManager = serviceProvider.GetRequiredService<KeyboardManager>();
-    var errorHandler = serviceProvider.GetRequiredService<ErrorHandler>();
+    var userAcceptService = serviceProvider.GetRequiredService<UserAcceptService>();
+    var applicationDbContext = serviceProvider.GetRequiredService<ApplicationDbContext>();
 
     return new TelegramBotService(
         userApplicationService,
         applicationService,
-        googleSheetsService,
-        googleDriveService,
-        stepManager,
-        stepManagerAdmin,
-        keyboardManager,
-        errorHandler
+        userAcceptService,
+        applicationDbContext
     );
 });
+
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
