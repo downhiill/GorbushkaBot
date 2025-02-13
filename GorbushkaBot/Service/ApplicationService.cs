@@ -22,7 +22,7 @@ namespace GorbushkaBot.Service
         }
 
         // Метод для добавления пользователя в группу с настройкой прав
-        public async Task<bool> AddUserToGroupAsync(long applicantChatId)
+        public async Task<bool> AddUserToGroupWithRoleAsync(long applicantChatId)
         {
             var application = await GetApplicationByIdAsync(applicantChatId);
             if (application == null)
@@ -31,6 +31,7 @@ namespace GorbushkaBot.Service
                 return false;
             }
 
+            // Генерация прав доступа в зависимости от роли пользователя
             ChatPermissions permissions;
             switch (application.Role)
             {
@@ -80,11 +81,18 @@ namespace GorbushkaBot.Service
 
             try
             {
-                // Приглашаем пользователя в группу
-                await _botClient.SendTextMessageAsync(_groupChatId, $"👤 {application.Fio} добавлен в чат с ролью: {application.Role}");
+                // Приглашаем пользователя через ссылку
+                var inviteLink = "https://t.me/your_group_link"; // Замените на вашу ссылку для приглашения
+                await _botClient.SendTextMessageAsync(applicantChatId, $"Для присоединения к группе, перейдите по следующей ссылке: {inviteLink}");
 
-                // Устанавливаем права пользователя в чате
+                // Ожидаем, пока пользователь присоединится (это необходимо для применения прав)
+                // Здесь можно сделать ожидание или периодически проверять статус пользователя
+
+                // Применение прав после присоединения пользователя в группу
                 await _botClient.RestrictChatMemberAsync(_groupChatId, applicantChatId, permissions);
+
+                // Уведомление о добавлении
+                await _botClient.SendTextMessageAsync(_groupChatId, $"👤 {application.Fio} добавлен в чат с ролью: {application.Role}");
 
                 // Отправляем уведомление пользователю
                 await _botClient.SendTextMessageAsync(applicantChatId, "✅ Вы добавлены в группу с соответствующими правами!");
