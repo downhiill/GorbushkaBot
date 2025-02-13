@@ -15,9 +15,10 @@ namespace GorbushkaBot.Service
         private readonly TelegramBotClient _botClient;
         private readonly long _groupChatId = -10023418528690;
 
-        public ApplicationService(ApplicationDbContext dbContext)
+        public ApplicationService(ApplicationDbContext dbContext, TelegramBotClient botClient)
         {
             _dbContext = dbContext;
+            _botClient = botClient;
         }
 
         // Метод для добавления пользователя в группу с настройкой прав
