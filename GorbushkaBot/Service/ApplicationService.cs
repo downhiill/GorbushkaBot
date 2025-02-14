@@ -61,7 +61,7 @@ namespace GorbushkaBot.Service
                         CanSendOtherMessages = false
                     };
                     break;
-                case "Покупатель,Продавец":
+                case "Продавец и Покупатель":
                     permissions = new ChatPermissions
                     {
                         CanSendMessages = true,
