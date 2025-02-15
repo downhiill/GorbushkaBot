@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GorbushkaBot.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250209133922_CreateUserApplicationsTable")]
-    partial class CreateUserApplicationsTable
+    [Migration("20250215215230_CreateTable")]
+    partial class CreateTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

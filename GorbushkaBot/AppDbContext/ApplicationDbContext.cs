@@ -9,6 +9,7 @@ namespace GorbushkaBot.AppDbContext
     {
         public DbSet<UserApplication> UserApplications { get; set; }
         public DbSet<UserAccept> UserAccepts { get; set; }
+        public DbSet<PinnedMessage> PinnedMessages { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
@@ -16,6 +17,7 @@ namespace GorbushkaBot.AppDbContext
         {
             modelBuilder.Entity<UserApplication>().ToTable("user_applications");
             modelBuilder.Entity<UserAccept>().ToTable("user_accepts");
+            modelBuilder.Entity<PinnedMessage>().ToTable("pinned_message");
         }
     }
 }
