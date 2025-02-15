@@ -100,7 +100,7 @@ namespace GorbushkaBot.Service
             }
             catch (Exception ex)
             {
-                await _botClient.SendTextMessageAsync(applicantChatId, $"Ошибка при добавлении в чат: {ex.Message}");
+                
                 return false;
             }
         }
@@ -114,7 +114,7 @@ namespace GorbushkaBot.Service
 
                 if (sheetNamesAndGids == null || !sheetNamesAndGids.Any())
                 {
-                    await _botClient.SendTextMessageAsync(_groupChatId, "Не удалось получить названия листов.");
+                    
                     return false;
                 }
 
@@ -128,7 +128,7 @@ namespace GorbushkaBot.Service
 
                 if (!inlineKeyboardButtons.Any())
                 {
-                    await _botClient.SendTextMessageAsync(_groupChatId, "Не удалось сформировать кнопки с ссылками.");
+                    
                     return false;
                 }
 
@@ -156,7 +156,7 @@ namespace GorbushkaBot.Service
             }
             catch (Exception ex)
             {
-                await _botClient.SendTextMessageAsync(_groupChatId, $"Ошибка при закреплении сообщения: {ex.Message}");
+                
                 return false;
             }
         }
@@ -173,7 +173,7 @@ namespace GorbushkaBot.Service
 
                 if (pinnedMessage == null)
                 {
-                    await _botClient.SendTextMessageAsync(_groupChatId, "Нет закрепленных сообщений.");
+                    
                     return false;
                 }
 
@@ -184,13 +184,13 @@ namespace GorbushkaBot.Service
                 _dbContext.PinnedMessages.Remove(pinnedMessage);
                 await _dbContext.SaveChangesAsync();
 
-                await _botClient.SendTextMessageAsync(_groupChatId, "Старое закрепленное сообщение удалено.");
+                
 
                 return true;
             }
             catch (Exception ex)
             {
-                await _botClient.SendTextMessageAsync(_groupChatId, $"Ошибка при удалении старого закрепленного сообщения: {ex.Message}");
+                
                 return false;
             }
         }
