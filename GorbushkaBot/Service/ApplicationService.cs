@@ -139,7 +139,8 @@ namespace GorbushkaBot.Service
                     "Выберите категорию (лист) из таблицы:",
                     replyMarkup: inlineKeyboard
                 );
-
+                
+                await UnpinOldMessageAsync();
                 await _botClient.PinChatMessageAsync(_groupChatId, sentMessage.MessageId);
 
                 // Сохранение в базу данных
@@ -159,6 +160,41 @@ namespace GorbushkaBot.Service
                 return false;
             }
         }
+
+        public async Task<bool> UnpinOldMessageAsync()
+        {
+            try
+            {
+                // Получаем старое закрепленное сообщение из базы данных
+                var pinnedMessage = await _dbContext.PinnedMessages
+                    .Where(pm => pm.ChatId == _groupChatId)
+                    .OrderByDescending(pm => pm.Id) // Сортировка, если нужно выбрать последнее закрепленное
+                    .FirstOrDefaultAsync();
+
+                if (pinnedMessage == null)
+                {
+                    await _botClient.SendTextMessageAsync(_groupChatId, "Нет закрепленных сообщений.");
+                    return false;
+                }
+
+                // Удаляем старое закрепленное сообщение из чата
+                await _botClient.UnpinChatMessageAsync(_groupChatId, pinnedMessage.MessageId);
+
+                // Удаляем запись из базы данных
+                _dbContext.PinnedMessages.Remove(pinnedMessage);
+                await _dbContext.SaveChangesAsync();
+
+                await _botClient.SendTextMessageAsync(_groupChatId, "Старое закрепленное сообщение удалено.");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await _botClient.SendTextMessageAsync(_groupChatId, $"Ошибка при удалении старого закрепленного сообщения: {ex.Message}");
+                return false;
+            }
+        }
+
 
 
         // Метод для получения всех заявок
