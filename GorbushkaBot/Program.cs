@@ -17,8 +17,8 @@ builder.Services.AddScoped<UserAcceptService>();
 builder.Services.AddScoped<ApplicationService>();
 builder.Services.AddScoped<GoogleSheetsService>(provider =>
 {
-    var credentialPath = "GOOGLE_CREDENTIALS_PATH"; // ”кажите правильный путь
-    var spreadsheetId = "GOOGLE_SHEET_ID"; // ”кажите правильный ID таблицы
+    var credentialPath = Environment.GetEnvironmentVariable("GOOGLE_CREDENTIALS_PATH"); // ”кажите правильный путь
+    var spreadsheetId = Environment.GetEnvironmentVariable("GOOGLE_SHEET_ID"); // ”кажите правильный ID таблицы
     var spreedsheetcategoriesId = "1UovBQNNaA5sEKu9AhyZTqjJq9ORd_AlwKgK5x4525pI";
     var userApplicationService = provider.GetRequiredService<UserApplicationService>();
     var userAcceptService = provider.GetRequiredService<UserAcceptService>();
