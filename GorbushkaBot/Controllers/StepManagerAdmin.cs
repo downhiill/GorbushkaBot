@@ -145,6 +145,20 @@ namespace GorbushkaBot.Controllers
                     replyMarkup: inlineKeyboard
                 );
             }
+            else if (data.StartsWith("update_categories"))
+            {
+                // Вызов метода для закрепления сообщения с кнопками
+                var success = await _applicationService.PinMessageWithLinksAsync();
+
+                if (success)
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "Категории обновлены!");
+                }
+                else
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "Ошибка при обновлении категорий.");
+                }
+            }
             else if (data.StartsWith("application_"))
             {
                 // Извлекаем ChatId из callbackData (например, "application_12345")

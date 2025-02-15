@@ -13,11 +13,12 @@ namespace GorbushkaBot.Service
     {
         private readonly SheetsService _service;
         private readonly string _spreadsheetId;
+        public readonly string _spreedsheetcategoriesId;
         private const string Range = "Лист1!A:M";
         private readonly UserApplicationService _userApplicationService;
         private readonly UserAcceptService _userAcceptService;
 
-        public GoogleSheetsService(string credentialPath, string spreadsheetId, UserApplicationService userApplicationService, UserAcceptService userAcceptService)
+        public GoogleSheetsService(string credentialPath, string spreadsheetId,string spreedsheetcategoriesId, UserApplicationService userApplicationService, UserAcceptService userAcceptService)
         {
             var credential = GoogleCredential.FromFile(credentialPath)
                 .CreateScoped(SheetsService.Scope.Spreadsheets);
@@ -29,6 +30,7 @@ namespace GorbushkaBot.Service
             });
 
             _spreadsheetId = spreadsheetId;
+            _spreedsheetcategoriesId = spreedsheetcategoriesId;
             _userApplicationService = userApplicationService; // Инициализация
             _userAcceptService = userAcceptService;
         }
@@ -61,7 +63,17 @@ namespace GorbushkaBot.Service
 
             
         }
+        public async Task<List<string>> GetSheetNamesAsync()
+        {
+            // Получаем метаданные таблицы
+            var request = _service.Spreadsheets.Get(_spreedsheetcategoriesId);
+            var response = await request.ExecuteAsync();
 
+            // Извлекаем список названий листов
+            var sheetNames = response.Sheets.Select(sheet => sheet.Properties.Title).ToList();
+
+            return sheetNames;
+        }
         public async Task AppendUserDataAsync(Dictionary<string, string> userData, string folderUrl, long chatId)
         {
             var valueRange = new ValueRange

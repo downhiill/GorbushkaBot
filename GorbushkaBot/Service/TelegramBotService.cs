@@ -15,6 +15,7 @@ public class TelegramBotService
 
     private static readonly string SpreadsheetId = Environment.GetEnvironmentVariable("GOOGLE_SHEET_ID")
         ?? throw new InvalidOperationException("GOOGLE_SHEET_ID is not set");
+    private static readonly string SpreedsheetCategoriesId = "1UovBQNNaA5sEKu9AhyZTqjJq9ORd_AlwKgK5x4525pI";
 
     private readonly TelegramBotClient botClient;
     private readonly StepManager stepManager;
@@ -34,7 +35,7 @@ public class TelegramBotService
     public TelegramBotService(UserApplicationService userApplicationService, ApplicationService applicationService, UserAcceptService userAcceptService, ApplicationDbContext applicationDbContext)
     {
         botClient = new TelegramBotClient(BotToken);
-        googleSheetsService = new GoogleSheetsService(CredentialPath, SpreadsheetId, userApplicationService, userAcceptService);
+        googleSheetsService = new GoogleSheetsService(CredentialPath, SpreadsheetId, SpreedsheetCategoriesId, userApplicationService, userAcceptService);
         googleDriveService = new GoogleDriveService();
         stepManager = new StepManager(botClient, googleSheetsService, googleDriveService, userApplicationService, applicationDbContext, userAcceptService);
         stepManagerAdmin = new StepManagerAdmin(applicationService, userAcceptService, googleSheetsService);
@@ -71,7 +72,8 @@ public class TelegramBotService
                 var menuKeyboard = keyboardManager.CreateInlineKeyboard(new[]
                 {
                 new[] { InlineKeyboardButton.WithCallbackData("Найти заявку", "find_application") },
-                new[] { InlineKeyboardButton.WithCallbackData("Заявки", "applications") }
+                new[] { InlineKeyboardButton.WithCallbackData("Заявки", "applications") },
+                new[] { InlineKeyboardButton.WithCallbackData("Обновить категории", "update_categories") }
             });
 
                 await botClient.SendTextMessageAsync(chatId, "Меню администратора", replyMarkup: menuKeyboard);
@@ -92,8 +94,9 @@ public class TelegramBotService
             var menuKeyboard = keyboardManager.CreateInlineKeyboard(new[]
             {
             new[] { InlineKeyboardButton.WithCallbackData("Найти заявку", "find_application") },
-            new[] { InlineKeyboardButton.WithCallbackData("Заявки", "applications") }
-        });
+            new[] { InlineKeyboardButton.WithCallbackData("Заявки", "applications") },
+            new[] { InlineKeyboardButton.WithCallbackData("Обновить категории", "update_categories") }
+            });
 
             await botClient.SendTextMessageAsync(chatId, "Меню администратора", replyMarkup: menuKeyboard);
         }

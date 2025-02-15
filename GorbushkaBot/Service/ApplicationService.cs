@@ -13,12 +13,14 @@ namespace GorbushkaBot.Service
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly TelegramBotClient _botClient;
+        private readonly GoogleSheetsService _googleSheetsService;
         private readonly long _groupChatId = -1002341852869;
 
-        public ApplicationService(ApplicationDbContext dbContext, TelegramBotClient botClient)
+        public ApplicationService(ApplicationDbContext dbContext, TelegramBotClient botClient, GoogleSheetsService googleSheetsService)
         {
             _dbContext = dbContext;
             _botClient = botClient;
+            _googleSheetsService = googleSheetsService;
         }
 
         // Метод для добавления пользователя в группу с настройкой прав
@@ -103,6 +105,48 @@ namespace GorbushkaBot.Service
             }
         }
 
+        // Метод для закрепления сообщения с кнопками-ссылками на листы в таблице
+        public async Task<bool> PinMessageWithLinksAsync()
+        {
+            try
+            {
+                // Получаем список названий листов в таблице
+                var sheetNames = await _googleSheetsService.GetSheetNamesAsync();
+
+                // Если листы не найдены
+                if (sheetNames == null || !sheetNames.Any())
+                {
+                    await _botClient.SendTextMessageAsync(_groupChatId, "Не удалось получить названия листов.");
+                    return false;
+                }
+
+                // Генерация кнопок с ссылками на каждый лист
+                var inlineKeyboardButtons = sheetNames.Select(sheetName =>
+                    InlineKeyboardButton.WithUrl(sheetName, $"https://docs.google.com/spreadsheets/d/{_googleSheetsService._spreedsheetcategoriesId}/edit#gid={sheetName}"))
+                    .ToList();
+
+                // Формирование клавиатуры
+                var inlineKeyboard = new InlineKeyboardMarkup(inlineKeyboardButtons);
+
+                // Отправка сообщения с кнопками
+                var sentMessage = await _botClient.SendTextMessageAsync(
+                    _groupChatId,
+                    "Выберите категорию (лист) из таблицы:",
+                    replyMarkup: inlineKeyboard
+                );
+
+                // Закрепление сообщения в группе
+                await _botClient.PinChatMessageAsync(_groupChatId, sentMessage.MessageId);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await _botClient.SendTextMessageAsync(_groupChatId, $"Ошибка при закреплении сообщения: {ex.Message}");
+                return false;
+            }
+        }
+
         // Метод для получения всех заявок
         public async Task<List<UserApplication>> GetAllApplicationsAsync()
         {
@@ -129,6 +173,8 @@ namespace GorbushkaBot.Service
 
             return (applications, totalPages);
         }
+
+
 
         // Метод для удаления заявки
         public async Task<bool> DeleteApplicationAsync(long chatId)
