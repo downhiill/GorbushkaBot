@@ -63,17 +63,20 @@ namespace GorbushkaBot.Service
 
             
         }
-        public async Task<List<string>> GetSheetNamesAsync()
+        public async Task<List<(string sheetName, string gid)>> GetSheetNamesAsync()
         {
             // Получаем метаданные таблицы
             var request = _service.Spreadsheets.Get(_spreedsheetcategoriesId);
             var response = await request.ExecuteAsync();
 
-            // Извлекаем список названий листов
-            var sheetNames = response.Sheets.Select(sheet => sheet.Properties.Title).ToList();
+            // Извлекаем список названий листов и их GID
+            var sheetNamesAndGids = response.Sheets
+                .Select(sheet => (sheet.Properties.Title, sheet.Properties.SheetId.ToString()))
+                .ToList();
 
-            return sheetNames;
+            return sheetNamesAndGids;
         }
+
         public async Task AppendUserDataAsync(Dictionary<string, string> userData, string folderUrl, long chatId)
         {
             var valueRange = new ValueRange

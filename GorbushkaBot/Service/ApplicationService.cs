@@ -110,20 +110,32 @@ namespace GorbushkaBot.Service
         {
             try
             {
-                // Получаем список названий листов в таблице
-                var sheetNames = await _googleSheetsService.GetSheetNamesAsync();
+                // Получаем список названий листов и их GID
+                var sheetNamesAndGids = await _googleSheetsService.GetSheetNamesAsync();
 
                 // Если листы не найдены
-                if (sheetNames == null || !sheetNames.Any())
+                if (sheetNamesAndGids == null || !sheetNamesAndGids.Any())
                 {
                     await _botClient.SendTextMessageAsync(_groupChatId, "Не удалось получить названия листов.");
                     return false;
                 }
 
                 // Генерация кнопок с ссылками на каждый лист
-                var inlineKeyboardButtons = sheetNames.Select(sheetName =>
-                    InlineKeyboardButton.WithUrl(sheetName, $"https://docs.google.com/spreadsheets/d/{_googleSheetsService._spreedsheetcategoriesId}/edit#gid={sheetName}"))
-                    .ToList();
+                var inlineKeyboardButtons = new List<InlineKeyboardButton>();
+
+                foreach (var (sheetName, sheetGid) in sheetNamesAndGids)
+                {
+                    // Формируем ссылку на лист с использованием его GID
+                    var url = $"https://docs.google.com/spreadsheets/d/{_googleSheetsService._spreedsheetcategoriesId}/edit#gid={sheetGid}";
+                    inlineKeyboardButtons.Add(InlineKeyboardButton.WithUrl(sheetName, url));
+                }
+
+                // Если не получилось получить кнопки для всех листов
+                if (!inlineKeyboardButtons.Any())
+                {
+                    await _botClient.SendTextMessageAsync(_groupChatId, "Не удалось сформировать кнопки с ссылками.");
+                    return false;
+                }
 
                 // Формирование клавиатуры
                 var inlineKeyboard = new InlineKeyboardMarkup(inlineKeyboardButtons);
@@ -146,6 +158,7 @@ namespace GorbushkaBot.Service
                 return false;
             }
         }
+
 
         // Метод для получения всех заявок
         public async Task<List<UserApplication>> GetAllApplicationsAsync()
