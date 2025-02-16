@@ -114,21 +114,27 @@ namespace GorbushkaBot.Service
 
                 if (sheetNamesAndGids == null || !sheetNamesAndGids.Any())
                 {
-                    
                     return false;
                 }
 
-                var inlineKeyboardButtons = new List<InlineKeyboardButton>();
+                var inlineKeyboardButtons = new List<List<InlineKeyboardButton>>();
 
                 foreach (var (sheetName, sheetGid) in sheetNamesAndGids)
                 {
                     var url = $"https://docs.google.com/spreadsheets/d/{_googleSheetsService._spreedsheetcategoriesId}/edit#gid={sheetGid}";
-                    inlineKeyboardButtons.Add(InlineKeyboardButton.WithUrl(sheetName, url));
+                    var button = InlineKeyboardButton.WithUrl(sheetName, url);
+
+                    // Добавляем кнопку в текущую строку, если строка неполная
+                    if (inlineKeyboardButtons.Count == 0 || inlineKeyboardButtons.Last().Count == 3)
+                    {
+                        inlineKeyboardButtons.Add(new List<InlineKeyboardButton>());
+                    }
+
+                    inlineKeyboardButtons.Last().Add(button);
                 }
 
                 if (!inlineKeyboardButtons.Any())
                 {
-                    
                     return false;
                 }
 
@@ -139,7 +145,7 @@ namespace GorbushkaBot.Service
                     "Выберите категорию (лист) из таблицы:",
                     replyMarkup: inlineKeyboard
                 );
-                
+
                 await UnpinOldMessageAsync();
                 await _botClient.PinChatMessageAsync(_groupChatId, sentMessage.MessageId);
 
@@ -156,10 +162,11 @@ namespace GorbushkaBot.Service
             }
             catch (Exception ex)
             {
-                
+                // Логирование ошибки (например, Console.WriteLine)
                 return false;
             }
         }
+
 
         public async Task<bool> UnpinOldMessageAsync()
         {
