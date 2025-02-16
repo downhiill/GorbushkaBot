@@ -136,25 +136,11 @@ namespace GorbushkaBot.Controllers
 
                 var inlineKeyboard = new InlineKeyboardMarkup(inlineKeyboardButtons);
 
-                if (callbackQuery.Message == null)
-                {
-                    // Если сообщение не существует, отправляем новое
-                    await botClient.SendTextMessageAsync(
-                        chatId: chatId,
-                        text: "📋 Список заявок:\n",
-                        replyMarkup: inlineKeyboard
-                    );
-                }
-                else
-                {
-                    // Редактируем сообщение, если оно существует
-                    await botClient.EditMessageTextAsync(
-                        chatId: chatId,
-                        messageId: callbackQuery.Message.MessageId,
-                        text: "📋 Список заявок:\n",
-                        replyMarkup: inlineKeyboard
-                    );
-                }
+                await botClient.SendTextMessageAsync(
+                chatId: chatId,
+                text: "📋 Список заявок:\n",
+                replyMarkup: inlineKeyboard);
+
             }
             else if (data.StartsWith("update_categories"))
             {
