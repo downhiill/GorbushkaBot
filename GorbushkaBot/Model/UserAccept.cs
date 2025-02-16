@@ -11,6 +11,7 @@
         public string PassportNumber { get; set; }
         public string Role { get; set; }
         public string PassportIssueDate { get; set; }
+        public string PassportIssueDateEnd { get; set; }
         public string RegistrationAddress { get; set; }
         public string PassportPhotos { get; set; }
         public string PavilionNumber { get; set; }

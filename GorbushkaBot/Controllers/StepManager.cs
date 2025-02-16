@@ -177,6 +177,28 @@ namespace GorbushkaBot.Controllers
                     botClient,
                     chatId,
                     messageId,
+                    "propiska_photo",
+                    "✅ Фото принято!\n\nТеперь отправьте фото прописки :",
+                    true
+                );
+            }
+            else if (step == "propiska_photo")
+            {
+                if (message.Photo == null)
+                {
+                    var errorMsg = await botClient.SendTextMessageAsync(
+                        chatId,
+                        "Ошибка: Отправьте фото первой страницы паспорта."
+                    );
+                    LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
+                    return;
+                }
+
+                SaveUserPhoto(chatId, "passport_photo", message.Photo);
+                await DeleteAndSendNextStep(
+                    botClient,
+                    chatId,
+                    messageId,
                     "passport_rus_data",
                     "✅ Фото принято!\n\nТеперь введите номер паспорта (формат: 0000 000000):",
                     true
@@ -249,6 +271,20 @@ namespace GorbushkaBot.Controllers
                     return;
                 }
                 SaveUserData(chatId, "passport_issue_date", message.Text);
+                await DeleteAndSendNextStep(botClient, chatId, messageId, "passport_issue_date_end", "Введите дату до какого числа действует:", true);
+            }
+            else if (step == "passport_issue_date_end")
+            {
+                if (!Regex.IsMatch(message.Text, @"^\d{2}\.\d{2}\.\d{4}$"))
+                {
+                    var errorMsg = await botClient.SendTextMessageAsync(
+                        chatId,
+                        "Ошибка: Введите корректную дату в формате ДД.ММ.ГГГГ."
+                    );
+                    LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
+                    return;
+                }
+                SaveUserData(chatId, "passport_issue_date_end", message.Text);
                 await DeleteAndSendNextStep(botClient, chatId, messageId, "pavilion_number", "Введите номер вашего павильона:", true);
             }
             else if (step == "registration_address")
@@ -286,17 +322,21 @@ namespace GorbushkaBot.Controllers
                 string fio = userData["fio"];
                 string passportNumber = userData["passport_number"];
                 string passportIssueDate = userData["passport_issue_date"];
+                string passpirtIssueDateEnd = userData["passport_issue_date_other"];
                 string phoneNumber = userData["phone_number"];
                 string role = userData["role"];
                 string pavilionNumber = userData["pavilion_number"];
                 string rentalContract = userData["rental_contract"];
                 string facePhoto = userData["face_photo"];
                 string passportPhotos = userData["passport_photo"];
+                string propiskaPhotos = userData["propiska_photo"];
                 string pavilionPhotos = userData["pavilion_photo"];
+                string registration_address = userData["registration_address"];
 
                 string completedMessage = $"✅ <b>Заявка заполнена!</b>\n\n" +
                     $"👤 <b>ФИО:</b> {fio}\n" +
-                    $"📄 <b>Паспорт:</b> {passportNumber}, {passportIssueDate}\n" +
+                    $"📄 <b>Паспорт:</b> {passportNumber}, {passportIssueDate}, {passpirtIssueDateEnd} \n" +
+                    $"🏢 <b>Адрес прописки:</b> {registration_address}\n" +
                     $"📞 <b>Телефон (контактный):</b> {phoneNumber}\n" +
                     $"💼 <b>Роль:</b> {role}\n" +
                     $"🏢 <b>Павильон:</b> {pavilionNumber}, {rentalContract}\n" +
@@ -314,6 +354,9 @@ namespace GorbushkaBot.Controllers
 
                 if (!string.IsNullOrEmpty(passportPhotos))
                     mediaList.Add(new InputMediaPhoto(new InputFileId(passportPhotos)));
+
+                if (!string.IsNullOrEmpty(propiskaPhotos))
+                    mediaList.Add(new InputMediaPhoto(new InputFileId(propiskaPhotos)));
 
                 if (!string.IsNullOrEmpty(pavilionPhotos))
                     mediaList.Add(new InputMediaPhoto(new InputFileId(pavilionPhotos)));
@@ -420,6 +463,7 @@ namespace GorbushkaBot.Controllers
                     await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "passport_other", "📷 Отправьте фото первой страницы паспорта:", true);
                     break;
 
+
                 case "next_after_pavilion":
                     await DeleteAndSendNextStep(
                         botClient,
@@ -497,11 +541,14 @@ namespace GorbushkaBot.Controllers
                             string role = userData.ContainsKey("role") ? userData["role"] : "Не указано";
                             string phoneNumber = userData.ContainsKey("phone_number") ? userData["phone_number"] : "Не указано";
                             string passportIssueDate = userData.ContainsKey("passport_issue_date") ? userData["passport_issue_date"] : "Не указано";
+                            string passportIssueDateEnd = userData.ContainsKey("passport_issue_date_end") ? userData["passport_issue_date_end"] : "Не указано";
                             string pavilionNumber = userData.ContainsKey("pavilion_number") ? userData["pavilion_number"] : "Не указано";
                             string rentalContract = userData.ContainsKey("rental_contract") ? userData["rental_contract"] : "Не указано";
                             string facePhoto = userData.ContainsKey("face_photo") ? userData["face_photo"] : "Не указано";
                             string passportphotos = userData.ContainsKey("passport_photo") ? userData["passport_photo"] : "Не указано";
+                            string propiskaphoto = userData.ContainsKey("propiska_photo") ? userData["propiska_photo"] : "Не указано";
                             string pavilionphotos = userData.ContainsKey("pavilion_photo") ? userData["pavilion_photo"] : "Не указано";
+                            string registration_address = userData.ContainsKey("registration_address") ? userData["registration_address"] : "Не указано";
 
 
                             await botClient.EditMessageTextAsync(
@@ -530,34 +577,36 @@ namespace GorbushkaBot.Controllers
                         if (previousStep != null)
                         {
                             var stepData = new Dictionary<string, (string, bool, InlineKeyboardMarkup?)>
-                    {
-                        { "fio", ("Введите ваше ФИО:", true, null) },
-                        { "face_photo", ("📸 Первый шаг: Отправьте свою фотографию (лицо крупным планом):", false, null) },
-                        { "phone_number", ("Введите номер вашего телефона:", true, null) },
-                        { "role", ("Выберите свою роль:", false,
-                            new InlineKeyboardMarkup(new[]
                             {
-                                new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
-                                new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
-                                new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
-                            })) },
-                        { "citizenship", ("Уточните ваше гражданство:", false,
-                            new InlineKeyboardMarkup(new[]
-                            {
-                                new[] { InlineKeyboardButton.WithCallbackData("РФ", "passport_rus") },
-                                new[] { InlineKeyboardButton.WithCallbackData("Другое", "passport_other") }
-                            })) },
-                        { "passport_rus", ("📷 Отправьте фото первой страницы паспорта:", true, null) },
-                        { "passport_other", ("📷 Отправьте фото первой страницы паспорта:", true, null) },
-                        { "passport_rus_data", ("Введите номер паспорта (формат: 0000 000000):", true, null) },
-                        { "passport_other_data", ("Введите номер паспорта:", true, null) },
-                        { "passport_issue_date_rus", ("Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):", true, null) },
-                        { "passport_issue_date_other", ("Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):", true, null) },
-                        { "registration_address", ("Введите свой адрес прописки:", true, null) },
-                        { "pavilion_number", ("Введите номер вашего павильона:", true, null) },
-                        { "rental_contract", ("Введите номер вашего договора аренды:", true, null) },
-                        { "pavilion_photo", ("📷 Отправьте фото вашего договора:", false, null) }
-                    };
+                                { "fio", ("Введите ваше ФИО:", true, null) },
+                                { "face_photo", ("📸 Первый шаг: Отправьте свою фотографию (лицо крупным планом):", false, null) },
+                                { "phone_number", ("Введите номер вашего телефона:", true, null) },
+                                { "role", ("Выберите свою роль:", false,
+                                    new InlineKeyboardMarkup(new[]
+                                    {
+                                        new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
+                                        new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
+                                        new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
+                                    })) },
+                                { "citizenship", ("Уточните ваше гражданство:", false,
+                                    new InlineKeyboardMarkup(new[]
+                                    {
+                                        new[] { InlineKeyboardButton.WithCallbackData("РФ", "passport_rus") },
+                                        new[] { InlineKeyboardButton.WithCallbackData("Другое", "passport_other") }
+                                    })) },
+                                { "passport_rus", ("📷 Отправьте фото первой страницы паспорта:", true, null) },
+                                { "propiska_photo", ("📷 Отправьте фото страницы с пропиской:", true, null) },
+                                { "passport_other", ("📷 Отправьте фото первой страницы паспорта:", true, null) },
+                                { "passport_rus_data", ("Введите номер паспорта (формат: 0000 000000):", true, null) },
+                                { "passport_other_data", ("Введите номер паспорта:", true, null) },
+                                { "passport_issue_date_rus", ("Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):", true, null) },
+                                { "passport_issue_date_other", ("Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):", true, null) },
+                                { "passport_issue_date_end", ("Введите дату до какого числа действует (в формате ДД.ММ.ГГГГ):", true, null) },
+                                { "registration_address", ("Введите свой адрес прописки:", true, null) },
+                                { "pavilion_number", ("Введите номер вашего павильона:", true, null) },
+                                { "rental_contract", ("Введите номер вашего договора аренды:", true, null) },
+                                { "pavilion_photo", ("📷 Отправьте фото вашего договора:", false, null) }
+                            };
 
                             if (stepData.TryGetValue(previousStep, out var stepInfo))
                             {
@@ -580,11 +629,13 @@ namespace GorbushkaBot.Controllers
                 { "role", "phone_number" },
                 { "citizenship", "role" },
                 { "passport_rus", "citizenship" },
+                { "propiska_photo", "passport_rus"},
                 { "passport_other", "citizenship" },
-                { "passport_rus_data", "passport_rus" },
+                { "passport_rus_data", "propiska_photo" },
                 { "passport_other_data", "passport_other" },
                 { "passport_issue_date_rus", "passport_rus_data" },
                 { "passport_issue_date_other", "passport_other_data" },
+                { "passport_issue_date_end", "passport_issue_date_other"},
                 { "registration_address", "passport_issue_date_rus" },
                 { "pavilion_number", "registration_address" },
                 { "rental_contract", "pavilion_number" },
