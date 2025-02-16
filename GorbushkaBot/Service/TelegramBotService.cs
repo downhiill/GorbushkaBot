@@ -100,6 +100,18 @@ public class TelegramBotService
 
             await botClient.SendTextMessageAsync(chatId, "Меню администратора", replyMarkup: menuKeyboard);
         }
+        else if (message.Text == "/find_application" && adminIds.Contains(chatId))
+        {
+            // Имитируем вызов нажатия на кнопку "Найти заявку"
+            var callbackQuery = new CallbackQuery
+            {
+                Data = "find_application", // Это данные, которые передаются с кнопкой
+                Message = message // Передаем исходное сообщение, чтобы сохранить контекст
+            };
+
+            // Вызываем обработчик callback-запроса для перехода к следующему шагу
+            await HandleCallbackQuery(botClient, callbackQuery);
+        }
         else if (adminIds.Contains(chatId))
         {
             await stepManagerAdmin.HandleMessage(botClient, chatId, message);
