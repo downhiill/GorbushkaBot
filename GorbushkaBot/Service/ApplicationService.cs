@@ -83,19 +83,15 @@ namespace GorbushkaBot.Service
 
             try
             {
-                // Генерация уникальной ссылки для приглашения
-                var inviteLink = await _botClient.CreateChatInviteLinkAsync(
-                    _groupChatId,
-                    memberLimit: 1, // Ограничиваем использование ссылки на одного пользователя
-                    createsJoinRequest: true // Создаем запрос на вступление, который можно использовать только один раз
-                );
-
-                // Отправляем пользователю ссылку для вступления
-                await _botClient.SendTextMessageAsync(applicantChatId, $"Для присоединения к группе, перейдите по следующей ссылке: {inviteLink.InviteLink}");
+                // Приглашаем пользователя через ссылку
+                var inviteLink = "https://t.me/+Nz5qqO88Qf4xNjRi"; // Замените на вашу ссылку для приглашения
+                await _botClient.SendTextMessageAsync(applicantChatId, $"Для присоединения к группе, перейдите по следующей ссылке: {inviteLink}");
 
                 // Ожидаем, пока пользователь присоединится (это необходимо для применения прав)
+                // Здесь можно сделать ожидание или периодически проверять статус пользователя
+
                 // Применение прав после присоединения пользователя в группу
-                //await _botClient.RestrictChatMemberAsync(_groupChatId, applicantChatId, permissions);
+                await _botClient.RestrictChatMemberAsync(_groupChatId, applicantChatId, permissions);
 
                 // Уведомление о добавлении
                 await _botClient.SendTextMessageAsync(_groupChatId, $"👤 {application.Fio} добавлен в чат с ролью: {application.Role}");
