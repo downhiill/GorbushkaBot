@@ -102,15 +102,11 @@ public class TelegramBotService
         }
         else if (message.Text == "/find_application" && adminIds.Contains(chatId))
         {
-            // Имитируем вызов нажатия на кнопку "Найти заявку"
-            var callbackQuery = new CallbackQuery
-            {
-                Data = "find_application", // Это данные, которые передаются с кнопкой
-                Message = message // Передаем исходное сообщение, чтобы сохранить контекст
-            };
+            // Сохраняем шаг "waiting_for_application_id" для администратора
+            stepManagerAdmin.SaveStep(chatId, "waiting_for_application_id", message.MessageId);
 
-            // Вызываем обработчик callback-запроса для перехода к следующему шагу
-            await HandleCallbackQuery(botClient, callbackQuery);
+            // Отправляем сообщение с запросом ID заявки
+            await botClient.SendTextMessageAsync(chatId, "Введите ID заявки для поиска:");
         }
         else if (adminIds.Contains(chatId))
         {
