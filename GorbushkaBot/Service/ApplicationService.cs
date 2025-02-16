@@ -94,10 +94,8 @@ namespace GorbushkaBot.Service
                 await _botClient.SendTextMessageAsync(applicantChatId, $"Для присоединения к группе, перейдите по следующей ссылке: {inviteLink.InviteLink}");
 
                 // Ожидаем, пока пользователь присоединится (это необходимо для применения прав)
-                // Здесь можно сделать ожидание или периодически проверять статус пользователя
-
                 // Применение прав после присоединения пользователя в группу
-                await _botClient.RestrictChatMemberAsync(_groupChatId, applicantChatId, permissions);
+                //await _botClient.RestrictChatMemberAsync(_groupChatId, applicantChatId, permissions);
 
                 // Уведомление о добавлении
                 await _botClient.SendTextMessageAsync(_groupChatId, $"👤 {application.Fio} добавлен в чат с ролью: {application.Role}");

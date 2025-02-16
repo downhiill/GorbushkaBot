@@ -266,9 +266,6 @@ namespace GorbushkaBot.Controllers
                 // 8. Отправляем сообщение пользователю о том, что его заявка одобрена
                 await botClient.SendTextMessageAsync(applicantChatId, "Ваша заявка была одобрена! ✅");
             }
-
-
-
             else if (data.StartsWith("reject_"))
             {
                 long applicantChatId = long.Parse(data.Split('_')[1]);
