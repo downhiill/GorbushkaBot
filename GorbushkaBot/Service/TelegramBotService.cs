@@ -110,13 +110,27 @@ public class TelegramBotService
         }
         else if (message.Text == "/applications" && adminIds.Contains(chatId))
         {
-            // Сохраняем шаг "waiting_for_application_id" для администратора
-            stepManagerAdmin.SaveStep(chatId, "applications", message.MessageId);
+            // Имитируем callback-запрос для отображения списка заявок
+            var callbackQuery = new CallbackQuery
+            {
+                Data = "applications_0", // Начинаем с первой страницы (page = 0)
+                Message = message // Передаем исходное сообщение для контекста
+            };
+
+            // Вызываем обработчик callback-запроса
+            await stepManagerAdmin.HandleCallbackQuery(botClient, chatId, callbackQuery);
         }
         else if (message.Text == "/update_categories" && adminIds.Contains(chatId))
         {
-            // Сохраняем шаг "waiting_for_application_id" для администратора
-            stepManagerAdmin.SaveStep(chatId, "update_categories", message.MessageId);
+            // Имитируем callback-запрос для обновления категорий
+            var callbackQuery = new CallbackQuery
+            {
+                Data = "update_categories", // Данные для обновления категорий
+                Message = message // Передаем исходное сообщение для контекста
+            };
+
+            // Вызываем обработчик callback-запроса
+            await stepManagerAdmin.HandleCallbackQuery(botClient, chatId, callbackQuery);
         }
         else if (adminIds.Contains(chatId))
         {
