@@ -86,7 +86,7 @@ namespace GorbushkaBot.Controllers
                 await botClient.SendTextMessageAsync(chatId, "Введите ID заявки для поиска:");
                 SaveStep(chatId, "waiting_for_application_id", callbackQuery.Message.MessageId);
             }
-            else if (data.StartsWith("applications"))
+            else if (data.StartsWith("applications_"))
             {
                 int page = 0;
                 var parts = data.Split('_');
