@@ -19,6 +19,7 @@ namespace GorbushkaBot.Controllers
         long[] adminChatIds = { 8018159474, 448145168, 388009185, 7069858455 };
         private static readonly Dictionary<long, (string step, int messageId)> UserSteps = new();
         private static readonly Dictionary<long, Dictionary<string, string>> UserData = new();
+
         private static readonly Dictionary<long, (int errorMsgId, int userMsgId)> LastErrorMessages = new(); // Новый словарь для ошибок
         private readonly TelegramBotClient botClient;
         private readonly GoogleSheetsService _sheetsService;
@@ -263,7 +264,7 @@ namespace GorbushkaBot.Controllers
             else if (step == "rental_contract")
             {
                 SaveUserData(chatId, "rental_contract", message.Text);
-                await DeleteAndSendNextStep(botClient, chatId, messageId, "pavilion_photo", "📷 Отправьте фото вашего павильона:", true);
+                await DeleteAndSendNextStep(botClient, chatId, messageId, "pavilion_photo", "📷 Отправьте фото вашего договора:", true);
             }
             else if (step == "pavilion_photo")
             {
@@ -506,11 +507,7 @@ namespace GorbushkaBot.Controllers
                             await botClient.EditMessageTextAsync(
                                 chatId: chatId,
                                 messageId: callbackQuery.Message.MessageId,
-                                text: "✅ Заявка успешно отправлена! Ожидайте подтверждения.",
-                                replyMarkup: new InlineKeyboardMarkup(new[]
-                                {
-                                    new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") }
-                                }));
+                                text: "✅ Заявка успешно отправлена! Ожидайте подтверждения.");
 
                             
                         }
@@ -528,49 +525,73 @@ namespace GorbushkaBot.Controllers
                     if (UserSteps.TryGetValue(chatId, out var currentStepData))
                     {
                         string currentStep = currentStepData.step;
-                        string previousStep = null;
-
-                        // Модифицируем порядок шагов с учётом новых условий
-                        var stepOrder = new List<string>
-                        {
-                            "fio", "face_photo", "phone_number","role","citizenship","passport_number", "passport_issue_date",
-                            "registration_address", "passport","pavilion_number", "rental_contract", "pavilion_photo"
-                        };
+                        string previousStep = GetPreviousStep(currentStep);
 
                         if (previousStep != null)
                         {
                             var stepData = new Dictionary<string, (string, bool, InlineKeyboardMarkup?)>
+                    {
+                        { "fio", ("Введите ваше ФИО:", true, null) },
+                        { "face_photo", ("📸 Первый шаг: Отправьте свою фотографию (лицо крупным планом):", false, null) },
+                        { "phone_number", ("Введите номер вашего телефона:", true, null) },
+                        { "role", ("Выберите свою роль:", false,
+                            new InlineKeyboardMarkup(new[]
                             {
-                                { "fio", ("Введите ваше ФИО:", true, null) },
-                                { "face_photo", ("📸 Первый шаг: Отправьте свою фотографию (лицо крупным планом):", false, null) },
-                                { "phone_number", ("Введите номер вашего телефона:", true, null) },
-                                { "passport_number", ("Введите номер вашего паспорта (формат: 0000 000000):", true, null) },
-                                { "passport_issue_date", ("Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):", true, null) },
-                                { "registration_address", ("Введите свой адрес прописки:", true, null) },
-                                { "passport", ("📷 Отправьте фото паспорта с данными:", false, null) },
-                                { "role", ("Выберите свою роль:", false,
-                                    new InlineKeyboardMarkup(new[]
-                                    {
-                                        new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
-                                        new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
-                                        new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
-                                    })) },
-                                { "pavilion_number", ("Введите номер вашего павильона:", true, null) },
-                                { "rental_contract", ("Введите номер договора аренды:", true, null) },
-                                { "pavilion_photo", ("📷 Отправьте фото вашего павильона:", false, null) }
-                            };
+                                new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
+                                new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
+                                new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
+                            })) },
+                        { "citizenship", ("Уточните ваше гражданство:", false,
+                            new InlineKeyboardMarkup(new[]
+                            {
+                                new[] { InlineKeyboardButton.WithCallbackData("РФ", "passport_rus") },
+                                new[] { InlineKeyboardButton.WithCallbackData("Другое", "passport_other") }
+                            })) },
+                        { "passport_rus", ("📷 Отправьте фото первой страницы паспорта:", true, null) },
+                        { "passport_other", ("📷 Отправьте фото первой страницы паспорта:", true, null) },
+                        { "passport_rus_data", ("Введите номер паспорта (формат: 0000 000000):", true, null) },
+                        { "passport_other_data", ("Введите номер паспорта:", true, null) },
+                        { "passport_issue_date_rus", ("Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):", true, null) },
+                        { "passport_issue_date_other", ("Введите дату выдачи паспорта (в формате ДД.ММ.ГГГГ):", true, null) },
+                        { "registration_address", ("Введите свой адрес прописки:", true, null) },
+                        { "pavilion_number", ("Введите номер вашего павильона:", true, null) },
+                        { "rental_contract", ("Введите номер вашего договора аренды:", true, null) },
+                        { "pavilion_photo", ("📷 Отправьте фото вашего договора:", false, null) }
+                    };
 
                             if (stepData.TryGetValue(previousStep, out var stepInfo))
                             {
-                                // Примечание: Мы передаем keyboard в метод DeleteAndSendNextStep
                                 await DeleteAndSendNextStep(botClient, chatId, currentStepData.messageId, previousStep, stepInfo.Item1, stepInfo.Item2, stepInfo.Item3);
                             }
                         }
-
                     }
                     break;
 
             }
+        }
+
+        private string GetPreviousStep(string currentStep)
+        {
+            var stepOrder = new Dictionary<string, string>
+            {
+                { "fio", null },
+                { "face_photo", "fio" },
+                { "phone_number", "face_photo" },
+                { "role", "phone_number" },
+                { "citizenship", "role" },
+                { "passport_rus", "citizenship" },
+                { "passport_other", "citizenship" },
+                { "passport_rus_data", "passport_rus" },
+                { "passport_other_data", "passport_other" },
+                { "passport_issue_date_rus", "passport_rus_data" },
+                { "passport_issue_date_other", "passport_other_data" },
+                { "registration_address", "passport_issue_date_rus" },
+                { "pavilion_number", "registration_address" },
+                { "rental_contract", "pavilion_number" },
+                { "pavilion_photo", "rental_contract" }
+            };
+
+            return stepOrder.TryGetValue(currentStep, out var previousStep) ? previousStep : null;
         }
 
         private async Task DeleteAndSendNextStep(ITelegramBotClient botClient, long chatId, int messageId, string nextStep, string messageText, bool isTextInput, InlineKeyboardMarkup? keyboard = null)
@@ -586,7 +607,7 @@ namespace GorbushkaBot.Controllers
             }
 
             // Добавляем кнопку "Назад", если это не начальный шаг
-            if (nextStep != "role" && nextStep != "completed") // Назад добавляется всегда, кроме первого шага и шага выбора роли
+            if (nextStep != "fio" && nextStep != "completed") // Назад добавляется всегда, кроме первого шага и шага выбора роли
             {
                 var backButton = InlineKeyboardButton.WithCallbackData("⬅️ Назад", "back");
                 if (keyboard == null)
