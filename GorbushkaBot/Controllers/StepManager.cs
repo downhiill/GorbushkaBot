@@ -322,7 +322,7 @@ namespace GorbushkaBot.Controllers
                 string fio = userData["fio"];
                 string passportNumber = userData["passport_number"];
                 string passportIssueDate = userData["passport_issue_date"];
-                string passpirtIssueDateEnd = userData["passport_issue_date_other"];
+                string passpirtIssueDateEnd = userData["passport_issue_date_end"];
                 string phoneNumber = userData["phone_number"];
                 string role = userData["role"];
                 string pavilionNumber = userData["pavilion_number"];
