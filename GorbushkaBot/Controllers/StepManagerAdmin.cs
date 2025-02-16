@@ -29,7 +29,6 @@ namespace GorbushkaBot.Controllers
         {
             if (!AdminSteps.ContainsKey(chatId))
             {
-                await botClient.SendTextMessageAsync(chatId, "Выберите действие из меню.");
                 return;
             }
 

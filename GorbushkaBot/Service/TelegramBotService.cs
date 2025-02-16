@@ -108,6 +108,16 @@ public class TelegramBotService
             // Отправляем сообщение с запросом ID заявки
             await botClient.SendTextMessageAsync(chatId, "Введите ID заявки для поиска:");
         }
+        else if (message.Text == "/applications" && adminIds.Contains(chatId))
+        {
+            // Сохраняем шаг "waiting_for_application_id" для администратора
+            stepManagerAdmin.SaveStep(chatId, "applications", message.MessageId);
+        }
+        else if (message.Text == "/update_categories" && adminIds.Contains(chatId))
+        {
+            // Сохраняем шаг "waiting_for_application_id" для администратора
+            stepManagerAdmin.SaveStep(chatId, "update_categories", message.MessageId);
+        }
         else if (adminIds.Contains(chatId))
         {
             await stepManagerAdmin.HandleMessage(botClient, chatId, message);
