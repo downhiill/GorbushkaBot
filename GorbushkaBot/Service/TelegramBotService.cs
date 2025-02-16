@@ -129,7 +129,7 @@ public class TelegramBotService
             // Имитируем callback-запрос для отображения списка заявок
             var callbackQuery = new CallbackQuery
             {
-                Data = "applications_", // Начинаем с первой страницы (page = 0)
+                Data = "applications", // Начинаем с первой страницы (page = 0)
                 Message = message // Передаем исходное сообщение для контекста
             };
 
