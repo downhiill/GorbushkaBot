@@ -69,13 +69,17 @@ public class TelegramBotService
         {
             if (adminIds.Contains(chatId))
             {
-                var menuKeyboard = keyboardManager.CreateInlineKeyboard(new[]
+                // Создаем обычную клавиатуру (ReplyKeyboardMarkup) с кнопками
+                var menuKeyboard = new ReplyKeyboardMarkup(new[]
                 {
-                new[] { InlineKeyboardButton.WithCallbackData("Найти заявку", "find_application") },
-                new[] { InlineKeyboardButton.WithCallbackData("Заявки", "applications") },
-                new[] { InlineKeyboardButton.WithCallbackData("Обновить категории", "update_categories") }
-            });
+                    new KeyboardButton[] { "Найти заявку", "Заявки", "Обновить категории" }
+                })
+                {
+                    ResizeKeyboard = true, // Опционально, чтобы кнопки были адаптивными
+                    OneTimeKeyboard = true // Опционально, чтобы клавиатура скрывалась после нажатия
+                };
 
+                // Отправляем сообщение с клавиатурой под полем ввода
                 await botClient.SendTextMessageAsync(chatId, "Меню администратора", replyMarkup: menuKeyboard);
             }
             else
@@ -91,13 +95,17 @@ public class TelegramBotService
         }
         else if (message.Text == "/menu" && adminIds.Contains(chatId))
         {
-            var menuKeyboard = keyboardManager.CreateInlineKeyboard(new[]
+            // Создаем обычную клавиатуру (ReplyKeyboardMarkup) с кнопками
+            var menuKeyboard = new ReplyKeyboardMarkup(new[]
             {
-            new[] { InlineKeyboardButton.WithCallbackData("Найти заявку", "find_application") },
-            new[] { InlineKeyboardButton.WithCallbackData("Заявки", "applications") },
-            new[] { InlineKeyboardButton.WithCallbackData("Обновить категории", "update_categories") }
-            });
+                new KeyboardButton[] { "Найти заявку", "Заявки", "Обновить категории" }
+            })
+            {
+                ResizeKeyboard = true, // Опционально, чтобы кнопки были адаптивными
+                OneTimeKeyboard = true // Опционально, чтобы клавиатура скрывалась после нажатия
+            };
 
+            // Отправляем сообщение с клавиатурой под полем ввода
             await botClient.SendTextMessageAsync(chatId, "Меню администратора", replyMarkup: menuKeyboard);
         }
         else if (message.Text == "/find_application" && adminIds.Contains(chatId))
@@ -107,6 +115,26 @@ public class TelegramBotService
 
             // Отправляем сообщение с запросом ID заявки
             await botClient.SendTextMessageAsync(chatId, "Введите ID заявки для поиска:");
+        }
+        else if (message.Text == "Найти заявку" && adminIds.Contains(chatId))
+        {
+            // Сохраняем шаг "waiting_for_application_id" для администратора
+            stepManagerAdmin.SaveStep(chatId, "waiting_for_application_id", message.MessageId);
+
+            // Отправляем сообщение с запросом ID заявки
+            await botClient.SendTextMessageAsync(chatId, "Введите ID заявки для поиска:");
+        }
+        else if (message.Text == "Заявки" && adminIds.Contains(chatId))
+        {
+            // Имитируем callback-запрос для отображения списка заявок
+            var callbackQuery = new CallbackQuery
+            {
+                Data = "applications_0", // Начинаем с первой страницы (page = 0)
+                Message = message // Передаем исходное сообщение для контекста
+            };
+
+            // Вызываем обработчик callback-запроса
+            await stepManagerAdmin.HandleCallbackQuery(botClient, chatId, callbackQuery);
         }
         else if (message.Text == "/applications" && adminIds.Contains(chatId))
         {
@@ -132,6 +160,18 @@ public class TelegramBotService
             // Вызываем обработчик callback-запроса
             await stepManagerAdmin.HandleCallbackQuery(botClient, chatId, callbackQuery);
         }
+        else if (message.Text == "Обновить категории" && adminIds.Contains(chatId))
+        {
+            // Имитируем callback-запрос для обновления категорий
+            var callbackQuery = new CallbackQuery
+            {
+                Data = "update_categories", // Данные для обновления категорий
+                Message = message // Передаем исходное сообщение для контекста
+            };
+
+            // Вызываем обработчик callback-запроса
+            await stepManagerAdmin.HandleCallbackQuery(botClient, chatId, callbackQuery);
+        }
         else if (adminIds.Contains(chatId))
         {
             await stepManagerAdmin.HandleMessage(botClient, chatId, message);
@@ -141,8 +181,6 @@ public class TelegramBotService
             await stepManager.HandleMessage(botClient, chatId, message);
         }
     }
-
-
     private async Task HandleCallbackQuery(ITelegramBotClient botClient, CallbackQuery callbackQuery)
     {
         long chatId = callbackQuery.Message.Chat.Id;
