@@ -188,19 +188,19 @@ namespace GorbushkaBot.Controllers
                 {
                     var errorMsg = await botClient.SendTextMessageAsync(
                         chatId,
-                        "Ошибка: Отправьте фото первой страницы паспорта."
+                        "Ошибка: Отправьте фото страницы с пропиской."
                     );
                     LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
                     return;
                 }
 
-                SaveUserPhoto(chatId, "passport_photo", message.Photo);
+                SaveUserPhoto(chatId, "propiska_photo", message.Photo); // Сохраняем фото прописки под ключом "propiska_photo"
                 await DeleteAndSendNextStep(
                     botClient,
                     chatId,
                     messageId,
                     "passport_rus_data",
-                    "✅ Фото принято!\n\nТеперь введите номер паспорта (формат: 0000 000000):",
+                    "✅ Фото прописки принято!\n\nТеперь введите номер паспорта (формат: 0000 000000):",
                     true
                 );
             }
@@ -271,7 +271,7 @@ namespace GorbushkaBot.Controllers
                     return;
                 }
                 SaveUserData(chatId, "passport_issue_date", message.Text);
-                await DeleteAndSendNextStep(botClient, chatId, messageId, "passport_issue_date_end", "Введите дату до какого числа действует:", true);
+                await DeleteAndSendNextStep(botClient, chatId, messageId, "passport_issue_date_end", "Введите дату до какого числа действует (в формате ДД.ММ.ГГГГ)::", true);
             }
             else if (step == "passport_issue_date_end")
             {
@@ -284,7 +284,7 @@ namespace GorbushkaBot.Controllers
                     LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
                     return;
                 }
-                SaveUserData(chatId, "passport_issue_date_end", message.Text);
+                SaveUserData(chatId, "passport_issue_date_end", message.Text); // Сохраняем дату окончания срока действия паспорта
                 await DeleteAndSendNextStep(botClient, chatId, messageId, "pavilion_number", "Введите номер вашего павильона:", true);
             }
             else if (step == "registration_address")
