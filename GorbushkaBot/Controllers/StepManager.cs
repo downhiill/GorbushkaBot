@@ -540,7 +540,7 @@ namespace GorbushkaBot.Controllers
                             string passportNumber = userData.ContainsKey("passport_number") ? userData["passport_number"] : "Не указано";
                             string role = userData.ContainsKey("role") ? userData["role"] : "Не указано";
                             string phoneNumber = userData.ContainsKey("phone_number") ? userData["phone_number"] : "Не указано";
-                            string passportIssueDate = userData.ContainsKey("passport_issue_date") ? userData["passport_issue_date"] : "Не указано";
+                            string passpirtIssueDate = userData.ContainsKey("passport_issue_date") ? userData["passport_issue_date"] : "Не указано";
                             string passportIssueDateEnd = userData.ContainsKey("passport_issue_date_end") ? userData["passport_issue_date_end"] : "Не указано";
                             string pavilionNumber = userData.ContainsKey("pavilion_number") ? userData["pavilion_number"] : "Не указано";
                             string rentalContract = userData.ContainsKey("rental_contract") ? userData["rental_contract"] : "Не указано";
@@ -637,7 +637,7 @@ namespace GorbushkaBot.Controllers
                 { "passport_issue_date_other", "passport_other_data" },
                 { "passport_issue_date_end", "passport_issue_date_other"},
                 { "registration_address", "passport_issue_date_rus" },
-                { "pavilion_number", "registration_address" },
+                { "pavilion_number", "passport_issue_date_end" },
                 { "rental_contract", "pavilion_number" },
                 { "pavilion_photo", "rental_contract" }
             };
