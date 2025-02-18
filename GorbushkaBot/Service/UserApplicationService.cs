@@ -26,7 +26,7 @@ namespace GorbushkaBot.Service
                 PassportIssueDateEnd = userData.GetValueOrDefault("passport_issue_date_end",""),
                 RegistrationAddress = userData.GetValueOrDefault("registration_address", ""),
                 PassportPhotos = userData["passport_photo"],
-                PropiskaPhotos = userData.GetValueOrDefault("propiska_photo",""),
+                PropiskaPhoto = userData.GetValueOrDefault("propiska_photo",""),
                 PavilionNumber = userData.GetValueOrDefault("pavilion_number", ""),
                 RentalContract = userData.GetValueOrDefault("rental_contract", ""),
                 PavilionPhotos = userData["pavilion_photo"],
