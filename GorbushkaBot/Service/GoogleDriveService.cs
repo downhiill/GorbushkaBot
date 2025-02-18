@@ -39,6 +39,7 @@ namespace GorbushkaBot.Service
             // Создаем подпапки и сохраняем их ID
             folders.Add("face", (await CreateFolderAsync("face", rootFolder.Id)).Id);
             folders.Add("passport", (await CreateFolderAsync("passport", rootFolder.Id)).Id);
+            folders.Add("propiska", (await CreateFolderAsync("propiska", rootFolder.Id)).Id);
             folders.Add("pavilion", (await CreateFolderAsync("pavilion", rootFolder.Id)).Id);
 
             return folders;

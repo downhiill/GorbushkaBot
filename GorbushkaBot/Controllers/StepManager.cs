@@ -329,7 +329,7 @@ namespace GorbushkaBot.Controllers
                 string rentalContract = userData["rental_contract"]; 
                 string facePhoto = userData["face_photo"];
                 string passportPhotos = userData["passport_photo"];
-                string propiskaPhotos = userData["propiska_photo"];
+                string propiskaPhotos = userData.ContainsKey("propiska_photo") ? userData["propiska_photo"] : "Не указано"; ;
                 string pavilionPhotos = userData["pavilion_photo"];
                 string registration_address = userData["registration_address"];
 
@@ -506,6 +506,14 @@ namespace GorbushkaBot.Controllers
                                     new[] { facePhotoId.Split(',')[0] }
                                 );
                             }
+                            if (userData.TryGetValue("propiska_photo", out var propiskaPhotos))
+                            {
+                                await _driveService.UploadPhotosAsync(
+                                    botClient,
+                                    folders["propiska"],
+                                    propiskaPhotos.Split(',')
+                                );
+                            }
 
                             // Загружаем фото паспорта
                             if (userData.TryGetValue("passport_photo", out var passportPhotos))
@@ -530,6 +538,7 @@ namespace GorbushkaBot.Controllers
                             // Обновляем данные для таблицы
                             userData["face_photo"] = $"https://drive.google.com/drive/folders/{folders["face"]}";
                             userData["passport_photo"] = $"https://drive.google.com/drive/folders/{folders["passport"]}";
+                            userData["propiska_photo"] = $"https://drive.google.com/drive/folders/{folders["propiska"]}";
                             userData["pavilion_photo"] = $"https://drive.google.com/drive/folders/{folders["pavilion"]}";
 
                             await _sheetsService.AppendDataAsync(userData, folders["root"],chatId);
