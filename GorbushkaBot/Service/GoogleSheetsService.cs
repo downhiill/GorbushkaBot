@@ -14,7 +14,7 @@ namespace GorbushkaBot.Service
         private readonly SheetsService _service;
         private readonly string _spreadsheetId;
         public readonly string _spreedsheetcategoriesId;
-        private const string Range = "Лист1!A2:O";
+        private const string Range = "Заявки!A2:O";
         private readonly UserApplicationService _userApplicationService;
         private readonly UserAcceptService _userAcceptService;
 
