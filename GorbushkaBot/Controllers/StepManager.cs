@@ -151,9 +151,9 @@ namespace GorbushkaBot.Controllers
                 await DeleteAndSendNextStep(botClient, chatId, messageId, "role", "Выберите свою роль:", false,
                     new InlineKeyboardMarkup(new[]
                     {
-                new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
-                new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
-                new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
+                        new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
+                        new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
+                        new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
                     }));
             }
             else if (step == "citizenship")
@@ -322,11 +322,11 @@ namespace GorbushkaBot.Controllers
                 string fio = userData["fio"];
                 string passportNumber = userData["passport_number"];
                 string passportIssueDate = userData["passport_issue_date"];
-                string passpirtIssueDateEnd = userData["passport_issue_date_end"];
+                string passpirtIssueDateEnd = userData.ContainsKey("passport_issue_date_end") ? userData["passport_issue_date_end"] : "Не указано";
                 string phoneNumber = userData["phone_number"];
                 string role = userData["role"];
                 string pavilionNumber = userData["pavilion_number"];
-                string rentalContract = userData["rental_contract"];
+                string rentalContract = userData["rental_contract"]; 
                 string facePhoto = userData["face_photo"];
                 string passportPhotos = userData["passport_photo"];
                 string propiskaPhotos = userData["propiska_photo"];
