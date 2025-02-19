@@ -17,7 +17,7 @@
         public string PavilionNumber { get; set; }
         public string RentalContract { get; set; }
         public string PavilionPhotos { get; set; }
-        public string PropiskaPhotos { get; set; }
+        public string PropiskaPhoto { get; set; }
         public string FolderUrl { get; set; }
     }
 }
