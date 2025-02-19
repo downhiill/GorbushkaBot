@@ -258,11 +258,21 @@ namespace GorbushkaBot.Controllers
 
                 await _applicationService.DeleteApplicationAsync(applicantChatId);
 
-                // Отправляем сообщение пользователю о том, что его заявка отклонена
-                await botClient.SendTextMessageAsync(applicantChatId, "К сожалению, ваша заявка была отклонена. ❌");
+                // Создаем кнопку "Заполнить заново"
+                var keyboard = new InlineKeyboardMarkup(
+                    new InlineKeyboardButton[]
+                    {
+                        InlineKeyboardButton.WithCallbackData("Заполнить заново 🔄", "verify")
+                    });
 
-                // Можно добавить логику обновления статуса в базе данных
+                // Отправляем сообщение с кнопкой
+                await botClient.SendTextMessageAsync(
+                    applicantChatId,
+                    "К сожалению, ваша заявка была отклонена. ❌\nВы можете подать заявку заново, нажав кнопку ниже.",
+                    replyMarkup: keyboard
+                );
             }
+
 
         }
     }
