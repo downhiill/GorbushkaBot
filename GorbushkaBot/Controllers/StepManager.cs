@@ -330,9 +330,9 @@ namespace GorbushkaBot.Controllers
                 string rentalContract = userData["rental_contract"]; 
                 string facePhoto = userData["face_photo"];
                 string passportPhotos = userData["passport_photo"];
-                string propiskaPhotos = userData.ContainsKey("propiska_photo") ? userData["propiska_photo"] : "Не указано"; ;
+                string propiskaPhotos = userData["propiska_photo"];
                 string pavilionPhotos = userData["pavilion_photo"];
-                string registration_address = userData.ContainsKey("registration_address") ? userData["registration_address"] : "Не указано";
+                string registration_address = userData.ContainsKey("registration_address")? userData["registration_address"] : "Не указано";
 
                 string completedMessage = $"✅ <b>Заявка заполнена!</b>\n\n" +
                     $"👤 <b>ФИО:</b> {fio}\n" +
