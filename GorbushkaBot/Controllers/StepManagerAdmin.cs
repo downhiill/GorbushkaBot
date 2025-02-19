@@ -176,7 +176,7 @@ namespace GorbushkaBot.Controllers
                                               $"📞 Телефон (контактный): {application.PhoneNumber}\n" +
                                               $"🛠 Роль: {application.Role}\n" +
                                               $"🏢 Павильон: {application.PavilionNumber}, {application.RentalContract}\n" +
-                                              $"🖼 Фото: \n Лицо: {application.FacePhoto}\n Паспорт: {application.PassportPhotos}\n Павильон: {application.PavilionPhotos}";
+                                              $"🖼 Фото: \n Лицо: {application.FacePhoto}\n Паспорт: {application.PassportPhotos}\n Прописка: {application.PropiskaPhoto}\n Павильон: {application.PavilionPhotos}";
                                               
                 // Создаем кнопки для одобрения и отказа
                 var approveButton = InlineKeyboardButton.WithCallbackData("✅ Одобрить", $"approve_{applicationChatId}");
