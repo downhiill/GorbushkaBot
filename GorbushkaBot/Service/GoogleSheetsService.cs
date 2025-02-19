@@ -103,7 +103,7 @@ namespace GorbushkaBot.Service
                 }}
             };
 
-            var request = _service.Spreadsheets.Values.Append(valueRange, _spreadsheetId, "Пользователь!A2:O");
+            var request = _service.Spreadsheets.Values.Append(valueRange, _spreadsheetId, "Пользователи!A2:O");
             request.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
             await request.ExecuteAsync();
 
