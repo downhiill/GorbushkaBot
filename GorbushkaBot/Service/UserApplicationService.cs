@@ -12,7 +12,7 @@ namespace GorbushkaBot.Service
             _dbContext = dbContext;
         }
 
-        public async Task SaveUserApplicationAsync(Dictionary<string, string> userData, string folderUrl, long chatId)
+        public async Task SaveUserApplicationAsync(Dictionary<string, string> userData, string folderUrl, long chatId, string telegramUsername = null)
         {
             var userApplication = new UserApplication
             {
@@ -30,7 +30,8 @@ namespace GorbushkaBot.Service
                 PavilionNumber = userData.GetValueOrDefault("pavilion_number", ""),
                 RentalContract = userData.GetValueOrDefault("rental_contract", ""),
                 PavilionPhotos = userData["pavilion_photo"],
-                FolderUrl = folderUrl
+                FolderUrl = folderUrl,
+                UserNameTg = telegramUsername
             };
 
             _dbContext.UserApplications.Add(userApplication);

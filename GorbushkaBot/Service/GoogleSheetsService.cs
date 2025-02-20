@@ -31,11 +31,11 @@ namespace GorbushkaBot.Service
 
             _spreadsheetId = spreadsheetId;
             _spreedsheetcategoriesId = spreedsheetcategoriesId;
-            _userApplicationService = userApplicationService; // Инициализация
+            _userApplicationService = userApplicationService; 
             _userAcceptService = userAcceptService;
         }
 
-        public async Task AppendDataAsync(Dictionary<string, string> userData, string folderUrl, long chatId)
+        public async Task AppendDataAsync(Dictionary<string, string> userData, string folderUrl, long chatId, string telegramUsername = null)
         {
             var valueRange = new ValueRange
             {
@@ -55,7 +55,8 @@ namespace GorbushkaBot.Service
                     userData.GetValueOrDefault("pavilion_number", ""),
                     userData.GetValueOrDefault("rental_contract", ""),
                     userData["pavilion_photo"],
-                    chatId
+                    chatId,
+                    telegramUsername ?? "Не указано" 
                 }}
             };
 

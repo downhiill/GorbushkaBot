@@ -317,6 +317,9 @@ namespace GorbushkaBot.Controllers
 
                 // Получаем сохраненные данные пользователя
                 var userData = UserData[chatId];
+                // Получаем username
+                string telegramUsername = message.From.Username;
+
 
                 string fio = userData["fio"];
                 string passportNumber = userData["passport_number"];
@@ -482,6 +485,9 @@ namespace GorbushkaBot.Controllers
 
                             var userData = UserData[chatId];
 
+                            // Получаем username
+                            string telegramUsername = callbackQuery.From.Username;
+
                             // Создаем папки и получаем их ID
                             var folders = await _driveService.CreateUserFolderAsync(chatId);
 
@@ -529,8 +535,8 @@ namespace GorbushkaBot.Controllers
                             userData["propiska_photo"] = $"https://drive.google.com/drive/folders/{folders["propiska"]}";
                             userData["pavilion_photo"] = $"https://drive.google.com/drive/folders/{folders["pavilion"]}";
 
-                            await _sheetsService.AppendDataAsync(userData, folders["root"],chatId);
-                            await _userApplicationService.SaveUserApplicationAsync(userData, folders["root"],chatId);
+                            await _sheetsService.AppendDataAsync(userData, folders["root"],chatId, telegramUsername);
+                            await _userApplicationService.SaveUserApplicationAsync(userData, folders["root"],chatId, telegramUsername);
 
 
                             string fio = userData.ContainsKey("fio") ? userData["fio"] : "Не указано";

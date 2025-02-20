@@ -4,6 +4,7 @@
     {
         public int Id { get; set; }
         public long ChatId { get; set; }
+        public string UserNameTg { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string FacePhoto { get; set; }
         public string Fio { get; set; }
