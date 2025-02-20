@@ -14,9 +14,9 @@ namespace GorbushkaBot.Service
 
         public GoogleDriveService()
         {
-            _parentFolderId = Environment.GetEnvironmentVariable("GOOGLE_DRIVE_FOLDER_ID");
-            _botToken = Environment.GetEnvironmentVariable("BOT_TOKEN");
-            var credentialPath = Environment.GetEnvironmentVariable("GOOGLE_CREDENTIALS_PATH");
+            _parentFolderId = "1PBgt4w7CvL0sbhjR18v18FwVnqppAfH-";
+            _botToken = "8072900802:AAFoYeX1Ikv1_vwbGDJYfq_g64Kcaye5lGY";
+            var credentialPath = "gorbushkarequest-56264ab50e01.json";
 
             var credential = GoogleCredential.FromFile(credentialPath)
                 .CreateScoped(DriveService.Scope.Drive);

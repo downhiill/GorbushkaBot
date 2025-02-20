@@ -17,8 +17,8 @@ builder.Services.AddScoped<UserAcceptService>();
 builder.Services.AddScoped<ApplicationService>();
 builder.Services.AddScoped<GoogleSheetsService>(provider =>
 {
-    var credentialPath = Environment.GetEnvironmentVariable("GOOGLE_CREDENTIALS_PATH"); // Укажите правильный путь
-    var spreadsheetId = Environment.GetEnvironmentVariable("GOOGLE_SHEET_ID"); // Укажите правильный ID таблицы
+    var credentialPath = "gorbushkarequest-56264ab50e01.json"; // Укажите правильный путь
+    var spreadsheetId = "1B25AYhgBmm3J-98peLHxjeOBeaVsbPfJcMoySV3EHAc"; // Укажите правильный ID таблицы
     var spreedsheetcategoriesId = "1UovBQNNaA5sEKu9AhyZTqjJq9ORd_AlwKgK5x4525pI";
     var userApplicationService = provider.GetRequiredService<UserApplicationService>();
     var userAcceptService = provider.GetRequiredService<UserAcceptService>();
@@ -42,7 +42,7 @@ builder.Services.AddScoped<TelegramBotService>(serviceProvider =>
 
 builder.Services.AddSingleton<TelegramBotClient>(provider =>
 {
-    var botToken = Environment.GetEnvironmentVariable("BOT_TOKEN"); // Замените на ваш реальный токен бота
+    var botToken = "8072900802:AAFoYeX1Ikv1_vwbGDJYfq_g64Kcaye5lGY"; // Замените на ваш реальный токен бота
     return new TelegramBotClient(botToken);
 });
 

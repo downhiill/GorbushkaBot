@@ -28,7 +28,6 @@ namespace GorbushkaBot.Controllers
         private readonly UserApplicationService _userApplicationService;
         private readonly UserAcceptService _userAcceptService;
         private readonly ApplicationDbContext _dbContext;
-        private static readonly string bottoken = Environment.GetEnvironmentVariable("BOT_TOKEN");
 
         public StepManager(TelegramBotClient botClient, GoogleSheetsService sheetsService,GoogleDriveService driveService, UserApplicationService userApplicationService, ApplicationDbContext dbContext, UserAcceptService userAcceptService)
         {
@@ -152,9 +151,8 @@ namespace GorbushkaBot.Controllers
                 await DeleteAndSendNextStep(botClient, chatId, messageId, "role", "Выберите свою роль:", false,
                     new InlineKeyboardMarkup(new[]
                     {
-                        new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
-                        new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
-                        new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
+                        new[] { InlineKeyboardButton.WithCallbackData("Оптовик", "seller") },
+                        new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") }
                     }));
             }
             else if (step == "citizenship")
@@ -417,15 +415,14 @@ namespace GorbushkaBot.Controllers
                     await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "role", "Выберите свою роль:", false,
                         new InlineKeyboardMarkup(new[]
                         {
-                            new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Оптовик", "seller") },
                             new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
-                            new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
                         }));
                 break;
 
                 case "seller":
 
-                    SaveUserData(chatId, "role", "Продавец");
+                    SaveUserData(chatId, "role", "Оптовик");
 
                     await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "citizenship", "Уточните ваше гражданство:", false,
                        new InlineKeyboardMarkup(new[]
@@ -444,17 +441,6 @@ namespace GorbushkaBot.Controllers
                             new[] { InlineKeyboardButton.WithCallbackData("РФ", "passport_rus") },
                             new[] { InlineKeyboardButton.WithCallbackData("Другое", "passport_other") }
                        }));
-                    break;
-                case "both":
-                    
-                    SaveUserData(chatId, "role", "Продавец и Покупатель"); 
-
-                    await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "citizenship", "Уточните ваше гражданство:", false,
-                        new InlineKeyboardMarkup(new[]
-                        {
-                            new[] { InlineKeyboardButton.WithCallbackData("РФ", "passport_rus") },
-                            new[] { InlineKeyboardButton.WithCallbackData("Другое", "passport_other") }
-                        }));
                     break;
 
                 case "passport_rus":
@@ -595,9 +581,8 @@ namespace GorbushkaBot.Controllers
                                 { "role", ("Выберите свою роль:", false,
                                     new InlineKeyboardMarkup(new[]
                                     {
-                                        new[] { InlineKeyboardButton.WithCallbackData("Продавец", "seller") },
-                                        new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") },
-                                        new[] { InlineKeyboardButton.WithCallbackData("Продавец и Покупатель", "both") }
+                                        new[] { InlineKeyboardButton.WithCallbackData("Оптовик", "seller") },
+                                        new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") }
                                     })) },
                                 { "citizenship", ("Уточните ваше гражданство:", false,
                                     new InlineKeyboardMarkup(new[]
