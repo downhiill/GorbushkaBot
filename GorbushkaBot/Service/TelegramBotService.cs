@@ -64,24 +64,18 @@ public class TelegramBotService
         {
             if (adminIds.Contains(chatId))
             {
-                // Создаем обычную клавиатуру (ReplyKeyboardMarkup) с кнопками для администраторов
-                var menuKeyboard = new ReplyKeyboardMarkup(new[] {
-                new KeyboardButton[] { "Найти заявку", "Заявки", "Обновить категории" }
-            })
-                {
-                    ResizeKeyboard = true, // Опционально, чтобы кнопки были адаптивными
-                    OneTimeKeyboard = true // Опционально, чтобы клавиатура скрывалась после нажатия
-                };
+                await SetCommandsForAdmin(botClient, chatId); // Устанавливаем команды только для админов
 
-                // Отправляем сообщение с клавиатурой для администраторов
+                var menuKeyboard = GetAdminKeyboard();
                 await botClient.SendTextMessageAsync(chatId, "Меню администратора", replyMarkup: menuKeyboard);
             }
             else
             {
-                // Отправляем сообщение для обычного пользователя без клавиатуры
-                var inlineKeyboard = keyboardManager.CreateInlineKeyboard(new[] {
+                await botClient.DeleteMyCommandsAsync(); // Удаляем команды у обычных пользователей
+                var inlineKeyboard = keyboardManager.CreateInlineKeyboard(new[]
+                {
                 new[] { InlineKeyboardButton.WithCallbackData("Перейти к верификации", "verify") }
-            });
+                });
 
                 Message sentMessage = await botClient.SendTextMessageAsync(chatId, "Добро пожаловать в систему!", replyMarkup: inlineKeyboard);
                 stepManager.SaveStep(chatId, "start", sentMessage.MessageId);
@@ -172,6 +166,38 @@ public class TelegramBotService
             await stepManager.HandleCallbackQuery(botClient, chatId, callbackQuery);
         }
     }
+
+    private async Task SetCommandsForAdmin(ITelegramBotClient botClient, long userId)
+    {
+        if (adminIds.Contains(userId))
+        {
+            var commands = new[]
+            {
+            new BotCommand { Command = "find_application", Description = "Найти заявку" },
+            new BotCommand { Command = "applications", Description = "Список заявок" },
+            new BotCommand { Command = "update_categories", Description = "Обновить категории" }
+        };
+
+            await botClient.SetMyCommandsAsync(commands);
+        }
+        else
+        {
+            await botClient.DeleteMyCommandsAsync(); // Удаляем команды у обычных пользователей
+        }
+    }
+
+    private ReplyKeyboardMarkup GetAdminKeyboard()
+    {
+        return new ReplyKeyboardMarkup(new[]
+        {
+        new KeyboardButton[] { "Найти заявку", "Заявки", "Обновить категории" }
+        })
+        {
+            ResizeKeyboard = true,
+            OneTimeKeyboard = true
+        };
+    }
+
 
 }
 
