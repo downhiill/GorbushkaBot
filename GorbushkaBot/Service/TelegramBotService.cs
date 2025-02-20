@@ -169,22 +169,31 @@ public class TelegramBotService
 
     private async Task SetCommandsForAdmin(ITelegramBotClient botClient, long userId)
     {
-        if (adminIds.Contains(userId))
+        var userCommands = new[]
         {
-            var commands = new[]
-            {
-            new BotCommand { Command = "find_application", Description = "Найти заявку" },
-            new BotCommand { Command = "applications", Description = "Список заявок" },
-            new BotCommand { Command = "update_categories", Description = "Обновить категории" }
+        new BotCommand { Command = "/help", Description = "Помощь" },
+        new BotCommand { Command = "/info", Description = "Информация" }
         };
 
-            await botClient.SetMyCommandsAsync(commands);
+        if (adminIds.Contains(userId))
+        {
+            var adminCommands = new[]
+            {
+            new BotCommand { Command = "/find_application", Description = "Найти заявку" },
+            new BotCommand { Command = "/applications", Description = "Список заявок" },
+            new BotCommand { Command = "/update_categories", Description = "Обновить категории" }
+        };
+
+            // Устанавливаем команды для админа
+            await botClient.SetMyCommandsAsync(adminCommands, new BotCommandScopeChat { ChatId = userId });
         }
         else
         {
-            await botClient.DeleteMyCommandsAsync(); // Удаляем команды у обычных пользователей
+            // Удаляем админские команды у пользователя
+            await botClient.SetMyCommandsAsync(userCommands, new BotCommandScopeChat { ChatId = userId });
         }
     }
+
 
     private ReplyKeyboardMarkup GetAdminKeyboard()
     {
