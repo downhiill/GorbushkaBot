@@ -236,15 +236,6 @@ namespace GorbushkaBot.Controllers
                 // 5. Сохраняем данные в Google Sheets
                 await _googleSheetsService.AppendUserDataAsync(userData, folderUrl, applicantChatId);
 
-
-                // 7. Добавляем пользователя в чат
-                bool addedToChat = await _applicationService.AddUserToGroupWithRoleAsync(applicantChatId);
-                if (!addedToChat)
-                {
-                    await botClient.SendTextMessageAsync(chatId, "Ошибка при добавлении пользователя в чат.");
-                    return;
-                }
-
                 // 6. Удаляем заявку из таблицы UserApplications
                 await _applicationService.DeleteApplicationAsync(applicantChatId);
 
