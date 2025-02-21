@@ -14,7 +14,7 @@ namespace GorbushkaBot.Service
         private readonly SheetsService _service;
         private readonly string _spreadsheetId;
         public readonly string _spreedsheetcategoriesId;
-        private const string Range = "Заявки!A2:O";
+        private const string Range = "Заявки!A2:P";
         private readonly UserApplicationService _userApplicationService;
         private readonly UserAcceptService _userAcceptService;
 
@@ -55,6 +55,7 @@ namespace GorbushkaBot.Service
                     userData.GetValueOrDefault("pavilion_number", ""),
                     userData.GetValueOrDefault("rental_contract", ""),
                     userData["pavilion_photo"],
+                    userData.GetValueOrDefault("nomer_soiza", "Не указано"),
                     chatId,
                     telegramUsername ?? "Не указано" 
                 }}
@@ -80,7 +81,7 @@ namespace GorbushkaBot.Service
             return sheetNamesAndGids;
         }
 
-        public async Task AppendUserDataAsync(Dictionary<string, string> userData, string folderUrl, long chatId)
+        public async Task AppendUserDataAsync(Dictionary<string, string> userData, string folderUrl, long chatId, string telegramUsername = null)
         {
             var valueRange = new ValueRange
             {
@@ -100,11 +101,13 @@ namespace GorbushkaBot.Service
                     userData.GetValueOrDefault("pavilion_number", ""),
                     userData.GetValueOrDefault("rental_contract", ""),
                     userData["pavilion_photo"],
+                    userData.GetValueOrDefault("nomer_soiza", "Не указано"),
+                    telegramUsername ?? "Не указано",
                     chatId
                 }}
             };
 
-            var request = _service.Spreadsheets.Values.Append(valueRange, _spreadsheetId, "Пользователи!A2:O");
+            var request = _service.Spreadsheets.Values.Append(valueRange, _spreadsheetId, "Пользователи!A2:P");
             request.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
             await request.ExecuteAsync();
 

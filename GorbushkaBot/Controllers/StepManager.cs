@@ -10,6 +10,7 @@ using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
+using static System.Net.Mime.MediaTypeNames;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
@@ -315,72 +316,187 @@ namespace GorbushkaBot.Controllers
 
                 SaveUserPhoto(chatId, "pavilion_photo", message.Photo);
 
-                // Получаем сохраненные данные пользователя
-                var userData = UserData[chatId];
-                // Получаем username
-                string telegramUsername = message.From.Username;
-
-
-                string fio = userData["fio"];
-                string passportNumber = userData["passport_number"];
-                string passportIssueDate = userData["passport_issue_date"];
-                string passpirtIssueDateEnd = userData.ContainsKey("passport_issue_date_end") ? userData["passport_issue_date_end"] : "Не указано";
-                string phoneNumber = userData["phone_number"];
-                string role = userData["role"];
-                string pavilionNumber = userData["pavilion_number"];
-                string rentalContract = userData["rental_contract"]; 
-                string facePhoto = userData["face_photo"];
-                string passportPhotos = userData["passport_photo"];
-                string propiskaPhotos = userData.ContainsKey("propiska_photo") ? userData["propiska_photo"] : null;
-                string pavilionPhotos = userData["pavilion_photo"];
-                string registration_address = userData.ContainsKey("registration_address")? userData["registration_address"] : "Не указано";
-
-                string completedMessage = $"✅ <b>Заявка заполнена!</b>\n\n" +
-                    $"👤 <b>ФИО:</b> {fio}\n" +
-                    $"📄 <b>Паспорт:</b> {passportNumber}, {passportIssueDate}, {passpirtIssueDateEnd} \n" +
-                    $"🏢 <b>Адрес прописки:</b> {registration_address}\n" +
-                    $"📞 <b>Телефон (контактный):</b> {phoneNumber}\n" +
-                    $"💼 <b>Роль:</b> {role}\n" +
-                    $"🏢 <b>Павильон:</b> {pavilionNumber}, {rentalContract}\n" +
-                    $"🖼 <b>Фото:</b> ниже ⬇️";
-
-                // Отправляем текст с данными
-                await botClient.SendTextMessageAsync(
+                // Переходим к шагу "nomer_soiza"
+                await DeleteAndSendNextStep(
+                    botClient,
                     chatId,
-                    completedMessage,
-                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+                    messageId,
+                    "nomer_soiza",
+                    "Вы с союза?",
+                    false,
+                    new InlineKeyboardMarkup(new[]
+                    {
+                        new[] { InlineKeyboardButton.WithCallbackData("Да", "soiuz_yes") },
+                        new[] { InlineKeyboardButton.WithCallbackData("Нет", "soiuz_no") }
+                    })
                 );
+            }
+            else if (step == "nomer_soiza")
+            {
 
-                // Собираем список фотографий
-                var mediaList = new List<IAlbumInputMedia>();
-
-                if (!string.IsNullOrEmpty(passportPhotos))
-                    mediaList.Add(new InputMediaPhoto(new InputFileId(passportPhotos)));
-
-                if (!string.IsNullOrEmpty(propiskaPhotos))
-                    mediaList.Add(new InputMediaPhoto(new InputFileId(propiskaPhotos)));
-
-                if (!string.IsNullOrEmpty(pavilionPhotos))
-                    mediaList.Add(new InputMediaPhoto(new InputFileId(pavilionPhotos)));
-
-                if (!string.IsNullOrEmpty(facePhoto))
-                    mediaList.Add(new InputMediaPhoto(new InputFileId(facePhoto)));
-
-                // Отправляем все фото одним сообщением, если есть хотя бы одно фото
-                if (mediaList.Count > 0)
+                if (message.Text == null)
                 {
-                    await botClient.SendMediaGroupAsync(chatId, mediaList);
-
-                    // Отправляем кнопки
-                    await DeleteAndSendNextStep(botClient, chatId, messageId, "completed", "Выберите действие:", false,
-                        new InlineKeyboardMarkup(new[]
-                        {
-                            new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
-                            new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
-                        }));
+                    var errorMsg = await botClient.SendTextMessageAsync(
+                        chatId,
+                        "Ошибка: Пожалуйста, выберите вариант из предложенных."
+                    );
+                    LastErrorMessages[chatId] = (errorMsg.MessageId, message.MessageId);
+                    return;
                 }
 
+                if (message.Text == "soiuz_yes")
+                {
 
+                    await DeleteAndSendNextStep(
+                        botClient,
+                        chatId,
+                        messageId,
+                        "soiuz_number",
+                        "Введите номер союза:",
+                        true
+                    );
+                }
+                else if (message.Text == "soiuz_no")
+                {
+
+                    var userData = UserData[chatId];
+
+                    string telegramUsername = message.From.Username;
+
+
+                    string fio = userData["fio"];
+                    string passportNumber = userData["passport_number"];
+                    string passportIssueDate = userData["passport_issue_date"];
+                    string passpirtIssueDateEnd = userData.ContainsKey("passport_issue_date_end") ? userData["passport_issue_date_end"] : "Не указано";
+                    string phoneNumber = userData["phone_number"];
+                    string role = userData["role"];
+                    string pavilionNumber = userData["pavilion_number"];
+                    string rentalContract = userData["rental_contract"];
+                    string facePhoto = userData["face_photo"];
+                    string passportPhotos = userData["passport_photo"];
+                    string propiskaPhotos = userData.ContainsKey("propiska_photo") ? userData["propiska_photo"] : null;
+                    string pavilionPhotos = userData["pavilion_photo"];
+                    string nomerSoiza = userData.ContainsKey("nomer_soiza") ? userData["nomer_soiza"] : "Не указано";
+                    string registration_address = userData.ContainsKey("registration_address") ? userData["registration_address"] : "Не указано";
+
+                    string completedMessage = $"✅ <b>Заявка заполнена!</b>\n\n" +
+                        $"👤 <b>ФИО:</b> {fio}\n" +
+                        $"📄 <b>Паспорт:</b> {passportNumber}, {passportIssueDate}, {passpirtIssueDateEnd} \n" +
+                        $"🏢 <b>Адрес прописки:</b> {registration_address}\n" +
+                        $"📞 <b>Телефон (контактный):</b> {phoneNumber}\n" +
+                        $"💼 <b>Роль:</b> {role}\n" +
+                        $"🏢 <b>Павильон:</b> {pavilionNumber}, {rentalContract}\n" +
+                        $"🏛 Номер союза: {nomerSoiza}\n" +
+                        $"🖼 <b>Фото:</b> ниже ⬇️";
+
+                    // Отправляем текст с данными
+                    await botClient.SendTextMessageAsync(
+                        chatId,
+                        completedMessage,
+                        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+                    );
+
+                    // Собираем список фотографий
+                    var mediaList = new List<IAlbumInputMedia>();
+
+                    if (!string.IsNullOrEmpty(passportPhotos))
+                        mediaList.Add(new InputMediaPhoto(new InputFileId(passportPhotos)));
+
+                    if (!string.IsNullOrEmpty(propiskaPhotos))
+                        mediaList.Add(new InputMediaPhoto(new InputFileId(propiskaPhotos)));
+
+                    if (!string.IsNullOrEmpty(pavilionPhotos))
+                        mediaList.Add(new InputMediaPhoto(new InputFileId(pavilionPhotos)));
+
+                    if (!string.IsNullOrEmpty(facePhoto))
+                        mediaList.Add(new InputMediaPhoto(new InputFileId(facePhoto)));
+
+                    // Отправляем все фото одним сообщением, если есть хотя бы одно фото
+                    if (mediaList.Count > 0)
+                    {
+                        await botClient.SendMediaGroupAsync(chatId, mediaList);
+
+                        // Отправляем кнопки
+                        await DeleteAndSendNextStep(botClient, chatId, messageId, "completed", "Выберите действие:", false,
+                            new InlineKeyboardMarkup(new[]
+                            {
+                            new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
+                            }));
+                    }
+                }
+                else if (step == "soiuz_number")
+                {
+                    // Сохраняем номер союза
+                    SaveUserData(chatId, "soiuz_number", message.Text);
+
+                    // Получаем сохраненные данные пользователя
+                    var userData = UserData[chatId];
+                    // Получаем username
+                    string telegramUsername = message.From.Username;
+
+
+                    string fio = userData["fio"];
+                    string passportNumber = userData["passport_number"];
+                    string passportIssueDate = userData["passport_issue_date"];
+                    string passpirtIssueDateEnd = userData.ContainsKey("passport_issue_date_end") ? userData["passport_issue_date_end"] : "Не указано";
+                    string phoneNumber = userData["phone_number"];
+                    string role = userData["role"];
+                    string pavilionNumber = userData["pavilion_number"];
+                    string rentalContract = userData["rental_contract"];
+                    string facePhoto = userData["face_photo"];
+                    string passportPhotos = userData["passport_photo"];
+                    string propiskaPhotos = userData.ContainsKey("propiska_photo") ? userData["propiska_photo"] : null;
+                    string pavilionPhotos = userData["pavilion_photo"];
+                    string nomerSoiza = userData.ContainsKey("nomer_soiza") ? userData["nomer_soiza"] : "Не указано";
+                    string registration_address = userData.ContainsKey("registration_address") ? userData["registration_address"] : "Не указано";
+
+                    string completedMessage = $"✅ <b>Заявка заполнена!</b>\n\n" +
+                        $"👤 <b>ФИО:</b> {fio}\n" +
+                        $"📄 <b>Паспорт:</b> {passportNumber}, {passportIssueDate}, {passpirtIssueDateEnd} \n" +
+                        $"🏢 <b>Адрес прописки:</b> {registration_address}\n" +
+                        $"📞 <b>Телефон (контактный):</b> {phoneNumber}\n" +
+                        $"💼 <b>Роль:</b> {role}\n" +
+                        $"🏢 <b>Павильон:</b> {pavilionNumber}, {rentalContract}\n" +
+                        $"🏛 Номер союза: {nomerSoiza}\n" +
+                        $"🖼 <b>Фото:</b> ниже ⬇️";
+
+                    // Отправляем текст с данными
+                    await botClient.SendTextMessageAsync(
+                        chatId,
+                        completedMessage,
+                        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+                    );
+
+                    // Собираем список фотографий
+                    var mediaList = new List<IAlbumInputMedia>();
+
+                    if (!string.IsNullOrEmpty(passportPhotos))
+                        mediaList.Add(new InputMediaPhoto(new InputFileId(passportPhotos)));
+
+                    if (!string.IsNullOrEmpty(propiskaPhotos))
+                        mediaList.Add(new InputMediaPhoto(new InputFileId(propiskaPhotos)));
+
+                    if (!string.IsNullOrEmpty(pavilionPhotos))
+                        mediaList.Add(new InputMediaPhoto(new InputFileId(pavilionPhotos)));
+
+                    if (!string.IsNullOrEmpty(facePhoto))
+                        mediaList.Add(new InputMediaPhoto(new InputFileId(facePhoto)));
+
+                    // Отправляем все фото одним сообщением, если есть хотя бы одно фото
+                    if (mediaList.Count > 0)
+                    {
+                        await botClient.SendMediaGroupAsync(chatId, mediaList);
+
+                        // Отправляем кнопки
+                        await DeleteAndSendNextStep(botClient, chatId, messageId, "completed", "Выберите действие:", false,
+                            new InlineKeyboardMarkup(new[]
+                            {
+                            new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
+                            }));
+                    }
+                }
             }
             
 
@@ -423,6 +539,7 @@ namespace GorbushkaBot.Controllers
                         }));
                 break;
 
+
                 case "seller":
 
                     SaveUserData(chatId, "role", "Оптовик");
@@ -446,12 +563,39 @@ namespace GorbushkaBot.Controllers
                        }));
                     break;
 
+
                 case "passport_rus":
                     await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "passport_rus", "📷 Отправьте фото первой страницы паспорта:", true);
                     break;
-
                 case "passport_other":
                     await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "passport_other", "📷 Отправьте фото первой страницы паспорта:", true);
+                    break;
+
+
+                case "soiuz_yes":
+                    await DeleteAndSendNextStep(
+                        botClient,
+                        chatId,
+                        callbackQuery.Message.MessageId,
+                        "soiuz_number",
+                        "Введите номер союза:",
+                        true
+                    );
+                    break;
+                case "soiuz_no":
+                    await DeleteAndSendNextStep(
+                        botClient,
+                        chatId,
+                        callbackQuery.Message.MessageId,
+                        "completed",
+                        "Заявка заполнена.\n\nВыберите действие:",
+                        false,
+                        new InlineKeyboardMarkup(new[]
+                        {
+                            new[] { InlineKeyboardButton.WithCallbackData("Заполнить заново", "verify") },
+                            new[] { InlineKeyboardButton.WithCallbackData("Отправить", "submit") }
+                        })
+                    );
                     break;
 
 
@@ -470,7 +614,7 @@ namespace GorbushkaBot.Controllers
                         })
                     );
                 break;
-
+    
 
                 case "submit":
                     if (UserData.ContainsKey(chatId))
@@ -551,6 +695,7 @@ namespace GorbushkaBot.Controllers
                             string passportphotos = userData.ContainsKey("passport_photo") ? userData["passport_photo"] : "Не указано";
                             string propiskaphoto = userData.ContainsKey("propiska_photo") ? userData["propiska_photo"] : "Не указано";
                             string pavilionphotos = userData.ContainsKey("pavilion_photo") ? userData["pavilion_photo"] : "Не указано";
+                            string nomerSoiza = userData.ContainsKey("nomer_soiza") ? userData["nomer_soiza"] : "Не указано";
                             string registration_address = userData.ContainsKey("registration_address") ? userData["registration_address"] : "Не указано";
 
 
@@ -607,7 +752,14 @@ namespace GorbushkaBot.Controllers
                                 { "registration_address", ("Введите свой адрес прописки:", true, null) },
                                 { "pavilion_number", ("Введите номер вашего павильона:", true, null) },
                                 { "rental_contract", ("Введите номер вашего договора аренды:", true, null) },
-                                { "pavilion_photo", ("📷 Отправьте фото вашего договора:", false, null) }
+                                { "pavilion_photo", ("📷 Отправьте фото вашего договора:", false, null) },
+                                { "nomer_soiza", ("Вы с союза?",false,
+                                    new InlineKeyboardMarkup(new[]
+                                    {
+                                        new[] { InlineKeyboardButton.WithCallbackData("Да", "soiuz_yes") },
+                                        new[] { InlineKeyboardButton.WithCallbackData("Нет", "soiuz_no") }
+                                    })) },
+                                { "soiuz_number", ("Введите номер союза:", true, null) }
                             };
 
                             if (stepData.TryGetValue(previousStep, out var stepInfo))
@@ -641,7 +793,9 @@ namespace GorbushkaBot.Controllers
                 { "registration_address", "passport_issue_date_rus" },
                 { "pavilion_number", "passport_issue_date_end" },
                 { "rental_contract", "pavilion_number" },
-                { "pavilion_photo", "rental_contract" }
+                { "pavilion_photo", "rental_contract" },
+                { "nomer_soiza", "pavilion_photo" }, 
+                { "soiuz_number", "nomer_soiza" }   
             };
 
             return stepOrder.TryGetValue(currentStep, out var previousStep) ? previousStep : null;
