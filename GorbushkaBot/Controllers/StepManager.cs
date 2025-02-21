@@ -360,16 +360,16 @@ namespace GorbushkaBot.Controllers
                 {
                     await CompleteApplication(botClient, chatId, message.MessageId);
                 }
-                else if (step == "soiuz_number")
-                {
-                    // Сохраняем номер союза
-                    SaveUserData(chatId, "soiuz_number", message.Text);
-
-                    // Переходим к завершению заявки
-                    await CompleteApplication(botClient, chatId, message.MessageId);
-                }
             }
-            
+            else if (step == "soiuz_number")
+            {
+                // Сохраняем номер союза
+                SaveUserData(chatId, "soiuz_number", message.Text);
+
+                // Переходим к завершению заявки
+                await CompleteApplication(botClient, chatId, message.MessageId);
+            }
+
 
         }
 
