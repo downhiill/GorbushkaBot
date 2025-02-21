@@ -789,5 +789,10 @@ namespace GorbushkaBot.Controllers
             SaveStep(chatId, nextStep, newMessage.MessageId);
         }
 
+        public async Task<bool> UserHasApplication(long chatId)
+        {
+            return await _dbContext.UserApplications.AnyAsync(u => u.ChatId == chatId);
+        }
+
     }
 }

@@ -1,5 +1,6 @@
 ﻿using GorbushkaBot.AppDbContext;
 using GorbushkaBot.Model;
+using Microsoft.EntityFrameworkCore;
 
 namespace GorbushkaBot.Service
 {
@@ -37,6 +38,11 @@ namespace GorbushkaBot.Service
 
             _dbContext.UserAccepts.Add(userAccept);
             await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task<bool> UserHasApplication(long chatId)
+        {
+            return await _dbContext.UserAccepts.AnyAsync(u => u.ChatId == chatId);
         }
     }
 }

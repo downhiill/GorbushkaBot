@@ -25,6 +25,7 @@ public class TelegramBotService
     private readonly StepManagerAdmin stepManagerAdmin;
 
 
+
     long[] adminIds = { 8018159474, 448145168, 388009185, 7069858455 }; // Список ID администраторов
 
     public TelegramBotService(UserApplicationService userApplicationService, ApplicationService applicationService, UserAcceptService userAcceptService, ApplicationDbContext applicationDbContext)
@@ -69,12 +70,18 @@ public class TelegramBotService
                 var menuKeyboard = GetAdminKeyboard();
                 await botClient.SendTextMessageAsync(chatId, "Меню администратора", replyMarkup: menuKeyboard);
             }
+            bool applicationExists = await Task.WhenAny(userApplicationService.UserHasApplication(chatId), userAcceptService.UserHasApplication(chatId)) == Task.CompletedTask;
+
+            if (applicationExists)
+            {
+                await botClient.SendTextMessageAsync(chatId, "Вы уже подали заявку. Ожидайте рассмотрения.");
+            }
             else
             {
                 await botClient.DeleteMyCommandsAsync(); // Удаляем команды у обычных пользователей
                 var inlineKeyboard = keyboardManager.CreateInlineKeyboard(new[]
                 {
-                new[] { InlineKeyboardButton.WithCallbackData("Перейти к верификации", "verify") }
+                    new[] { InlineKeyboardButton.WithCallbackData("Перейти к верификации", "verify") }
                 });
 
                 Message sentMessage = await botClient.SendTextMessageAsync(chatId, "Добро пожаловать в систему!", replyMarkup: inlineKeyboard);
@@ -206,6 +213,7 @@ public class TelegramBotService
             OneTimeKeyboard = true
         };
     }
+    
 
 
 }
