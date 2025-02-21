@@ -30,7 +30,7 @@ namespace GorbushkaBot.Service
                 PavilionNumber = userData.GetValueOrDefault("pavilion_number", ""),
                 RentalContract = userData.GetValueOrDefault("rental_contract", ""),
                 PavilionPhotos = userData["pavilion_photo"],
-                NomerSoiza = userData.GetValueOrDefault("nomer_soiza", ""),
+                NomerSoiza = userData.GetValueOrDefault("soiuz_number", ""),
                 FolderUrl = folderUrl,
                 UserNameTg = telegramUsername
             };

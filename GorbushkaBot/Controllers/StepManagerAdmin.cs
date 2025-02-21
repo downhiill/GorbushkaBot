@@ -233,6 +233,7 @@ namespace GorbushkaBot.Controllers
                     { "pavilion_number", application.PavilionNumber ?? "" },
                     { "rental_contract", application.RentalContract ?? "" },
                     { "pavilion_photo", application.PavilionPhotos ?? "" },
+                    { "soiuz_number", application.NomerSoiza ?? "" }
                 };
 
                 // 5. Сохраняем данные в Google Sheets

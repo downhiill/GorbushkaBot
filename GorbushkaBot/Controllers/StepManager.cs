@@ -363,7 +363,7 @@ namespace GorbushkaBot.Controllers
                 else if (step == "soiuz_number")
                 {
                     // Сохраняем номер союза
-                    SaveUserData(chatId, "nomer_soiza", message.Text);
+                    SaveUserData(chatId, "soiuz_number", message.Text);
 
                     // Переходим к завершению заявки
                     await CompleteApplication(botClient, chatId, message.MessageId);
@@ -599,13 +599,15 @@ namespace GorbushkaBot.Controllers
                                     {
                                         new[] { InlineKeyboardButton.WithCallbackData("Оптовик", "seller") },
                                         new[] { InlineKeyboardButton.WithCallbackData("Покупатель", "buyer") }
-                                    })) },
+                                    })) 
+                                },
                                 { "citizenship", ("Уточните ваше гражданство:", false,
                                     new InlineKeyboardMarkup(new[]
                                     {
                                         new[] { InlineKeyboardButton.WithCallbackData("РФ", "passport_rus") },
                                         new[] { InlineKeyboardButton.WithCallbackData("Другое", "passport_other") }
-                                    })) },
+                                    })) 
+                                },
                                 { "passport_rus", ("📷 Отправьте фото первой страницы паспорта:", true, null) },
                                 { "propiska_photo", ("📷 Отправьте фото страницы с пропиской:", true, null) },
                                 { "passport_other", ("📷 Отправьте фото первой страницы паспорта:", true, null) },
@@ -623,8 +625,8 @@ namespace GorbushkaBot.Controllers
                                     {
                                         new[] { InlineKeyboardButton.WithCallbackData("Да", "soiuz_yes") },
                                         new[] { InlineKeyboardButton.WithCallbackData("Нет", "soiuz_no") }
-                                    })) },
-                                { "soiuz_number", ("Введите номер союза:", true, null) }
+                                    })) 
+                                },
                             };
 
                             if (stepData.TryGetValue(previousStep, out var stepInfo))

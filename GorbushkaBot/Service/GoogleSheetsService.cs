@@ -55,7 +55,7 @@ namespace GorbushkaBot.Service
                     userData.GetValueOrDefault("pavilion_number", ""),
                     userData.GetValueOrDefault("rental_contract", ""),
                     userData["pavilion_photo"],
-                    userData.GetValueOrDefault("nomer_soiza", "Не указано"),
+                    userData.GetValueOrDefault("soiuz_number", "Не указано"),
                     chatId,
                     telegramUsername ?? "Не указано" 
                 }}
@@ -101,7 +101,7 @@ namespace GorbushkaBot.Service
                     userData.GetValueOrDefault("pavilion_number", ""),
                     userData.GetValueOrDefault("rental_contract", ""),
                     userData["pavilion_photo"],
-                    userData.GetValueOrDefault("nomer_soiza", "Не указано"),
+                    userData.GetValueOrDefault("soiuz_number", "Не указано"),
                     telegramUsername ?? "Не указано",
                     chatId
                 }}
