@@ -454,6 +454,13 @@ namespace GorbushkaBot.Controllers
                         true
                     );
                     break;
+                case "soiuz_number":
+                    // Сохраняем номер союза
+                    SaveUserData(chatId, "soiuz_number", callbackQuery.Message.Text);
+
+                    // Переходим к завершению заявки
+                    await CompleteApplication(botClient, chatId, callbackQuery.Message.MessageId);
+                    break;
 
                 case "soiuz_no":
                     // Если пользователь выбрал "Нет", сохраняем "Не указано" для номера союза
