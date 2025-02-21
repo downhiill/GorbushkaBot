@@ -74,7 +74,7 @@ public class TelegramBotService
 
             if (applicationExists)
             {
-                await botClient.SendTextMessageAsync(chatId, "Вы уже подали заявку. Ожидайте рассмотрения.");
+                await botClient.SendTextMessageAsync(chatId, "Вы уже подали заявку. Ожидайте рассмотрения или добавления в чат.");
             }
             else
             {
