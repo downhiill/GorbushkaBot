@@ -19,7 +19,7 @@ namespace GorbushkaBot.Service
         private readonly UserAcceptService _userAcceptService;
         private readonly ApplicationService _applicationService;
 
-        public GoogleSheetsService(string credentialPath, string spreadsheetId,string spreedsheetcategoriesId, UserApplicationService userApplicationService, UserAcceptService userAcceptService, ApplicationService applicationService)
+        public GoogleSheetsService(string credentialPath, string spreadsheetId,string spreedsheetcategoriesId, UserApplicationService userApplicationService, UserAcceptService userAcceptService)
         {
             var credential = GoogleCredential.FromFile(credentialPath)
                 .CreateScoped(SheetsService.Scope.Spreadsheets);
@@ -34,7 +34,6 @@ namespace GorbushkaBot.Service
             _spreedsheetcategoriesId = spreedsheetcategoriesId;
             _userApplicationService = userApplicationService; 
             _userAcceptService = userAcceptService;
-            _applicationService = applicationService;
         }
 
         public async Task AppendDataAsync(Dictionary<string, string> userData, string folderUrl, long chatId, string telegramUsername = null)
