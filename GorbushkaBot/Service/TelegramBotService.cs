@@ -70,12 +70,6 @@ public class TelegramBotService
                 var menuKeyboard = GetAdminKeyboard();
                 await botClient.SendTextMessageAsync(chatId, "Меню администратора", replyMarkup: menuKeyboard);
             }
-            bool applicationExists = await Task.WhenAny(userApplicationService.UserHasApplication(chatId), userAcceptService.UserHasApplication(chatId)) == Task.CompletedTask;
-
-            if (applicationExists)
-            {
-                await botClient.SendTextMessageAsync(chatId, "Вы уже подали заявку. Ожидайте рассмотрения или добавления в чат.");
-            }
             else
             {
                 await botClient.DeleteMyCommandsAsync(); // Удаляем команды у обычных пользователей
