@@ -148,6 +148,24 @@ public class TelegramBotService
             };
             await stepManagerAdmin.HandleCallbackQuery(botClient, chatId, callbackQuery);
         }
+        else if (message.Text == "/black_list" && adminIds.Contains(chatId))
+        {
+            var callbackQuery = new CallbackQuery
+            {
+                Data = "black_list",
+                Message = message
+            };
+            await stepManagerAdmin.HandleCallbackQuery(botClient, chatId, callbackQuery);
+        }
+        else if (message.Text == "Пройтись по блэк-листу" && adminIds.Contains(chatId))
+        {
+            var callbackQuery = new CallbackQuery
+            {
+                Data = "black_list",
+                Message = message
+            };
+            await stepManagerAdmin.HandleCallbackQuery(botClient, chatId, callbackQuery);
+        }
         else if (adminIds.Contains(chatId))
         {
             await stepManagerAdmin.HandleMessage(botClient, chatId, message);
@@ -178,18 +196,19 @@ public class TelegramBotService
     {
         var userCommands = new[]
         {
-        new BotCommand { Command = "/help", Description = "Помощь" },
-        new BotCommand { Command = "/info", Description = "Информация" }
+            new BotCommand { Command = "/help", Description = "Помощь" },
+            new BotCommand { Command = "/info", Description = "Информация" }
         };
 
         if (adminIds.Contains(userId))
         {
             var adminCommands = new[]
             {
-            new BotCommand { Command = "/find_application", Description = "Найти заявку" },
-            new BotCommand { Command = "/applications", Description = "Список заявок" },
-            new BotCommand { Command = "/update_categories", Description = "Обновить категории" }
-        };
+                new BotCommand { Command = "/find_application", Description = "Найти заявку" },
+                new BotCommand { Command = "/applications", Description = "Список заявок" },
+                new BotCommand { Command = "/update_categories", Description = "Обновить категории" },
+                new BotCommand { Command = "/black_list", Description ="Пройтись по блэк-листу"}
+            };
 
             // Устанавливаем команды для админа
             await botClient.SetMyCommandsAsync(adminCommands, new BotCommandScopeChat { ChatId = userId });
@@ -206,7 +225,7 @@ public class TelegramBotService
     {
         return new ReplyKeyboardMarkup(new[]
         {
-        new KeyboardButton[] { "Найти заявку", "Заявки", "Обновить категории" }
+            new KeyboardButton[] { "Найти заявку", "Заявки", "Обновить категории", "Пройтись по блэк-листу" }
         })
         {
             ResizeKeyboard = true,

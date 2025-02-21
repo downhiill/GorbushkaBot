@@ -270,6 +270,10 @@ namespace GorbushkaBot.Controllers
                     replyMarkup: keyboard
                 );
             }
+            else if (data == "black_list")
+            {
+
+            }
 
 
         }

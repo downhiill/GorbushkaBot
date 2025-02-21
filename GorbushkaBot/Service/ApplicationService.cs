@@ -198,6 +198,78 @@ namespace GorbushkaBot.Service
             return (formattedApplications.ToString(), new InlineKeyboardMarkup(inlineKeyboardButtons));
         }
 
+        public async Task<bool> AddUserToBlacklistAsync(long chatId)
+        {
+            try
+            {
+                // Проверяем, есть ли пользователь уже в черном списке
+                var existingBlacklistEntry = await _dbContext.BlacklistEntries
+                    .FirstOrDefaultAsync(b => b.ChatId == chatId);
+
+                if (existingBlacklistEntry != null)
+                {
+                    return false; // Пользователь уже в черном списке
+                }
+
+                // Добавляем пользователя в черный список
+                _dbContext.BlacklistEntries.Add(new BlacklistEntry
+                {
+                    ChatId = chatId,
+                    CreatedAt = DateTime.UtcNow
+                });
+
+                await _dbContext.SaveChangesAsync();
+
+                // Блокируем пользователя в чате
+                await _botClient.RestrictChatMemberAsync(
+                    _groupChatId,
+                    chatId,
+                    new ChatPermissions { CanSendMessages = false}
+                );
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Логирование ошибки
+                return false;
+            }
+        }
+
+        public async Task<bool> RemoveUserFromBlacklistAsync(long chatId)
+        {
+            try
+            {
+                // Находим запись пользователя в черном списке
+                var blacklistEntry = await _dbContext.BlacklistEntries
+                    .FirstOrDefaultAsync(b => b.ChatId == chatId);
+
+                if (blacklistEntry == null)
+                {
+                    return false; // Пользователь не в черном списке
+                }
+
+                // Удаляем пользователя из черного списка
+                _dbContext.BlacklistEntries.Remove(blacklistEntry);
+                await _dbContext.SaveChangesAsync();
+
+                // Разблокируем пользователя
+                await _botClient.RestrictChatMemberAsync(
+                    _groupChatId,
+                    chatId,
+                    new ChatPermissions { CanSendMessages = true }
+                );
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Логирование ошибки
+                return false;
+            }
+        }
+
+
 
     }
 }

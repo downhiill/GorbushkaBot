@@ -17,8 +17,9 @@ namespace GorbushkaBot.Service
         private const string Range = "Заявки!A2:P";
         private readonly UserApplicationService _userApplicationService;
         private readonly UserAcceptService _userAcceptService;
+        private readonly ApplicationService _applicationService;
 
-        public GoogleSheetsService(string credentialPath, string spreadsheetId,string spreedsheetcategoriesId, UserApplicationService userApplicationService, UserAcceptService userAcceptService)
+        public GoogleSheetsService(string credentialPath, string spreadsheetId,string spreedsheetcategoriesId, UserApplicationService userApplicationService, UserAcceptService userAcceptService, ApplicationService applicationService)
         {
             var credential = GoogleCredential.FromFile(credentialPath)
                 .CreateScoped(SheetsService.Scope.Spreadsheets);
@@ -33,6 +34,7 @@ namespace GorbushkaBot.Service
             _spreedsheetcategoriesId = spreedsheetcategoriesId;
             _userApplicationService = userApplicationService; 
             _userAcceptService = userAcceptService;
+            _applicationService = applicationService;
         }
 
         public async Task AppendDataAsync(Dictionary<string, string> userData, string folderUrl, long chatId, string telegramUsername = null)
@@ -113,6 +115,68 @@ namespace GorbushkaBot.Service
 
             
         }
+
+        public async Task ProcessBlackListAsync()
+        {
+            // Получаем данные из листа "БлекЛист"
+            var range = "БлекЛист!A2:Z"; // Поменяйте на правильный диапазон
+            var request = _service.Spreadsheets.Values.Get(_spreadsheetId, range);
+            var response = await request.ExecuteAsync();
+
+            var rows = response.Values;
+
+            if (rows == null || rows.Count == 0)
+            {
+                Console.WriteLine("Черный список пуст.");
+                return;
+            }
+
+            foreach (var row in rows)
+            {
+                // Индекс столбца с Telegram ID (столбец P = 15)
+                var telegramId = row[16]?.ToString(); // Telegram ID
+                // Индекс столбца с флагом "Выкупил доступ" (столбец T = 19)
+                var hasPaidAccess = row[20] != null && (bool)row[21]; // Флаг "Выкупил доступ" (проверка значения чекбокса)
+
+                if (!hasPaidAccess)
+                {
+                    // Блокируем пользователя
+                    await BlockUserAsync(telegramId);
+                }
+                else
+                {
+                    // Убираем пользователя из черного списка
+                    await UnblockUserAsync(telegramId);
+                }
+            }
+        }
+
+        private async Task BlockUserAsync(string telegramId)
+        {
+            // Здесь вызовите Telegram API для блокировки пользователя
+            Console.WriteLine($"Блокируем пользователя {telegramId}");
+            // Преобразуем строку telegramId в long (если необходимо)
+            if (!long.TryParse(telegramId, out var chatId))
+            {
+                Console.WriteLine($"Неверный формат ID пользователя: {telegramId}");
+                return;
+            }
+             await _applicationService.AddUserToBlacklistAsync(chatId);
+        }
+
+        private async Task UnblockUserAsync(string telegramId)
+        {
+            // Здесь вызовите Telegram API для разблокировки пользователя
+            Console.WriteLine($"Разблокируем пользователя {telegramId}");
+            if (!long.TryParse(telegramId, out var chatId))
+            {
+                Console.WriteLine($"Неверный формат ID пользователя: {telegramId}");
+                return;
+            }
+            await _applicationService.RemoveUserFromBlacklistAsync(chatId);
+        }
+
+
 
     }
 }
