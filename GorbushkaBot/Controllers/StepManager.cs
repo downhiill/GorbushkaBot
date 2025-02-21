@@ -363,7 +363,7 @@ namespace GorbushkaBot.Controllers
                 else if (step == "soiuz_number")
                 {
                     // Сохраняем номер союза
-                    SaveUserData(chatId, "soiuz_number", message.Text);
+                    SaveUserData(chatId, "nomer_soiza", message.Text);
 
                     // Переходим к завершению заявки
                     await CompleteApplication(botClient, chatId, message.MessageId);
