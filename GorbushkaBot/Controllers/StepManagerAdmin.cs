@@ -272,7 +272,7 @@ namespace GorbushkaBot.Controllers
             }
             else if (data == "black_list")
             {
-
+                await _googleSheetsService.ProcessBlackListAsync();
             }
 
 
