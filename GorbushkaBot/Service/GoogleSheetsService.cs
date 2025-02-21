@@ -132,22 +132,33 @@ namespace GorbushkaBot.Service
 
             foreach (var row in rows)
             {
-                // Индекс столбца с Telegram ID (столбец P = 15)
-                var telegramId = row[16]?.ToString(); // Telegram ID
-                // Индекс столбца с флагом "Выкупил доступ" (столбец T = 19)
-                var hasPaidAccess = row[20] != null && (bool)row[21]; // Флаг "Выкупил доступ" (проверка значения чекбокса)
-
-                if (!hasPaidAccess)
+                // Проверяем, что строка имеет достаточно элементов
+                if (row.Count > 19)
                 {
-                    // Блокируем пользователя
-                    await BlockUserAsync(telegramId);
+                    // Индекс столбца с Telegram ID (столбец P = 15)
+                    var telegramId = row[15]?.ToString(); // Telegram ID
+
+                    // Индекс столбца с флагом "Выкупил доступ" (столбец T = 19)
+                    var hasPaidAccess = row[19] != null && (bool?)row[20] == true; // Флаг "Выкупил доступ" (проверка значения чекбокса)
+
+                    if (!hasPaidAccess)
+                    {
+                        // Блокируем пользователя
+                        await BlockUserAsync(telegramId);
+                    }
+                    else
+                    {
+                        // Убираем пользователя из черного списка
+                        await UnblockUserAsync(telegramId);
+                    }
                 }
                 else
                 {
-                    // Убираем пользователя из черного списка
-                    await UnblockUserAsync(telegramId);
+                    // Если строка имеет меньше элементов, чем нужно
+                    Console.WriteLine("Строка имеет недостаточно данных для обработки.");
                 }
             }
+
         }
 
         private async Task BlockUserAsync(string telegramId)
