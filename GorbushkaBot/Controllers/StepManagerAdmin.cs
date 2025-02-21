@@ -239,8 +239,12 @@ namespace GorbushkaBot.Controllers
                 // 5. Сохраняем данные в Google Sheets
                 await _googleSheetsService.AppendUserDataAsync(userData, folderUrl, applicantChatId);
 
+                await _userAcceptService.SaveUserAcceptAsync(userData, folderUrl, applicantChatId);
+
                 // 6. Удаляем заявку из таблицы UserApplications
                 await _applicationService.DeleteApplicationAsync(applicantChatId);
+
+
 
 
                 // 8. Отправляем сообщение пользователю о том, что его заявка одобрена
