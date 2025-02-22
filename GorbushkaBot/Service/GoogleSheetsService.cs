@@ -132,29 +132,34 @@ namespace GorbushkaBot.Service
 
             foreach (var row in rows)
             {
-                // Проверяем, что строка имеет нужное количество элементов
-                if (row.Count > 21)
-                {
-                    // Индекс столбца с Telegram ID (столбец P = 16)
-                    var telegramId = row[16]?.ToString(); // Telegram ID
-                                                          // Индекс столбца с флагом "Выкупил доступ" (столбец T = 20)
-                    var hasPaidAccess = row[20] != null && (bool?)row[21] == true; // Флаг "Выкупил доступ" (проверка значения чекбокса)
+                Console.WriteLine($"Обрабатываем строку: {string.Join(", ", row)}");
 
-                    if (!hasPaidAccess)
-                    {
-                        // Блокируем пользователя
-                        await BlockUserAsync(telegramId);
-                    }
-                    else
-                    {
-                        // Убираем пользователя из черного списка
-                        await UnblockUserAsync(telegramId);
-                    }
+                if (row.Count <= 20)
+                {
+                    Console.WriteLine("Ошибка: строка слишком короткая!");
+                    continue;
+                }
+
+                var telegramId = row[16]?.ToString();
+                bool hasPaidAccess = false;
+
+                if (bool.TryParse(row[20]?.ToString(), out bool result))
+                {
+                    hasPaidAccess = result;
                 }
                 else
                 {
-                    // Если строка имеет меньше элементов, чем нужно
-                    Console.WriteLine("Строка имеет недостаточно данных для обработки.");
+                    Console.WriteLine($"Ошибка при обработке флага доступа в строке: {string.Join(", ", row)}");
+                    continue;
+                }
+
+                if (!hasPaidAccess)
+                {
+                    await BlockUserAsync(telegramId);
+                }
+                else
+                {
+                    await UnblockUserAsync(telegramId);
                 }
             }
         }
