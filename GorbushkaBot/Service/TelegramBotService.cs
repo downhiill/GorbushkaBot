@@ -26,7 +26,7 @@ public class TelegramBotService
 
 
 
-    long[] adminIds = { 8018159474, 448145168, 388009185, 7069858455 }; // Список ID администраторов
+    long[] adminIds = { 8018159474, 448145168, 7069858455 }; // Список ID администраторов
 
     public TelegramBotService(UserApplicationService userApplicationService, ApplicationService applicationService, UserAcceptService userAcceptService, ApplicationDbContext applicationDbContext)
     {
