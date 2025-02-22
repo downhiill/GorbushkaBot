@@ -148,6 +148,9 @@ namespace GorbushkaBot.Service
                             continue;
                         }
 
+                        // Удаляем все нечисловые символы (если они есть)
+                        telegramId = new string(telegramId.Where(char.IsDigit).ToArray());
+
                         if (!long.TryParse(telegramId, out long chatId))
                         {
                             Console.WriteLine($"Ошибка: неверный формат Telegram ID ({telegramId})");
