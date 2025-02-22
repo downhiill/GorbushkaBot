@@ -98,10 +98,9 @@ namespace GorbushkaBot.Service
                 Console.WriteLine($"Пользователь {chatId} добавлен в черный список.");
 
                 // Блокируем пользователя в чате
-                await _botClient.RestrictChatMemberAsync(
+                await _botClient.BanChatMemberAsync(
                     _groupChatId,
-                    chatId,
-                    new ChatPermissions { CanSendMessages = false }
+                    chatId
                 );
 
                 Console.WriteLine($"Пользователь {chatId} заблокирован в группе.");
@@ -134,10 +133,9 @@ namespace GorbushkaBot.Service
                 Console.WriteLine($"Пользователь {chatId} удален из черного списка.");
 
                 // Разблокируем пользователя в чате
-                await _botClient.RestrictChatMemberAsync(
+                await _botClient.UnbanChatMemberAsync(
                     _groupChatId,
-                    chatId,
-                    new ChatPermissions { CanSendMessages = true }
+                    chatId
                 );
 
                 Console.WriteLine($"Пользователь {chatId} разблокирован в группе.");
