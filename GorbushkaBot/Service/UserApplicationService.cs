@@ -54,6 +54,8 @@ namespace GorbushkaBot.Service
         {
             try
             {
+                Console.WriteLine($"Попытка добавить пользователя {chatId} в черный список.");
+
                 // Проверяем, что _dbContext инициализирован
                 if (_dbContext == null)
                 {
@@ -81,6 +83,7 @@ namespace GorbushkaBot.Service
 
                 if (existingBlacklistEntry != null)
                 {
+                    Console.WriteLine($"Пользователь {chatId} уже в черном списке.");
                     return false; // Пользователь уже в черном списке
                 }
 
@@ -92,6 +95,7 @@ namespace GorbushkaBot.Service
                 });
 
                 await _dbContext.SaveChangesAsync();
+                Console.WriteLine($"Пользователь {chatId} добавлен в черный список.");
 
                 // Блокируем пользователя в чате
                 await _botClient.RestrictChatMemberAsync(
@@ -100,6 +104,7 @@ namespace GorbushkaBot.Service
                     new ChatPermissions { CanSendMessages = false }
                 );
 
+                Console.WriteLine($"Пользователь {chatId} заблокирован в группе.");
                 return true;
             }
             catch (Exception ex)
@@ -113,47 +118,29 @@ namespace GorbushkaBot.Service
         {
             try
             {
-                // Проверяем, что _dbContext инициализирован
-                if (_dbContext == null)
-                {
-                    Console.WriteLine("Ошибка: _dbContext не инициализирован.");
-                    return false;
-                }
+                Console.WriteLine($"Попытка удалить пользователя {chatId} из черного списка.");
 
-                // Проверяем, что _botClient инициализирован
-                if (_botClient == null)
-                {
-                    Console.WriteLine("Ошибка: _botClient не инициализирован.");
-                    return false;
-                }
-
-                // Проверяем, что _groupChatId задан
-                if (_groupChatId == 0)
-                {
-                    Console.WriteLine("Ошибка: _groupChatId не задан.");
-                    return false;
-                }
-
-                // Находим запись пользователя в черном списке
                 var blacklistEntry = await _dbContext.BlacklistEntries
                     .FirstOrDefaultAsync(b => b.ChatId == chatId);
 
                 if (blacklistEntry == null)
                 {
-                    return false; // Пользователь не в черном списке
+                    Console.WriteLine($"Пользователь {chatId} не найден в черном списке.");
+                    return false;
                 }
 
-                // Удаляем пользователя из черного списка
                 _dbContext.BlacklistEntries.Remove(blacklistEntry);
                 await _dbContext.SaveChangesAsync();
+                Console.WriteLine($"Пользователь {chatId} удален из черного списка.");
 
-                // Разблокируем пользователя
+                // Разблокируем пользователя в чате
                 await _botClient.RestrictChatMemberAsync(
                     _groupChatId,
                     chatId,
                     new ChatPermissions { CanSendMessages = true }
                 );
 
+                Console.WriteLine($"Пользователь {chatId} разблокирован в группе.");
                 return true;
             }
             catch (Exception ex)

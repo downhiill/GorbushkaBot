@@ -17,7 +17,6 @@ namespace GorbushkaBot.Service
         private const string Range = "Заявки!A2:P";
         private readonly UserApplicationService _userApplicationService;
         private readonly UserAcceptService _userAcceptService;
-        private readonly ApplicationService _applicationService;
 
         public GoogleSheetsService(string credentialPath, string spreadsheetId,string spreedsheetcategoriesId, UserApplicationService userApplicationService, UserAcceptService userAcceptService)
         {
@@ -136,15 +135,12 @@ namespace GorbushkaBot.Service
                 {
                     try
                     {
-                        Console.WriteLine($"Обрабатываем строку: {string.Join(", ", row)}");
-
                         if (row.Count <= 20)
                         {
                             Console.WriteLine("Ошибка: строка слишком короткая!");
                             continue;
                         }
 
-                        // Проверяем, что row[15] и row[20] не null
                         var telegramId = row[15]?.ToString()?.Trim();
                         if (string.IsNullOrEmpty(telegramId))
                         {
@@ -205,13 +201,6 @@ namespace GorbushkaBot.Service
                     return;
                 }
 
-                // Проверяем, что _applicationService инициализирован
-                if (_applicationService == null)
-                {
-                    Console.WriteLine("Ошибка: _applicationService не инициализирован.");
-                    return;
-                }
-
                 await _userApplicationService.AddUserToBlacklistAsync(chatId);
             }
             catch (Exception ex)
@@ -229,13 +218,6 @@ namespace GorbushkaBot.Service
                 if (!long.TryParse(telegramId, out var chatId))
                 {
                     Console.WriteLine($"Неверный формат ID пользователя: {telegramId}");
-                    return;
-                }
-
-                // Проверяем, что _applicationService инициализирован
-                if (_applicationService == null)
-                {
-                    Console.WriteLine("Ошибка: _applicationService не инициализирован.");
                     return;
                 }
 
