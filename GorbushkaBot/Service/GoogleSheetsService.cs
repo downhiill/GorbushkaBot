@@ -117,82 +117,134 @@ namespace GorbushkaBot.Service
 
         public async Task ProcessBlackListAsync()
         {
-            // Получаем данные из листа "БлекЛист"
-            var range = "БлекЛист!A2:U"; // Поменяйте на правильный диапазон
-            var request = _service.Spreadsheets.Values.Get(_spreadsheetId, range);
-            var response = await request.ExecuteAsync();
-
-            var rows = response.Values;
-
-            if (rows == null || rows.Count == 0)
+            try
             {
-                Console.WriteLine("Черный список пуст.");
-                return;
+                // Получаем данные из листа "БлекЛист"
+                var range = "БлекЛист!A2:U"; // Поменяйте на правильный диапазон
+                var request = _service.Spreadsheets.Values.Get(_spreadsheetId, range);
+                var response = await request.ExecuteAsync();
+
+                var rows = response.Values;
+
+                if (rows == null || rows.Count == 0)
+                {
+                    Console.WriteLine("Черный список пуст.");
+                    return;
+                }
+
+                foreach (var row in rows)
+                {
+                    try
+                    {
+                        Console.WriteLine($"Обрабатываем строку: {string.Join(", ", row)}");
+
+                        if (row.Count <= 20)
+                        {
+                            Console.WriteLine("Ошибка: строка слишком короткая!");
+                            continue;
+                        }
+
+                        // Проверяем, что row[15] и row[20] не null
+                        var telegramId = row[15]?.ToString()?.Trim();
+                        if (string.IsNullOrEmpty(telegramId))
+                        {
+                            Console.WriteLine("Ошибка: Telegram ID отсутствует или пуст.");
+                            continue;
+                        }
+
+                        if (!long.TryParse(telegramId, out long chatId))
+                        {
+                            Console.WriteLine($"Ошибка: неверный формат Telegram ID ({telegramId})");
+                            continue;
+                        }
+
+                        // Обработка флага доступа
+                        bool hasPaidAccess = false;
+                        if (row[20] != null && bool.TryParse(row[20].ToString(), out bool result))
+                        {
+                            hasPaidAccess = result;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Ошибка при обработке флага доступа в строке: {string.Join(", ", row)}");
+                            continue;
+                        }
+
+                        // Блокировка или разблокировка пользователя
+                        if (!hasPaidAccess)
+                        {
+                            await BlockUserAsync(chatId.ToString());
+                        }
+                        else
+                        {
+                            await UnblockUserAsync(chatId.ToString());
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Ошибка при обработке строки: {ex.Message}");
+                    }
+                }
             }
-
-            foreach (var row in rows)
+            catch (Exception ex)
             {
-                Console.WriteLine($"Обрабатываем строку: {string.Join(", ", row)}");
-
-                if (row.Count <= 20)
-                {
-                    Console.WriteLine("Ошибка: строка слишком короткая!");
-                    continue;
-                }
-
-                var telegramId = row[15]?.ToString()?.Trim();
-                if (!long.TryParse(telegramId, out long chatId))
-                {
-                    Console.WriteLine($"Ошибка: неверный формат Telegram ID ({telegramId})");
-                    continue;
-                }
-                bool hasPaidAccess = false;
-
-                if (bool.TryParse(row[20]?.ToString(), out bool result))
-                {
-                    hasPaidAccess = result;
-                }
-                else
-                {
-                    Console.WriteLine($"Ошибка при обработке флага доступа в строке: {string.Join(", ", row)}");
-                    continue;
-                }
-
-                if (!hasPaidAccess)
-                {
-                    await BlockUserAsync(chatId.ToString());  
-                }
-                else
-                {
-                    await UnblockUserAsync(chatId.ToString());
-                }
+                Console.WriteLine($"Ошибка при обработке черного списка: {ex.Message}");
             }
         }
 
 
         private async Task BlockUserAsync(string telegramId)
         {
-            // Здесь вызовите Telegram API для блокировки пользователя
-            Console.WriteLine($"Блокируем пользователя {telegramId}");
-            // Преобразуем строку telegramId в long (если необходимо)
-            if (!long.TryParse(telegramId, out var chatId))
+            try
             {
-                Console.WriteLine($"Неверный формат ID пользователя: {telegramId}");
-                return;
+                Console.WriteLine($"Блокируем пользователя {telegramId}");
+
+                if (!long.TryParse(telegramId, out var chatId))
+                {
+                    Console.WriteLine($"Неверный формат ID пользователя: {telegramId}");
+                    return;
+                }
+
+                // Проверяем, что _applicationService инициализирован
+                if (_applicationService == null)
+                {
+                    Console.WriteLine("Ошибка: _applicationService не инициализирован.");
+                    return;
+                }
+
+                await _applicationService.AddUserToBlacklistAsync(chatId);
             }
-             await _applicationService.AddUserToBlacklistAsync(chatId);
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при блокировке пользователя: {ex.Message}");
+            }
         }
 
         private async Task UnblockUserAsync(string telegramId)
         {
-            // Здесь вызовите Telegram API для разблокировки пользователя
-            Console.WriteLine($"Разблокируем пользователя {telegramId}");
-            if (!long.TryParse(telegramId, out var chatId))
+            try
             {
-                Console.WriteLine($"Неверный формат ID пользователя: {telegramId}");
-                return;
+                Console.WriteLine($"Разблокируем пользователя {telegramId}");
+
+                if (!long.TryParse(telegramId, out var chatId))
+                {
+                    Console.WriteLine($"Неверный формат ID пользователя: {telegramId}");
+                    return;
+                }
+
+                // Проверяем, что _applicationService инициализирован
+                if (_applicationService == null)
+                {
+                    Console.WriteLine("Ошибка: _applicationService не инициализирован.");
+                    return;
+                }
+
+                await _applicationService.RemoveUserFromBlacklistAsync(chatId);
             }
-            await _applicationService.RemoveUserFromBlacklistAsync(chatId);
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при разблокировке пользователя: {ex.Message}");
+            }
         }
 
 

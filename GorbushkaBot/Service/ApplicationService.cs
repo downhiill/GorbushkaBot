@@ -202,6 +202,27 @@ namespace GorbushkaBot.Service
         {
             try
             {
+                // Проверяем, что _dbContext инициализирован
+                if (_dbContext == null)
+                {
+                    Console.WriteLine("Ошибка: _dbContext не инициализирован.");
+                    return false;
+                }
+
+                // Проверяем, что _botClient инициализирован
+                if (_botClient == null)
+                {
+                    Console.WriteLine("Ошибка: _botClient не инициализирован.");
+                    return false;
+                }
+
+                // Проверяем, что _groupChatId задан
+                if (_groupChatId == 0)
+                {
+                    Console.WriteLine("Ошибка: _groupChatId не задан.");
+                    return false;
+                }
+
                 // Проверяем, есть ли пользователь уже в черном списке
                 var existingBlacklistEntry = await _dbContext.BlacklistEntries
                     .FirstOrDefaultAsync(b => b.ChatId == chatId);
@@ -224,14 +245,14 @@ namespace GorbushkaBot.Service
                 await _botClient.RestrictChatMemberAsync(
                     _groupChatId,
                     chatId,
-                    new ChatPermissions { CanSendMessages = false}
+                    new ChatPermissions { CanSendMessages = false }
                 );
 
                 return true;
             }
             catch (Exception ex)
             {
-                // Логирование ошибки
+                Console.WriteLine($"Ошибка при добавлении пользователя в черный список: {ex.Message}");
                 return false;
             }
         }
@@ -240,6 +261,27 @@ namespace GorbushkaBot.Service
         {
             try
             {
+                // Проверяем, что _dbContext инициализирован
+                if (_dbContext == null)
+                {
+                    Console.WriteLine("Ошибка: _dbContext не инициализирован.");
+                    return false;
+                }
+
+                // Проверяем, что _botClient инициализирован
+                if (_botClient == null)
+                {
+                    Console.WriteLine("Ошибка: _botClient не инициализирован.");
+                    return false;
+                }
+
+                // Проверяем, что _groupChatId задан
+                if (_groupChatId == 0)
+                {
+                    Console.WriteLine("Ошибка: _groupChatId не задан.");
+                    return false;
+                }
+
                 // Находим запись пользователя в черном списке
                 var blacklistEntry = await _dbContext.BlacklistEntries
                     .FirstOrDefaultAsync(b => b.ChatId == chatId);
@@ -264,7 +306,7 @@ namespace GorbushkaBot.Service
             }
             catch (Exception ex)
             {
-                // Логирование ошибки
+                Console.WriteLine($"Ошибка при удалении пользователя из черного списка: {ex.Message}");
                 return false;
             }
         }
