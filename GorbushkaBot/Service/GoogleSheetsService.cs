@@ -140,7 +140,7 @@ namespace GorbushkaBot.Service
                     continue;
                 }
 
-                var telegramId = row[16]?.ToString();
+                var telegramId = row[15]?.ToString();
                 bool hasPaidAccess = false;
 
                 if (bool.TryParse(row[20]?.ToString(), out bool result))
