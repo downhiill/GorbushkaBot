@@ -21,6 +21,8 @@ namespace GorbushkaBot.AppDbContext
             modelBuilder.Entity<UserAccept>().ToTable("user_accepts");
             modelBuilder.Entity<BlacklistEntry>().ToTable("black_list");
             modelBuilder.Entity<PinnedMessage>().ToTable("pinned_message");
+            modelBuilder.Entity<BlacklistEntry>()
+            .HasKey(b => b.Id);
         }
     }
 }
