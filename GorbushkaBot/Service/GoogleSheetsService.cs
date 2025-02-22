@@ -212,7 +212,7 @@ namespace GorbushkaBot.Service
                     return;
                 }
 
-                await _applicationService.AddUserToBlacklistAsync(chatId);
+                await _userApplicationService.AddUserToBlacklistAsync(chatId);
             }
             catch (Exception ex)
             {
@@ -239,7 +239,7 @@ namespace GorbushkaBot.Service
                     return;
                 }
 
-                await _applicationService.RemoveUserFromBlacklistAsync(chatId);
+                await _userApplicationService.RemoveUserFromBlacklistAsync(chatId);
             }
             catch (Exception ex)
             {
