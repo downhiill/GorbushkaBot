@@ -140,7 +140,12 @@ namespace GorbushkaBot.Service
                     continue;
                 }
 
-                var telegramId = row[15]?.ToString();
+                var telegramId = row[15]?.ToString()?.Trim();
+                if (!long.TryParse(telegramId, out long chatId))
+                {
+                    Console.WriteLine($"Ошибка: неверный формат Telegram ID ({telegramId})");
+                    continue;
+                }
                 bool hasPaidAccess = false;
 
                 if (bool.TryParse(row[20]?.ToString(), out bool result))
@@ -155,11 +160,11 @@ namespace GorbushkaBot.Service
 
                 if (!hasPaidAccess)
                 {
-                    await BlockUserAsync(telegramId);
+                    await BlockUserAsync(chatId.ToString());  
                 }
                 else
                 {
-                    await UnblockUserAsync(telegramId);
+                    await UnblockUserAsync(chatId.ToString());
                 }
             }
         }
