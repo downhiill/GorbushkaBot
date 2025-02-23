@@ -35,7 +35,7 @@ namespace GorbushkaBot.Service
             _userAcceptService = userAcceptService;
         }
 
-        public async Task AppendDataAsync(Dictionary<string, string> userData, string folderUrl, long chatId, string telegramUsername = null)
+        public async Task AppendDataAsync(Dictionary<string, string> userData, string folderUrl, long chatId, string telegramUsername)
         {
             var valueRange = new ValueRange
             {
@@ -81,7 +81,7 @@ namespace GorbushkaBot.Service
             return sheetNamesAndGids;
         }
 
-        public async Task AppendUserDataAsync(Dictionary<string, string> userData, string folderUrl, long chatId, string telegramUsername = null)
+        public async Task AppendUserDataAsync(Dictionary<string, string> userData, string folderUrl, long chatId, string telegramUsername)
         {
             var valueRange = new ValueRange
             {
@@ -102,8 +102,9 @@ namespace GorbushkaBot.Service
                     userData.GetValueOrDefault("rental_contract", ""),
                     userData["pavilion_photo"],
                     userData.GetValueOrDefault("soiuz_number", "Не указано"),
+                    chatId,
                     telegramUsername ?? "Не указано",
-                    chatId
+                    
                 }}
             };
 

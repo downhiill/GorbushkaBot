@@ -1,4 +1,5 @@
-﻿using GorbushkaBot.Service;
+﻿using Google.Apis.Drive.v3.Data;
+using GorbushkaBot.Service;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -196,6 +197,7 @@ namespace GorbushkaBot.Controllers
 
                 // 1. Извлекаем данные из таблицы UserApplications
                 var application = await _applicationService.GetApplicationByIdAsync(applicantChatId);
+                string telegramUsername = application.UserNameTg ?? "Не указано";
 
                 if (application == null)
                 {
@@ -237,9 +239,9 @@ namespace GorbushkaBot.Controllers
                 };
 
                 // 5. Сохраняем данные в Google Sheets
-                await _googleSheetsService.AppendUserDataAsync(userData, folderUrl, applicantChatId);
+                await _googleSheetsService.AppendUserDataAsync(userData, folderUrl, applicantChatId, telegramUsername);
 
-                await _userAcceptService.SaveUserAcceptAsync(userData, folderUrl, applicantChatId);
+                await _userAcceptService.SaveUserAcceptAsync(userData, folderUrl, applicantChatId, telegramUsername);
 
                 // 6. Удаляем заявку из таблицы UserApplications
                 await _applicationService.DeleteApplicationAsync(applicantChatId);

@@ -18,7 +18,7 @@ namespace GorbushkaBot.Service
             _botClient = botClient;
         }
 
-        public async Task SaveUserApplicationAsync(Dictionary<string, string> userData, string folderUrl, long chatId, string telegramUsername = null)
+        public async Task SaveUserApplicationAsync(Dictionary<string, string> userData, string folderUrl, long chatId, string telegramUsername)
         {
             var userApplication = new UserApplication
             {

@@ -13,7 +13,7 @@ namespace GorbushkaBot.Service
             _dbContext = dbContext;
         }
 
-        public async Task SaveUserAcceptAsync(Dictionary<string, string> userData, string folderUrl, long chatId, string telegramUsername = null)
+        public async Task SaveUserAcceptAsync(Dictionary<string, string> userData, string folderUrl, long chatId, string telegramUsername)
         {
             var userAccept = new UserAccept
             {
@@ -24,7 +24,7 @@ namespace GorbushkaBot.Service
                 PassportNumber = userData["passport_number"],
                 Role = userData["role"],
                 PassportIssueDate = userData["passport_issue_date"],
-                PassportIssueDateEnd = userData["passport_issue_date_end"],
+                PassportIssueDateEnd = userData.GetValueOrDefault("passport_issue_date_end", "Не указано"),
                 RegistrationAddress = userData.GetValueOrDefault("registration_address", ""),
                 PassportPhotos = userData["passport_photo"],
                 PropiskaPhoto = userData.GetValueOrDefault("propiska_photo", ""),
