@@ -175,7 +175,7 @@ namespace GorbushkaBot.Service
                    $"🛠 Роль: {application.Role}\n" +
                    $"🏢 Павильон: {application.PavilionNumber}, {application.RentalContract}\n" +
                    $"🏛 Номер союза: {application.NomerSoiza}\n" +
-                   $"🖼 Фото: \n Лицо: {application.FacePhoto}\n Паспорт: {application.PassportPhotos}\n Павильон: {application.PavilionPhotos}";
+                   $"🖼 Фото: \n Лицо: {application.FacePhoto}\n Паспорт: {application.PassportPhotos}\n Прописка: {application.PropiskaPhoto}\n Павильон: {application.PavilionPhotos}";
         }
 
 
