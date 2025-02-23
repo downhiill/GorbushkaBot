@@ -1,4 +1,5 @@
 ﻿using Google.Apis.Drive.v3.Data;
+using GorbushkaBot.Model;
 using GorbushkaBot.Service;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -9,6 +10,7 @@ namespace GorbushkaBot.Controllers
     public class StepManagerAdmin
     {
         private static readonly Dictionary<long, (string step, int messageId)> AdminSteps = new();
+        private static Dictionary<long, DateTime> rejectedApplications = new Dictionary<long, DateTime>();
         private static readonly Dictionary<long, int> AdminCurrentPage = new();
         private readonly ApplicationService _applicationService;
         private readonly UserAcceptService _userAcceptService;
@@ -37,14 +39,14 @@ namespace GorbushkaBot.Controllers
 
             if (step == "waiting_for_application_id")
             {
-                if (!int.TryParse(message.Text, out int applicationId))
+                if (!long.TryParse(message.Text, out long applicationId))  // Используем long вместо int
                 {
                     await botClient.SendTextMessageAsync(chatId, "Ошибка: Введите корректный ID заявки (число).");
                     return;
                 }
 
                 // Ищем заявку по ID
-                var application = await _applicationService.GetApplicationByIdAsync(applicationId);
+                var application = await _applicationService.GetApplicationByIdAsync(applicationId);  // Передаем long
 
                 if (application == null)
                 {
@@ -66,6 +68,7 @@ namespace GorbushkaBot.Controllers
 
                     await botClient.SendTextMessageAsync(chatId, formattedApplication, replyMarkup: inlineKeyboard);
                 }
+
 
                 // Очищаем шаг
                 AdminSteps.Remove(chatId);
@@ -256,22 +259,25 @@ namespace GorbushkaBot.Controllers
             {
                 long applicantChatId = long.Parse(data.Split('_')[1]);
 
+                // Запоминаем время отклонения
+                RejectedApplicationsStorage.AddRejected(applicantChatId);
+
                 await _applicationService.DeleteApplicationAsync(applicantChatId);
 
-                // Создаем кнопку "Заполнить заново"
                 var keyboard = new InlineKeyboardMarkup(
                     new InlineKeyboardButton[]
                     {
                         InlineKeyboardButton.WithCallbackData("Заполнить заново 🔄", "verify")
                     });
 
-                // Отправляем сообщение с кнопкой
                 await botClient.SendTextMessageAsync(
                     applicantChatId,
-                    "К сожалению, ваша заявка была отклонена. ❌\nВы можете подать заявку заново, нажав кнопку ниже.",
+                    "К сожалению, ваша заявка была отклонена. ❌\nВы можете подать заявку заново, нажав кнопку ниже через 5 минут.",
                     replyMarkup: keyboard
                 );
             }
+
+
             else if (data == "black_list")
             {
                 await _googleSheetsService.ProcessBlackListAsync();

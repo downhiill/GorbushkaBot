@@ -387,10 +387,18 @@ namespace GorbushkaBot.Controllers
             switch (data)
             {
                 case "verify":
-                    // Очищаем предыдущие данные
-                    if (UserData.ContainsKey(chatId)) UserData[chatId].Clear();
+                    if (!RejectedApplicationsStorage.CanReapply(chatId, out int minutesLeft))
+                    {
+                        await botClient.SendTextMessageAsync(
+                            chatId,
+                            $"Подождите {minutesLeft} мин. перед повторной подачей заявки. ⏳"
+                        );
+                        return;
+                    }
 
-                    // Начинаем с шага fio
+                    if (UserData.ContainsKey(chatId))
+                        UserData[chatId].Clear();
+
                     await DeleteAndSendNextStep(
                         botClient,
                         chatId,
@@ -400,6 +408,8 @@ namespace GorbushkaBot.Controllers
                         false
                     );
                 break;
+
+
 
                 case "next_after_passport":
                     await DeleteAndSendNextStep(botClient, chatId, callbackQuery.Message.MessageId, "role", "Выберите свою роль:", false,
